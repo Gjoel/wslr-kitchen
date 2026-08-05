@@ -1,0 +1,3330 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2b7fb0">
+<title>WSLR Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f7f5f0;
+  --panel:#ffffff;
+  --ink:#1d2a26;
+  --muted:#6b7570;
+  --line:#e5e1d6;
+  --brand:#2b7fb0;
+  --brand-dark:#1f6390;
+  --brand-soft:#e3eef6;
+  --red:#bf3b2b;    --red-bg:#fbeae7;
+  --amber:#a86a00;  --amber-bg:#fdf3dd;
+  --green:#1c7a4a;  --green-bg:#e7f4ec;
+  --fridge:#17629e; --fridge-bg:#e7f0f8;
+  --freezer:#4d51a8;--freezer-bg:#ebecf8;
+  --dry:#8a5a2b;    --dry-bg:#f6efe5;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(29,42,38,.06), 0 4px 14px rgba(29,42,38,.05);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Public Sans', -apple-system, sans-serif;
+  font-size:16px;
+  line-height:1.45;
+  padding-bottom:60px;
+}
+h1,h2,h3,.display{font-family:'Bricolage Grotesque','Public Sans',sans-serif;}
+button{font-family:inherit; touch-action:manipulation;}
+input,select,textarea{
+  font-family:inherit; font-size:16px; color:var(--ink);
+  background:#fff; border:1.5px solid var(--line); border-radius:10px;
+  padding:11px 12px; width:100%;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:var(--brand);}
+label{display:block; font-size:13px; font-weight:600; color:var(--muted); margin:0 0 5px 2px; text-transform:uppercase; letter-spacing:.04em;}
+.field{margin-bottom:14px;}
+
+/* Header */
+header{
+  background:var(--brand); color:#fff;
+  padding:calc(env(safe-area-inset-top, 0px) + 14px) 18px 12px;
+}
+.hd-row{max-width:1150px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+.hd-title{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:22px; letter-spacing:-.01em;}
+.hd-sub{font-size:12.5px; opacity:.75; margin-top:1px;}
+#statusDot{width:12px; height:12px; border-radius:50%; background:#9db8b2; flex:none;}
+#statusDot.on{background:#59d99f;}
+#statusDot.off{background:#ff8a73;}
+
+/* Tabs */
+nav{
+  position:sticky; top:0; z-index:40;
+  background:var(--brand); padding:0 10px 10px;
+  box-shadow:0 2px 8px rgba(31,99,144,.25);
+}
+.tabbar{max-width:1150px; margin:0 auto; display:flex; gap:6px; background:var(--brand-dark); border-radius:12px; padding:4px;}
+.tabbar button{
+  flex:1; border:none; background:transparent; color:#cfe4df;
+  font-family:'Bricolage Grotesque',sans-serif; font-weight:600; font-size:14.5px;
+  padding:11px 2px; border-radius:9px; cursor:pointer;
+}
+.tabbar button.active{background:#fff; color:var(--brand-dark);}
+
+/* Layout */
+main{max-width:1150px; margin:0 auto; padding:18px 16px 30px;}
+section{display:none;}
+section.active{display:block;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:14px;}
+.card h2{margin:0 0 12px; font-size:18px; font-weight:700;}
+.card h3{margin:18px 0 8px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 14px;}
+@media (max-width:560px){.grid2{grid-template-columns:1fr;}}
+.muted{color:var(--muted);}
+.small{font-size:13px;}
+
+/* Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border:none; border-radius:11px; cursor:pointer;
+  font-weight:700; font-size:16px; padding:13px 18px; min-height:48px;
+}
+.btn:disabled{opacity:.55; cursor:default;}
+.btn-primary{background:var(--brand); color:#fff; width:100%;}
+.btn-secondary{background:var(--brand-soft); color:var(--brand-dark);}
+.btn-ghost{background:#fff; border:1.5px solid var(--line); color:var(--ink);}
+.btn-sm{min-height:40px; padding:8px 14px; font-size:14.5px; border-radius:9px;}
+.btn-danger{background:var(--red-bg); color:var(--red);}
+
+/* Segmented control */
+.seg{display:flex; gap:6px;}
+.seg button{
+  flex:1; min-height:46px; border-radius:10px; border:1.5px solid var(--line);
+  background:#fff; color:var(--muted); font-weight:600; font-size:15px; cursor:pointer;
+}
+.seg button.on{background:var(--brand); border-color:var(--brand); color:#fff;}
+.seg button.on.warn{background:var(--red); border-color:var(--red);}
+
+/* Chip toggles and heads grid */
+.chips{display:flex; flex-wrap:wrap; gap:6px;}
+.chips button{
+  border:1.5px solid var(--line); background:#fff; color:var(--muted);
+  border-radius:999px; padding:9px 14px; font-weight:600; font-size:14px; cursor:pointer;
+}
+.chips button.on{background:var(--brand); border-color:var(--brand); color:#fff;}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+@media (max-width:560px){.grid4{grid-template-columns:1fr 1fr;}}
+.totline{
+  background:#efece4; border:1.5px solid var(--line); border-radius:10px;
+  padding:11px 12px; font-weight:700; font-size:17px; min-height:48px;
+  display:flex; align-items:center;
+}
+.draft-item.short{background:var(--red-bg);}
+
+/* Use first board */
+.uf-board{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; align-items:start;}
+@media (max-width:700px){.uf-board{grid-template-columns:1fr;}}
+.uf-col{background:#efece6; border:1px solid var(--line); border-radius:14px; padding:8px; min-height:140px;}
+.uf-col.drag{outline:2.5px dashed var(--brand); outline-offset:-3px; background:var(--brand-soft);}
+.uf-col-h{display:flex; justify-content:space-between; align-items:baseline; font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:15px; padding:4px 6px 8px;}
+.uf-col-h .cnt{color:var(--muted); font-weight:600; font-size:13px;}
+.uf-col .uf-rail{width:52px;}
+.uf-col .uf-rail .d1{font-size:18px;}
+.uf-col .uf-name{font-size:14.5px; white-space:normal;}
+.uf-meta{display:flex; align-items:center; gap:6px; flex-wrap:wrap; white-space:normal;}
+.uf-meta .pill{font-size:11px; padding:2px 8px;}
+.uf-acts{flex-direction:column; gap:4px; padding:6px 8px 6px 0; justify-content:center;}
+.btn-xs{min-height:32px; padding:3px 10px; font-size:12.5px; border-radius:8px;}
+.rail-none{background:#98a29c;}
+.uf-row.selected{background:var(--brand-soft); outline:2.5px solid var(--brand); outline-offset:-2px;}
+.sel-dot{width:24px; height:24px; border-radius:50%; border:2.5px solid var(--line); background:#fff; flex:none; align-self:center; margin-left:8px;}
+.uf-row.selected .sel-dot, .draft-item.selected .sel-dot{background:var(--brand); border-color:var(--brand);}
+.draft-item.selected{background:var(--brand-soft); outline:2.5px solid var(--brand);}
+.dvrow.dvsel{background:var(--brand-soft); border-radius:9px;}
+
+/* Function colours */
+.fnlegend{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px;}
+.fnlegend:empty{display:none;}
+.fnlegend button{border:none; border-radius:11px; padding:10px 14px; font-weight:700; font-size:14px; color:#fff; cursor:pointer;}
+.fnlegend button.all{background:var(--ink);}
+.fnlegend button.gen{background:#8a938e;}
+.fnlegend button.on{outline:3px solid var(--ink); outline-offset:2px;}
+.fndot{display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:4px;}
+.swatches{display:flex; gap:8px; flex-wrap:wrap;}
+.swatches button{width:36px; height:36px; border-radius:50%; border:3px solid transparent; cursor:pointer;}
+.swatches button.on{border-color:var(--ink);}
+.fnpick{width:100%; color:#fff; margin-bottom:8px; justify-content:flex-start;}
+
+/* Bulk bar and receive drop zone */
+.bulkbar{position:fixed; left:0; right:0; bottom:0; z-index:90; background:var(--ink); color:#fff; display:flex; gap:8px; align-items:center; padding:10px 14px calc(10px + env(safe-area-inset-bottom, 0px));}
+#pane-receive.dragging{outline:3px dashed var(--brand); outline-offset:-3px; border-radius:16px;}
+
+/* Deliveries sidebar layout */
+.dl-wrap{display:grid; grid-template-columns:200px 1fr; gap:14px; align-items:start;}
+.dl-side{display:flex; flex-direction:column; gap:8px; position:sticky; top:74px;}
+.dl-side button{
+  text-align:left; padding:13px 14px; border-radius:11px; border:1.5px solid var(--line);
+  background:#fff; color:var(--ink); font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700; font-size:15px; cursor:pointer;
+}
+.dl-side button.on{background:var(--brand); border-color:var(--brand); color:#fff;}
+@media (max-width:760px){
+  .dl-wrap{grid-template-columns:1fr;}
+  .dl-side{flex-direction:row; position:static;}
+  .dl-side button{flex:1; text-align:center; padding:11px 6px; font-size:14px;}
+}
+
+/* Chips and badges */
+.pill{display:inline-block; font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap;}
+.pill.fridge{background:var(--fridge-bg); color:var(--fridge);}
+.pill.freezer{background:var(--freezer-bg); color:var(--freezer);}
+.pill.dry{background:var(--dry-bg); color:var(--dry);}
+.pill.ok{background:var(--green-bg); color:var(--green);}
+.pill.warn{background:var(--amber-bg); color:var(--amber);}
+.pill.bad{background:var(--red-bg); color:var(--red);}
+.pill.plain{background:#efece4; color:var(--muted);}
+
+/* Use first rows: date rail is the signature element */
+.uf-group{margin:16px 0 6px; font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:15px;}
+.uf-group .cnt{color:var(--muted); font-weight:600; font-size:13px; margin-left:6px;}
+.uf-row{
+  display:flex; align-items:stretch; gap:12px;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  margin-bottom:8px; overflow:hidden; box-shadow:var(--shadow);
+}
+.uf-rail{
+  flex:none; width:66px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#fff; padding:8px 4px;
+}
+.uf-rail .d1{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:21px; line-height:1;}
+.uf-rail .d2{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; opacity:.9; margin-top:3px; text-align:center;}
+.rail-bad{background:var(--red);}
+.rail-warn{background:var(--amber);}
+.rail-ok{background:var(--green);}
+.uf-main{flex:1; padding:10px 0; min-width:0; cursor:pointer;}
+.uf-name{font-weight:700; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.uf-meta{font-size:13px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.uf-acts{flex:none; display:flex; align-items:center; gap:6px; padding-right:10px;}
+.uf-acts .btn-sm{min-height:44px;}
+
+/* Lists */
+.rowcard{
+  background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
+  padding:12px 14px; margin-bottom:8px; cursor:pointer;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.rowcard .l{min-width:0;}
+.rowcard .t{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rowcard .s{font-size:13px; color:var(--muted); margin-top:2px;}
+.rowcard .r{flex:none; text-align:right; display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
+
+/* Draft item list on receive */
+.draft-item{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--brand-soft); border-radius:10px; padding:9px 12px; margin-bottom:7px;
+}
+.draft-item .n{font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis;}
+.draft-item .x{flex:none; border:none; background:none; color:var(--brand-dark); font-size:22px; font-weight:700; cursor:pointer; padding:2px 8px;}
+
+/* Photo strip */
+#photoStrip{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+#photoStrip .ph{position:relative;}
+#photoStrip img{width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid var(--line);}
+#photoStrip .pdf-tile{width:84px; height:84px; border-radius:10px; border:1px solid var(--line); background:#efece4; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--muted);}
+#photoStrip .rm{
+  position:absolute; top:-7px; right:-7px; width:26px; height:26px; border-radius:50%;
+  background:var(--red); color:#fff; border:2px solid #fff; font-weight:700; cursor:pointer; line-height:1;
+}
+
+/* Modal */
+#modalRoot{position:fixed; inset:0; z-index:100; display:none;}
+#modalRoot.open{display:block;}
+.modal-back{position:absolute; inset:0; background:rgba(20,30,27,.5); overflow-y:auto; padding:24px 12px calc(24px + env(safe-area-inset-bottom,0px));}
+.modal{
+  max-width:640px; margin:0 auto; background:var(--bg); border-radius:16px;
+  padding:18px 16px; position:relative; box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+.modal h2{font-size:19px; margin:0 34px 4px 0;}
+.modal-close{
+  position:absolute; top:10px; right:10px; width:38px; height:38px; border-radius:50%;
+  border:none; background:#e8e4da; color:var(--ink); font-size:19px; font-weight:700; cursor:pointer;
+}
+.modal img.docket{width:100%; border-radius:12px; border:1px solid var(--line); margin:8px 0;}
+
+/* Toast */
+#toastRoot{position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom,0px)); z-index:200; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;}
+.toast{
+  pointer-events:auto; background:var(--ink); color:#fff; border-radius:11px;
+  padding:12px 16px; font-size:15px; font-weight:600; max-width:92%;
+  display:flex; align-items:center; gap:14px; box-shadow:0 6px 20px rgba(0,0,0,.3);
+}
+.toast.err{background:var(--red);}
+.toast button{border:none; background:rgba(255,255,255,.18); color:#fff; font-weight:700; border-radius:8px; padding:7px 13px; cursor:pointer; font-size:14px;}
+
+/* Overlays: PIN and setup */
+.gate{position:fixed; inset:0; z-index:300; background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center; padding:20px;}
+.gate .box{max-width:380px; width:100%; text-align:center;}
+.gate h1{font-size:26px; margin:0 0 4px;}
+.gate p{opacity:.85; font-size:14.5px;}
+.gate input{text-align:center; font-size:24px; letter-spacing:.3em; margin:14px 0 10px; border:none;}
+.gate .btn{background:#fff; color:var(--brand-dark); width:100%;}
+.gate .err{color:#ffd9d0; font-weight:600; min-height:22px; margin-top:8px;}
+.gate.setup{align-items:flex-start; overflow-y:auto;}
+.gate.setup .box{max-width:560px; text-align:left; background:rgba(255,255,255,.08); border-radius:14px; padding:20px; margin-top:40px;}
+.gate.setup code{background:rgba(0,0,0,.25); padding:2px 6px; border-radius:6px; font-size:14px;}
+
+/* Settings table */
+.sl-row{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);}
+.sl-row .c{flex:1; min-width:0; font-weight:600;}
+.sl-row .st{flex:none; width:78px;}
+.sl-row input{width:78px; text-align:center; flex:none; padding:9px 6px;}
+.sl-row .del{flex:none; border:none; background:none; color:var(--red); font-size:20px; cursor:pointer; padding:4px 8px;}
+.sl-row input.dirty{border-color:var(--amber); background:var(--amber-bg);}
+
+.empty{
+  text-align:center; color:var(--muted); padding:34px 16px; font-size:15px;
+  background:#fff; border:1.5px dashed var(--line); border-radius:12px;
+}
+
+/* ============ Kitchen / Admin modes ============ */
+body.kitchen .adm-only{display:none !important;}
+body.admin .kit-only{display:none !important;}
+body.kitchen{font-size:17px;}
+body.kitchen .btn{min-height:54px; font-size:17px;}
+body.kitchen .btn-sm{min-height:48px; font-size:15.5px;}
+body.kitchen .btn-xs{min-height:46px; font-size:14px; padding:6px 12px;}
+body.kitchen .tabbar button{padding:15px 2px; font-size:16.5px;}
+body.kitchen input, body.kitchen select, body.kitchen textarea{font-size:17px; padding:13px 14px;}
+body.kitchen .uf-name{font-size:17px;}
+body.kitchen .uf-meta{font-size:14px;}
+body.kitchen .rowcard{padding:15px 16px;}
+.hd-admin{border:none; background:rgba(255,255,255,.16); color:#fff; font-weight:700; font-size:13px; border-radius:9px; padding:9px 13px; cursor:pointer; font-family:inherit;}
+.badge-dot{display:inline-flex; align-items:center; justify-content:center; min-width:21px; height:21px; border-radius:999px; background:#ff8a73; color:#5c1608; font-size:12.5px; font-weight:800; margin-left:7px; padding:0 6px; vertical-align:1px;}
+.tabbar button.active .badge-dot{background:var(--red); color:#fff;}
+
+/* Arrival tick-off rows */
+.ord-row{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line);}
+.ord-row:last-child{border-bottom:none;}
+.ord-row .nm{flex:1; min-width:0; font-weight:600;}
+.ord-row .nm .sub{font-size:13px; color:var(--muted); font-weight:500; margin-top:1px;}
+.ord-seg{display:flex; gap:5px; flex:none;}
+.ord-seg button{min-height:46px; min-width:60px; border-radius:9px; border:1.5px solid var(--line); background:#fff; color:var(--muted); font-weight:700; font-size:13.5px; cursor:pointer; padding:4px 9px; font-family:inherit;}
+.ord-seg button.on-ok{background:var(--green); border-color:var(--green); color:#fff;}
+.ord-seg button.on-part{background:var(--amber); border-color:var(--amber); color:#fff;}
+.ord-seg button.on-none{background:var(--red); border-color:var(--red); color:#fff;}
+.ord-qty{margin-top:8px; display:flex; gap:8px; align-items:center;}
+.ord-qty input{width:120px; flex:none; text-align:center;}
+@media (max-width:560px){
+  .ord-row{flex-wrap:wrap;}
+  .ord-seg{width:100%; justify-content:flex-end;}
+}
+
+/* Food check rows */
+.xc-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px;}
+.xc-row:last-child{border-bottom:none;}
+.xc-row .r{flex:none; text-align:right; color:var(--muted);}
+.loading{text-align:center; color:var(--muted); padding:30px;}
+a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weight:600; margin:10px 0; cursor:pointer; text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="gate setup" id="setupOverlay" style="display:none;">
+  <div class="box">
+    <h1>Setup needed</h1>
+    <p>Open this file in a text editor and fill in the three constants at the top of the script section:</p>
+    <p><code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> from your Supabase project (Settings, then API), and optionally <code>APP_PIN</code>.</p>
+    <p>Then run <code>wslr-kitchen-schema.sql</code> in the Supabase SQL editor to create the tables, policies and docket photo bucket.</p>
+  </div>
+</div>
+
+<div class="gate" id="pinOverlay" style="display:none;">
+  <div class="box">
+    <h1>WSLR Kitchen</h1>
+    <p>Enter the kitchen PIN</p>
+    <input type="password" id="pinInput" inputmode="numeric" autocomplete="off">
+    <button class="btn" id="pinBtn">Unlock</button>
+    <div class="err" id="pinErr"></div>
+  </div>
+</div>
+
+<header>
+  <div class="hd-row">
+    <div>
+      <div class="hd-title">WSLR Kitchen</div>
+      <div class="hd-sub" id="hdSub">Receiving &middot; Use first &middot; Waste</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button class="hd-admin" id="btnMode">Admin</button>
+      <div id="statusDot" title="Connection"></div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="tabbar">
+    <button data-tab="usefirst" class="active">Stock</button>
+    <button data-tab="arrivals" class="kit-only">Arrivals<span id="arrBadge" class="badge-dot" style="display:none;"></span></button>
+    <button data-tab="orders" class="adm-only">Orders</button>
+    <button data-tab="unalloc" class="adm-only">Unallocated</button>
+    <button data-tab="functions">Functions</button>
+    <button data-tab="deliveries" class="adm-only">Deliveries</button>
+    <button data-tab="settings" class="adm-only">Settings</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============ USE FIRST ============ -->
+<section id="sec-usefirst" class="active">
+  <button class="btn btn-primary" id="btnGoReceive" style="margin-bottom:12px;">+ Receive a delivery</button>
+  <div style="display:flex; gap:8px; margin-bottom:12px;">
+    <input id="ufSearch" placeholder="Search items, e.g. chicken" autocomplete="off" style="flex:1;">
+    <button class="btn btn-ghost" id="btnUfSelect" style="flex:none;">Select</button>
+  </div>
+  <div class="fnlegend" id="ufLegend"></div>
+  <div id="ufList"><div class="loading">Loading&hellip;</div></div>
+  <a class="linkline adm-only" id="ufHistory">Item history</a>
+</section>
+
+<!-- ============ ARRIVALS (kitchen tick-off) ============ -->
+<section id="sec-arrivals">
+  <p class="muted small" style="margin:0 0 12px;">Orders the office is expecting. Tap one when it lands to tick off what actually arrived.</p>
+  <div id="arrList"><div class="loading">Loading&hellip;</div></div>
+  <button class="btn btn-secondary" id="btnNoOrder" style="width:100%; margin-top:12px;">+ Delivery arrived with no order</button>
+</section>
+
+<!-- ============ ORDERS (admin) ============ -->
+<section id="sec-orders">
+  <button class="btn btn-primary" id="btnAddOrder" style="margin-bottom:14px;">+ New order</button>
+  <h3 class="uf-group">Waiting to arrive</h3>
+  <div id="ordOpen"><div class="loading">Loading&hellip;</div></div>
+  <h3 class="uf-group">Recent</h3>
+  <div id="ordDone"></div>
+</section>
+
+
+<!-- ============ UNALLOCATED ============ -->
+<section id="sec-unalloc">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+    <p class="muted small" style="margin:0;">Everything in stock with no function yet. Allocate it or leave it as general.</p>
+    <button class="btn btn-ghost" id="btnUaSelect" style="flex:none;">Select</button>
+  </div>
+  <div id="uaList"><div class="loading">Loading&hellip;</div></div>
+</section>
+
+<!-- ============ FUNCTIONS ============ -->
+<section id="sec-functions">
+  <button class="btn btn-primary adm-only" id="btnAddFunction" style="margin-bottom:14px;">+ Add a function</button>
+  <div class="card adm-only">
+    <h2 style="margin-bottom:4px;">Groups from the confirmation builder</h2>
+    <p class="muted small" style="margin:0 0 10px;">Catering groups sent through the builder land here automatically. Tap one to create its function with dates, heads and menu prefilled.</p>
+    <div id="gbList"><div class="loading">Loading&hellip;</div></div>
+  </div>
+  <h3 class="uf-group">Upcoming</h3>
+  <div id="fnUpcoming"><div class="loading">Loading&hellip;</div></div>
+  <h3 class="uf-group">Recent</h3>
+  <div id="fnPast"></div>
+</section>
+
+<!-- ============ DELIVERIES ============ -->
+<section id="sec-deliveries">
+  <div class="dl-wrap">
+    <div class="dl-side">
+      <button data-dv="receive" class="on">+ Receive</button>
+      <button data-dv="log" class="adm-only">Deliveries</button>
+      <button data-dv="unalloc" class="adm-only">Unallocated</button>
+    </div>
+    <div class="dl-main">
+      <div id="pane-receive">
+  <button class="btn btn-ghost kit-only" id="btnBackArr" style="width:100%; margin-bottom:12px;">&larr; Back to arrivals</button>
+  <div class="card">
+    <h2>Delivery details</h2>
+    <div class="grid2">
+      <div class="field">
+        <label for="rSupplier">Supplier</label>
+        <input id="rSupplier" list="supplierList" placeholder="e.g. Bidfood" autocomplete="off">
+        <datalist id="supplierList"></datalist>
+      </div>
+      <div class="field">
+        <label for="rInvoice">Invoice or docket no.</label>
+        <input id="rInvoice" placeholder="e.g. I70861475" autocomplete="off">
+        <div class="small" id="invWarn" style="color:var(--red); font-weight:600; margin-top:4px;"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="rReceivedBy">Received by</label>
+        <input id="rReceivedBy" list="receiverList" placeholder="Your name" autocomplete="off">
+        <datalist id="receiverList"></datalist>
+      </div>
+      <div class="field">
+        <label for="rDate">Delivered on</label>
+        <input type="date" id="rDate">
+      </div>
+    </div>
+    <div class="field">
+      <label for="rFunction">This delivery is for</label>
+      <select id="rFunction"><option value="">General stock</option></select>
+    </div>
+    <div class="field">
+      <label>Docket</label>
+      <button class="btn btn-secondary" id="btnAddPhoto" style="width:100%;">&#128247; Add docket, order or screenshot</button>
+      <input type="file" id="photoInput" accept="image/*,application/pdf" style="display:none;">
+      <div id="photoStrip"></div>
+      <button class="btn btn-ghost" id="btnReadDocket" style="width:100%; margin-top:10px; display:none;">&#10024; Read items from docket</button>
+      <div class="small muted" style="margin-top:6px;">On a computer you can drag photos or PDFs anywhere onto this screen.</div>
+    </div>
+    <div class="field">
+      <label>Delivery received in full?</label>
+      <div class="seg" id="segFull">
+        <button data-v="yes" class="on">Yes, all good</button>
+        <button data-v="issue">Short or wrong</button>
+      </div>
+    </div>
+    <div class="field" id="rIssueWrap" style="display:none;">
+      <label for="rIssueNotes">What was short or wrong?</label>
+      <textarea id="rIssueNotes" rows="2" placeholder="e.g. 2 ctn chicken thigh missing, invoiced but not delivered"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0;">Items <span class="muted small" style="font-weight:400;">(optional)</span></h2>
+      <button class="btn btn-ghost btn-sm adm-only" id="btnDraftSelect">Select</button>
+    </div>
+    <div id="draftBulkRow" style="display:none; gap:8px; margin-bottom:10px;">
+      <button class="btn btn-ghost btn-sm" id="btnDraftAll" style="flex:none;">All</button>
+      <button class="btn btn-secondary btn-sm" id="btnDraftAlloc" style="flex:1;">Allocate selected</button>
+      <button class="btn btn-danger btn-sm" id="btnDraftRemove" style="flex:1;">Remove selected</button>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="iName">Item</label>
+        <input id="iName" list="nameList" placeholder="e.g. Chicken thigh" autocomplete="off">
+        <datalist id="nameList"></datalist>
+      </div>
+      <div class="field">
+        <label for="iCategory">Category</label>
+        <select id="iCategory"><option value="">Choose&hellip;</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Storage</label>
+      <div class="seg" id="segStorage">
+        <button data-v="fridge">Fridge</button>
+        <button data-v="freezer">Freezer</button>
+        <button data-v="dry">Dry store</button>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="iQty">Quantity</label>
+        <div style="display:flex; gap:8px;">
+          <input id="iQty" type="number" inputmode="decimal" step="any" min="0" placeholder="Qty" style="flex:1;">
+          <input id="iUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off">
+          <datalist id="unitList">
+            <option value="kg"></option><option value="g"></option><option value="L"></option>
+            <option value="ml"></option><option value="ea"></option><option value="ctn"></option>
+            <option value="box"></option><option value="tray"></option><option value="bag"></option>
+            <option value="dozen"></option>
+          </datalist>
+        </div>
+      </div>
+      <div class="field">
+        <label for="iExpiry">Use by <span style="text-transform:none; font-weight:500;">(auto from category)</span></label>
+        <input id="iExpiry" type="date">
+      </div>
+    </div>
+    <button class="btn btn-ghost" id="btnAddItem" style="width:100%;">+ Add item to delivery</button>
+    <div id="itemList" style="margin-top:12px;"></div>
+  </div>
+
+  <button class="btn btn-primary" id="btnSaveDelivery">Save delivery</button>
+      </div>
+      <div id="pane-log" style="display:none;">
+        <div id="delList"><div class="loading">Loading&hellip;</div></div>
+      </div>
+      <div id="pane-unalloc" style="display:none;">
+        <div class="card">
+          <h2>Unallocated repeat offenders</h2>
+          <p class="muted small" style="margin-top:-6px;">Lines sitting in general stock with no function, grouped by item so the recurring ones stand out.</p>
+          <div id="dvUnList"><div class="loading">Loading&hellip;</div></div>
+          <button class="btn btn-secondary" id="btnGoUnalloc" style="width:100%; margin-top:12px;">Open the Unallocated tab to allocate them</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="sec-settings">
+  <div class="card">
+    <h2>Shelf life defaults</h2>
+    <p class="muted small" style="margin-top:-6px;">Days until use by, from the day the delivery is received. Used to auto fill the use by date.</p>
+    <div id="slBody"><div class="loading">Loading&hellip;</div></div>
+    <button class="btn btn-secondary" id="btnSaveShelf" style="width:100%; margin-top:12px;">Save changes</button>
+    <h3>Add a category</h3>
+    <div class="grid2">
+      <div class="field"><label for="nsCategory">Category</label><input id="nsCategory" placeholder="e.g. Desserts"></div>
+      <div class="field"><label for="nsStorage">Storage and days</label>
+        <div style="display:flex; gap:8px;">
+          <select id="nsStorage" style="flex:1;"><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select>
+          <input id="nsDays" type="number" inputmode="numeric" min="1" placeholder="Days" style="flex:1;">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" id="btnAddShelf" style="width:100%;">+ Add</button>
+  </div>
+  <div class="card">
+    <h2>Docket reading hints</h2>
+    <p class="muted small" style="margin-top:-6px;">Teach the AI how each supplier lays out their dockets. When a supplier's docket reads badly, add or sharpen its hint here and the next read uses it straight away.</p>
+    <div id="hintsBody"><div class="loading">Loading&hellip;</div></div>
+    <button class="btn btn-ghost" id="btnAddHint" style="width:100%; margin-top:10px;">+ Add a supplier hint</button>
+  </div>
+  <div class="card">
+    <h2>Kitchen and admin modes</h2>
+    <p class="small muted" style="margin-top:-6px;">Every device opens in <b>kitchen mode</b>: tick off arrivals, mark items used or binned, allocate to functions, and fix use by dates and storage. Everything else lives in <b>admin mode</b>, behind the Admin button in the header.<br><br>
+    The admin PIN is set in the <code style="background:#efece4; padding:1px 5px; border-radius:5px;">ADMIN_PIN</code> constant at the top of the script in this file &mdash; open the file in a text editor to change it. A device that has unlocked admin stays in admin until you tap Exit admin.</p>
+  </div>
+  <div class="card">
+    <h2>About</h2>
+    <p class="small muted" id="verLine">WSLR Kitchen v2.1. One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Groups sent through the confirmation builder land under Functions in admin, ready to become functions with one tap; the bridge lives in the Apps Script (Code-with-kitchen-sync.gs).<br><br>If you see a "relation does not exist" error, run wslr-kitchen-v2-schema.sql in the Supabase SQL editor.</p>
+  </div>
+</section>
+
+</main>
+
+<div id="bulkBar" class="bulkbar" style="display:none;">
+  <span id="bulkCount" style="flex:1; font-weight:700;">0 selected</span>
+  <button class="btn btn-sm" id="bulkAll" style="background:#fff; color:var(--ink);">All</button>
+  <button class="btn btn-sm" id="bulkAlloc" style="background:#fff; color:var(--ink);">Allocate</button>
+  <button class="btn btn-sm" id="bulkUsed" style="background:var(--green); color:#fff;">Used</button>
+  <button class="btn btn-sm" id="bulkBin" style="background:var(--red); color:#fff;">Bin</button>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+<script>
+// APP-JS-START
+// ============================================================
+// CONFIG - fill these three in, then deploy
+// ============================================================
+const SUPABASE_URL = "https://agmonjcnxoguwvjppcxs.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_G5ZTmaaLwa8qbkFMBmUCeQ_sJs753qH";
+const APP_PIN = "";            // optional lock on the WHOLE app, e.g. "2519"; leave "" to disable
+const ADMIN_PIN = "2519";      // PIN for admin mode - CHANGE THIS. "" means no PIN (not recommended)
+
+// ============================================================
+let sb = null;
+const state = {
+  mode: "kitchen",    // "kitchen" (simple, default) or "admin" (full, behind ADMIN_PIN)
+  orders: [],         // open orders for the arrivals list
+  shelf: [],          // shelf life default rows
+  functions: [],      // upcoming functions for the receive picker
+  ufFnFilter: null,
+  ufItems: [],
+  selectMode: false,
+  selected: new Set(),
+  draftSelect: false,
+  draftSelected: new Set(),
+  invDup: null,
+  dvPane: "receive",
+  draftItems: [],
+  draftPhotos: [],    // {blob, url}
+  fullState: "yes",
+  itemStorage: "",
+  busy: false
+};
+
+// ---------- tiny helpers ----------
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function localISO(d = new Date()){
+  const l = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return l.toISOString().slice(0, 10);
+}
+function fmtDate(iso){
+  if(!iso) return "";
+  return new Date(iso + "T00:00").toLocaleDateString("en-AU", {weekday:"short", day:"numeric", month:"short"});
+}
+function fmtDateTime(ts){
+  if(!ts) return "";
+  return new Date(ts).toLocaleString("en-AU", {day:"numeric", month:"short", hour:"numeric", minute:"2-digit"});
+}
+function daysUntil(iso){
+  return Math.round((new Date(iso + "T00:00") - new Date(localISO() + "T00:00")) / 86400000);
+}
+function online(ok){
+  const d = $("statusDot");
+  d.className = ok ? "on" : "off";
+  d.title = ok ? "Connected" : "Connection problem";
+}
+async function run(qb){
+  const { data, error } = await qb;
+  if(error){ online(false); console.error(error); toast(error.message || "Request failed", {type:"err"}); throw error; }
+  online(true);
+  return data;
+}
+function pubUrl(path){
+  return sb.storage.from("dockets").getPublicUrl(path).data.publicUrl;
+}
+
+// ---------- kitchen / admin mode ----------
+function store(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+function readStore(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function setMode(m, remember){
+  state.mode = m;
+  state.selectMode = false; state.selected.clear();
+  ["btnUfSelect","btnUaSelect"].forEach(id => { const b = $(id); if(b) b.textContent = "Select"; });
+  document.body.classList.toggle("kitchen", m === "kitchen");
+  document.body.classList.toggle("admin", m === "admin");
+  $("btnMode").textContent = m === "admin" ? "Exit admin" : "Admin";
+  $("hdSub").textContent = m === "admin" ? "Admin · full controls" : "Arrivals · Use first · Waste";
+  const uf = document.querySelector('.tabbar [data-tab="usefirst"]');
+  if(uf) uf.textContent = m === "admin" ? "Dashboard" : "Stock";
+  const gr = $("btnGoReceive");
+  if(gr) gr.textContent = m === "admin" ? "+ Receive a delivery" : "+ A delivery just arrived";
+  if(remember !== false) store("wslr_mode", m);
+  updateBulkBar();
+  showTab("usefirst");
+  updateArrBadge();
+}
+function askAdminPin(){
+  if(!ADMIN_PIN){ setMode("admin"); return; }
+  const m = openModal(
+    "<h2>Admin mode</h2>" +
+    '<p class="small muted">Enter the admin PIN.</p>' +
+    '<div class="field"><input type="password" id="amPin" inputmode="numeric" autocomplete="off" style="text-align:center; font-size:24px; letter-spacing:.3em;"></div>' +
+    '<button class="btn btn-primary" id="amGo">Unlock</button>' +
+    '<div class="small" id="amErr" style="color:var(--red); font-weight:600; min-height:20px; text-align:center; margin-top:8px;"></div>'
+  );
+  const go = () => {
+    if(m.querySelector("#amPin").value === ADMIN_PIN){ closeModal(); setMode("admin"); }
+    else { m.querySelector("#amErr").textContent = "Wrong PIN"; m.querySelector("#amPin").value = ""; }
+  };
+  m.querySelector("#amGo").addEventListener("click", go);
+  m.querySelector("#amPin").addEventListener("keydown", e => { if(e.key === "Enter") go(); });
+  m.querySelector("#amPin").focus();
+}
+async function updateArrBadge(){
+  try{
+    const { data } = await sb.from("orders").select("id").eq("status", "open").limit(99);
+    const b = $("arrBadge");
+    if(!b || !data) return;
+    b.style.display = data.length ? "" : "none";
+    b.textContent = data.length;
+  }catch(e){}
+}
+
+// ---------- toast ----------
+function toast(msg, opts = {}){
+  const t = document.createElement("div");
+  t.className = "toast" + (opts.type === "err" ? " err" : "");
+  t.innerHTML = "<span>" + esc(msg) + "</span>";
+  if(opts.undo){
+    const b = document.createElement("button");
+    b.textContent = "Undo";
+    b.onclick = () => { opts.undo(); t.remove(); };
+    t.appendChild(b);
+  }
+  $("toastRoot").appendChild(t);
+  setTimeout(() => t.remove(), opts.undo ? 6000 : 3500);
+}
+
+// ---------- modal ----------
+function openModal(html){
+  const root = $("modalRoot");
+  root.innerHTML =
+    '<div class="modal-back" data-close="1"><div class="modal">' +
+    '<button class="modal-close" data-close="1">&times;</button>' + html +
+    "</div></div>";
+  root.classList.add("open");
+  root.querySelectorAll("[data-close]").forEach(el => {
+    el.addEventListener("click", e => { if(e.target === el) closeModal(); });
+  });
+  return root.querySelector(".modal");
+}
+function closeModal(){
+  const root = $("modalRoot");
+  root.classList.remove("open");
+  root.innerHTML = "";
+}
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeModal(); });
+
+// ---------- segmented controls ----------
+function wireSeg(el, initial, onChange){
+  el.querySelectorAll("button").forEach(b => {
+    if(b.dataset.v === initial) b.classList.add("on");
+    b.addEventListener("click", () => {
+      el.querySelectorAll("button").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      onChange(b.dataset.v);
+    });
+  });
+}
+
+// ---------- tabs ----------
+function showTab(name){
+  document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll("main section").forEach(s => s.classList.toggle("active", s.id === "sec-" + name));
+  if(name === "usefirst") renderUseFirst();
+  if(name === "arrivals") renderArrivals();
+  if(name === "orders") renderOrders();
+  if(name === "unalloc") renderUnallocated();
+  if(name === "functions") renderFunctions();
+  if(name === "deliveries") showDeliveryPane(state.dvPane);
+  if(name === "settings") renderSettings();
+}
+function showDeliveryPane(name){
+  state.dvPane = name;
+  document.querySelectorAll(".dl-side button").forEach(b => b.classList.toggle("on", b.dataset.dv === name));
+  ["receive","log","unalloc"].forEach(p => { $("pane-" + p).style.display = p === name ? "" : "none"; });
+  if(name === "receive") refreshReceiveRefs();
+  if(name === "log") renderDeliveries();
+  if(name === "unalloc") renderDvUnalloc();
+}
+function refreshCurrentTab(){
+  const b = document.querySelector(".tabbar button.active");
+  const t = b ? b.dataset.tab : "usefirst";
+  if(t === "usefirst") renderUseFirst();
+  else if(t === "arrivals") renderArrivals();
+  else if(t === "orders") renderOrders();
+  else if(t === "unalloc") renderUnallocated();
+  else if(t === "functions") renderFunctions();
+  else if(t === "deliveries"){
+    if(state.dvPane === "log") renderDeliveries();
+    else if(state.dvPane === "unalloc") renderDvUnalloc();
+  }
+}
+function setSelectMode(on){
+  state.selectMode = on;
+  state.selected.clear();
+  ["btnUfSelect","btnUaSelect"].forEach(id => {
+    const b = $(id);
+    if(b) b.textContent = on ? "Cancel" : "Select";
+  });
+  updateBulkBar();
+  refreshCurrentTab();
+}
+
+// ============================================================
+// REFERENCE DATA
+// ============================================================
+async function loadShelf(){
+  try{
+    state.shelf = await run(sb.from("shelf_life_defaults").select("*").order("category").order("storage"));
+    const cats = [...new Set(state.shelf.map(r => r.category))];
+    $("iCategory").innerHTML = '<option value="">Choose&hellip;</option>' +
+      cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
+  }catch(e){}
+}
+async function loadFunctionPicker(){
+  try{
+    const from = localISO(new Date(Date.now() - 3 * 86400000));
+    state.functions = await run(
+      sb.from("catering_functions").select("id, name, event_date, heads, colour")
+        .gte("event_date", from).order("event_date", {ascending:true}).limit(40)
+    );
+    $("rFunction").innerHTML = '<option value="">General stock</option>' +
+      state.functions.map(f => fnOptionHtml(f, null)).join("");
+    paintSelect($("rFunction"), () => state.functions);
+  }catch(e){}
+}
+async function loadDatalists(){
+  try{
+    const dels = await run(sb.from("deliveries").select("supplier, received_by").order("created_at", {ascending:false}).limit(200));
+    $("supplierList").innerHTML = [...new Set(dels.map(d => d.supplier).filter(Boolean))]
+      .map(s => '<option value="' + esc(s) + '"></option>').join("");
+    $("receiverList").innerHTML = [...new Set(dels.map(d => d.received_by).filter(Boolean))]
+      .map(s => '<option value="' + esc(s) + '"></option>').join("");
+    const items = await run(sb.from("stock_items").select("item_name").order("created_at", {ascending:false}).limit(300));
+    $("nameList").innerHTML = [...new Set(items.map(i => i.item_name).filter(Boolean))]
+      .map(s => '<option value="' + esc(s) + '"></option>').join("");
+  }catch(e){}
+}
+function refreshReceiveRefs(){
+  loadFunctionPicker();
+  loadDatalists();
+}
+
+// ============================================================
+// RECEIVE
+// ============================================================
+function autoExpiry(){
+  const cat = $("iCategory").value, st = state.itemStorage;
+  if(!cat || !st) return;
+  const row = state.shelf.find(r => r.category === cat && r.storage === st);
+  if(row) $("iExpiry").value = localISO(new Date(Date.now() + row.days * 86400000));
+}
+function hexTint(hex, a){
+  if(!hex || hex[0] !== "#" || hex.length !== 7) return "rgba(140,148,144," + a + ")";
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+}
+function fnChipById(fnId){
+  if(fnId === "NR") return '<span class="pill bad">Not received</span>';
+  if(!fnId) return '<span class="pill plain">General</span>';
+  const f = state.functions.find(x => x.id === fnId);
+  return '<span class="pill" style="background:' + esc(f && f.colour ? f.colour : "#546e64") + '; color:#fff;">' + esc(f ? f.name : "Function") + "</span>";
+}
+function fnOptionHtml(f, selectedId){
+  return '<option value="' + f.id + '"' + (selectedId === f.id ? " selected" : "") + ' style="background:' + esc(f.colour || "#546e64") + '; color:#fff;">' + esc(f.name) + " \u00b7 " + esc(fmtDate(f.event_date)) + "</option>";
+}
+function applySelPaint(sel){
+  const list = sel._fnlist ? sel._fnlist() : [];
+  const v = sel.value;
+  if(v === "NR"){ sel.style.background = "var(--red)"; sel.style.color = "#fff"; sel.style.fontWeight = "700"; return; }
+  const f = v ? list.find(x => String(x.id) === v) : null;
+  sel.style.background = f ? (f.colour || "#546e64") : "#fff";
+  sel.style.color = f ? "#fff" : "var(--ink)";
+  sel.style.fontWeight = f ? "700" : "";
+}
+function paintSelect(sel, listFn){
+  sel._fnlist = listFn;
+  if(!sel.dataset.painted){
+    sel.addEventListener("change", () => applySelPaint(sel));
+    sel.dataset.painted = "1";
+  }
+  applySelPaint(sel);
+}
+function draftItemWarn(it){
+  if(it.short || !it.expiry) return false;
+  const top = $("rFunction").value ? +$("rFunction").value : null;
+  const ids = it.allocs && it.allocs.length
+    ? it.allocs.map(a => a.fnId).filter(x => x && x !== "NR")
+    : (top ? [top] : []);
+  return ids.some(id => {
+    const f = state.functions.find(x => x.id === id);
+    return f && it.expiry < f.event_date;
+  });
+}
+function renderDraftItems(){
+  const topFn = $("rFunction").value ? +$("rFunction").value : null;
+  $("itemList").innerHTML = state.draftItems.map((it, i) => {
+    const isSel = state.draftSelect && state.draftSelected.has(i);
+    let chips = "";
+    if(!it.short){
+      if(it.allocs && it.allocs.length){
+        chips = it.allocs.map(a =>
+          ((it.qty != null && a.qty) ? '<span>' + a.qty + " " + esc(it.unit || "") + "</span> " : "") + fnChipById(a.fnId)
+        ).join(" ");
+        if(it.qty != null){
+          const sum = it.allocs.reduce((t, a) => t + (a.qty || 0), 0);
+          if(Math.round((it.qty - sum) * 100) / 100 > 0) chips += ' <span class="pill plain">rest general</span>';
+        }
+      } else chips = fnChipById(topFn);
+    }
+    let col = null;
+    if(!it.short){
+      const fid = it.allocs && it.allocs.length ? it.allocs[0].fnId : topFn;
+      if(fid === "NR") col = "#bf3b2b";
+      else if(fid){ const f = state.functions.find(x => x.id === fid); col = f && f.colour ? f.colour : "#546e64"; }
+    }
+    const tint = it.short ? "" : (col ? hexTint(col, 0.13) : "#f0efe9");
+    const meta = [it.qty ? it.qty + " " + (it.unit || "") : "", it.storage, it.expiry ? "use by " + fmtDate(it.expiry) : ""].filter(Boolean).join(" \u00b7 ");
+    return '<div class="draft-item' + (it.short ? " short" : "") + (isSel ? " selected" : "") + '" data-tint="' + tint + '"' +
+      (it.short || isSel ? "" : ' style="background:' + tint + ';"') + ">" +
+      (state.draftSelect ? '<span class="sel-dot" style="margin-left:0;"></span>' : "") +
+      '<div class="n" data-i="' + i + '" style="cursor:pointer;">' + esc(it.name) +
+      (it.short ? ' <span class="pill bad">Not received</span>' : "") +
+      (draftItemWarn(it) ? ' <span class="pill warn">Expires before event</span>' : "") +
+      '<div class="small muted" style="margin-top:2px;">' + esc(meta) + (meta && chips ? " \u00b7 " : "") + chips + "</div></div>" +
+      (state.draftSelect ? "" : '<button class="x" data-i="' + i + '">&times;</button>') + "</div>";
+  }).join("");
+  $("itemList").querySelectorAll(".x").forEach(b =>
+    b.addEventListener("click", () => { state.draftItems.splice(+b.dataset.i, 1); renderDraftItems(); })
+  );
+  $("itemList").querySelectorAll(".n").forEach(el =>
+    el.addEventListener("click", () => {
+      const ix = +el.dataset.i;
+      if(state.draftSelect){
+        const row = el.parentElement;
+        const on = !state.draftSelected.has(ix);
+        if(on) state.draftSelected.add(ix); else state.draftSelected.delete(ix);
+        row.classList.toggle("selected", on);
+        row.style.background = on ? "" : (row.dataset.tint || "");
+      } else editDraftItem(ix);
+    })
+  );
+}
+function editDraftItem(idx){
+  const it = state.draftItems[idx];
+  if(!it) return;
+  const cats = [...new Set(state.shelf.map(r => r.category))];
+  const topFn = $("rFunction").value ? +$("rFunction").value : null;
+  let allocs = it.allocs && it.allocs.length
+    ? it.allocs.map(a => ({fnId: a.fnId, qty: a.qty}))
+    : [{fnId: topFn, qty: it.qty ?? null}];
+  let short = !!it.short;
+  const fnOpts = fid =>
+    '<option value=""' + (!fid ? " selected" : "") + '>General stock</option>' +
+    '<option value="NR"' + (fid === "NR" ? " selected" : "") + ' style="background:var(--red); color:#fff;">NOT RECEIVED</option>' +
+    state.functions.map(f => fnOptionHtml(f, fid)).join("");
+  const m = openModal(
+    "<h2>Edit item</h2>" +
+    '<div class="field"><label>Received?</label><div class="seg" id="dmShortSeg">' +
+    '<button data-v="ok">Received</button>' +
+    '<button data-v="short">Not received</button></div>' +
+    '<div class="small muted" style="margin-top:5px;">Not received means it was on the docket or order but never arrived. The delivery gets flagged automatically.</div></div>' +
+    '<div class="field"><label for="dmName">Item</label><input id="dmName" value="' + esc(it.name) + '"></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label for="dmCategory">Category</label><select id="dmCategory"><option value="">None</option>' +
+    cats.map(c => '<option value="' + esc(c) + '"' + (it.category === c ? " selected" : "") + ">" + esc(c) + "</option>").join("") + "</select></div>" +
+    '<div class="field"><label for="dmStorage">Storage</label><select id="dmStorage"><option value="">None</option>' +
+    ["fridge","freezer","dry"].map(s => '<option value="' + s + '"' + (it.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") + "</select></div></div>" +
+    '<div class="grid2">' +
+    '<div class="field"><label for="dmQty">Quantity</label><div style="display:flex; gap:8px;">' +
+    '<input id="dmQty" type="number" inputmode="decimal" step="any" min="0" value="' + (it.qty ?? "") + '" style="flex:1;">' +
+    '<input id="dmUnit" list="unitList" value="' + esc(it.unit || "") + '" style="flex:1;"></div></div>' +
+    '<div class="field"><label for="dmExpiry">Use by</label><input type="date" id="dmExpiry" value="' + esc(it.expiry || "") + '"></div></div>' +
+    '<div class="field" id="dmAllocWrap"><label>Allocate to</label>' +
+    '<div id="dmAllocRows"></div>' +
+    '<button class="btn btn-ghost btn-sm" id="dmAddAlloc" style="width:100%; margin-top:6px;">+ Add another function</button>' +
+    '<div class="small muted" id="dmRemain" style="margin-top:6px;"></div></div>' +
+    '<button class="btn btn-primary" id="btnDmSave">Save item</button>' +
+    '<button class="btn btn-danger" id="btnDmRemove" style="width:100%; margin-top:8px;">Remove from delivery</button>'
+  );
+  const qtyVal = () => { const v = m.querySelector("#dmQty").value; return v === "" ? null : +v; };
+  const remain = () => {
+    const q = qtyVal(), el = m.querySelector("#dmRemain");
+    if(q == null){ el.textContent = ""; return; }
+    const sum = allocs.reduce((t, a) => t + (a.qty || 0), 0);
+    const rem = Math.round((q - sum) * 100) / 100;
+    if(rem > 0){ el.textContent = "Remainder to general stock: " + rem + " " + (m.querySelector("#dmUnit").value.trim() || ""); el.style.color = ""; }
+    else if(rem === 0){ el.textContent = "Fully allocated."; el.style.color = ""; }
+    else { el.textContent = "Over allocated by " + Math.abs(rem) + ". Trim the quantities."; el.style.color = "var(--red)"; }
+  };
+  const drawAllocs = () => {
+    const hasQty = qtyVal() != null;
+    m.querySelector("#dmAllocRows").innerHTML = allocs.map((a, ai) =>
+      '<div style="display:flex; gap:8px; margin-bottom:7px; align-items:center;">' +
+      '<select class="dmAfn" data-ai="' + ai + '" style="flex:2;">' + fnOpts(a.fnId) + "</select>" +
+      (hasQty ? '<input type="number" inputmode="decimal" step="any" min="0" class="dmAqty" data-ai="' + ai + '" value="' + (a.qty ?? "") + '" placeholder="Qty" style="flex:1;">' : "") +
+      (allocs.length > 1 ? '<button class="dmARm" data-ai="' + ai + '" style="flex:none; border:none; background:none; color:var(--red); font-size:22px; font-weight:700; cursor:pointer; padding:2px 6px;">&times;</button>' : "") +
+      "</div>"
+    ).join("");
+    m.querySelector("#dmAddAlloc").style.display = hasQty ? "" : "none";
+    m.querySelectorAll(".dmAfn").forEach(s => {
+      s._fnlist = () => state.functions;
+      applySelPaint(s);
+      s.addEventListener("change", () => {
+        allocs[+s.dataset.ai].fnId = s.value === "" ? null : (s.value === "NR" ? "NR" : +s.value);
+        applySelPaint(s);
+        remain();
+      });
+    });
+    m.querySelectorAll(".dmAqty").forEach(q => q.addEventListener("input", () => { allocs[+q.dataset.ai].qty = q.value === "" ? null : +q.value; remain(); }));
+    m.querySelectorAll(".dmARm").forEach(b => b.addEventListener("click", () => { allocs.splice(+b.dataset.ai, 1); drawAllocs(); }));
+    remain();
+  };
+  wireSeg(m.querySelector("#dmShortSeg"), short ? "short" : "ok", v => {
+    short = v === "short";
+    m.querySelector("#dmShortSeg").querySelector('[data-v="short"]').classList.toggle("warn", short);
+    m.querySelector("#dmAllocWrap").style.display = short ? "none" : "";
+  });
+  if(short){
+    m.querySelector("#dmShortSeg").querySelector('[data-v="short"]').classList.add("warn");
+    m.querySelector("#dmAllocWrap").style.display = "none";
+  }
+  m.querySelector("#dmAddAlloc").addEventListener("click", () => { allocs.push({fnId:null, qty:null}); drawAllocs(); });
+  m.querySelector("#dmQty").addEventListener("input", drawAllocs);
+  drawAllocs();
+  m.querySelector("#btnDmSave").addEventListener("click", () => {
+    const name = m.querySelector("#dmName").value.trim();
+    if(!name){ toast("The item needs a name", {type:"err"}); return; }
+    const q = qtyVal();
+    if(!short && q != null){
+      const sum = allocs.reduce((t, a) => t + (a.qty || 0), 0);
+      if(sum - q > 0.001){ toast("Allocated more than the quantity received", {type:"err"}); return; }
+    }
+    const cat = m.querySelector("#dmCategory").value || null;
+    const st = m.querySelector("#dmStorage").value || null;
+    let exp = m.querySelector("#dmExpiry").value || null;
+    if(!exp && cat && st){
+      const row = state.shelf.find(r => r.category === cat && r.storage === st);
+      if(row) exp = localISO(new Date(Date.now() + row.days * 86400000));
+    }
+    let stored = null;
+    if(!short){
+      if(q == null) stored = [{fnId: allocs[0] ? allocs[0].fnId : null, qty: null}];
+      else {
+        stored = allocs.filter(a => (a.qty || 0) > 0).map(a => ({fnId: a.fnId, qty: a.qty}));
+        if(!stored.length) stored = null;
+      }
+    }
+    state.draftItems[idx] = {
+      name,
+      category: cat,
+      storage: st,
+      qty: q,
+      unit: m.querySelector("#dmUnit").value.trim() || null,
+      expiry: exp,
+      short,
+      allocs: stored
+    };
+    closeModal(); renderDraftItems();
+  });
+  m.querySelector("#btnDmRemove").addEventListener("click", () => {
+    state.draftItems.splice(idx, 1);
+    closeModal(); renderDraftItems();
+  });
+}
+function renderPhotoStrip(){
+  $("photoStrip").innerHTML = state.draftPhotos.map((p, i) =>
+    '<div class="ph">' +
+    (p.isPdf ? '<div class="pdf-tile">PDF</div>' : '<img src="' + p.url + '">') +
+    '<button class="rm" data-i="' + i + '">&times;</button></div>'
+  ).join("");
+  $("photoStrip").querySelectorAll(".rm").forEach(b =>
+    b.addEventListener("click", () => {
+      const p = state.draftPhotos[+b.dataset.i];
+      if(p && p.url) URL.revokeObjectURL(p.url);
+      state.draftPhotos.splice(+b.dataset.i, 1);
+      renderPhotoStrip();
+    })
+  );
+  $("btnReadDocket").style.display = state.draftPhotos.length ? "" : "none";
+}
+async function compressImage(file, maxDim = 1600, q = 0.72){
+  try{
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = rej;
+      i.src = URL.createObjectURL(file);
+    });
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", q));
+    URL.revokeObjectURL(img.src);
+    return blob || file;
+  }catch(e){ return file; }
+}
+function addItemFromForm(){
+  const name = $("iName").value.trim();
+  if(!name){ toast("Give the item a name first", {type:"err"}); return; }
+  state.draftItems.push({
+    name,
+    category: $("iCategory").value || null,
+    storage: state.itemStorage || null,
+    qty: $("iQty").value ? +$("iQty").value : null,
+    unit: $("iUnit").value.trim() || null,
+    expiry: $("iExpiry").value || null,
+    short: false,
+    allocs: null
+  });
+  renderDraftItems();
+  $("iName").value = ""; $("iQty").value = ""; $("iExpiry").value = "";
+  if($("iCategory").value && state.itemStorage) autoExpiry();
+  $("iName").focus();
+}
+async function saveDelivery(){
+  if(state.busy) return;
+  const supplier = $("rSupplier").value.trim();
+  if(!supplier){ toast("Enter the supplier", {type:"err"}); return; }
+  if(state.draftPhotos.length === 0 && !confirm("Save without a docket photo?")) return;
+  const warnCount = state.draftItems.filter(draftItemWarn).length;
+  if(warnCount && !confirm(warnCount + " item" + (warnCount > 1 ? "s" : "") + " will expire before the function they are allocated to. Save anyway?")) return;
+  const invv = $("rInvoice").value.trim();
+  if(invv && state.invDup && !confirm("Invoice " + invv + " was already entered (" + (state.invDup.supplier || "delivery") + ", " + fmtDateTime(state.invDup.delivered_at) + "). Save anyway?")) return;
+  state.busy = true;
+  const btn = $("btnSaveDelivery");
+  btn.disabled = true; btn.textContent = "Saving\u2026";
+  try{
+    const fnId = $("rFunction").value ? +$("rFunction").value : null;
+    const dPayload = {
+      supplier,
+      invoice_number: $("rInvoice").value.trim() || null,
+      received_by: $("rReceivedBy").value.trim() || null,
+      function_id: fnId,
+      received_in_full: state.fullState === "yes",
+      issue_notes: state.fullState === "issue" ? ($("rIssueNotes").value.trim() || null) : null
+    };
+    const dv = $("rDate").value;
+    if(dv && dv !== localISO()) dPayload.delivered_at = new Date(dv + "T12:00").toISOString();
+    const del = await run(sb.from("deliveries").insert(dPayload).select().single());
+
+    let photoFail = 0;
+    const photoRows = [];
+    for(let i = 0; i < state.draftPhotos.length; i++){
+      const p = state.draftPhotos[i];
+      const path = del.id + "/" + Date.now() + "_" + i + (p.isPdf ? ".pdf" : ".jpg");
+      const { error } = await sb.storage.from("dockets").upload(path, p.blob, {contentType: p.isPdf ? "application/pdf" : "image/jpeg"});
+      if(error){ photoFail++; console.error(error); } else photoRows.push({delivery_id: del.id, path});
+    }
+    if(photoRows.length) await run(sb.from("delivery_photos").insert(photoRows));
+
+    if(state.draftItems.length){
+      const rows = [];
+      const flagged = [];
+      state.draftItems.forEach(it => {
+        const base = {
+          delivery_id: del.id,
+          item_name: it.name,
+          category: it.category,
+          storage: it.storage,
+          unit: it.unit,
+          expiry_date: it.expiry
+        };
+        if(it.short){
+          flagged.push(it.name);
+          rows.push({...base, quantity: it.qty, status: "not_received", short_or_wrong: true, function_id: fnId});
+          return;
+        }
+        if(!it.allocs || !it.allocs.length){
+          rows.push({...base, quantity: it.qty, function_id: fnId});
+          return;
+        }
+        let allocated = 0;
+        it.allocs.forEach(a => {
+          const q = it.qty != null ? (a.qty || 0) : null;
+          if(it.qty != null && !(q > 0)) return;
+          if(a.fnId === "NR"){
+            flagged.push(it.name + (q ? " (" + q + " " + (it.unit || "") + ")" : ""));
+            rows.push({...base, quantity: q, status: "not_received", short_or_wrong: true, function_id: fnId});
+          }else{
+            rows.push({...base, quantity: q, function_id: a.fnId || null});
+          }
+          if(q) allocated += q;
+        });
+        if(it.qty != null){
+          const rem = Math.round((it.qty - allocated) * 100) / 100;
+          if(rem > 0) rows.push({...base, quantity: rem, function_id: null});
+        }
+      });
+      if(rows.length) await run(sb.from("stock_items").insert(rows));
+      if(flagged.length){
+        const note = "Not received: " + flagged.join(", ");
+        const existing = state.fullState === "issue" ? $("rIssueNotes").value.trim() : "";
+        await run(sb.from("deliveries").update({
+          received_in_full: false,
+          issue_notes: existing ? existing + ". " + note : note
+        }).eq("id", del.id));
+      }
+    }
+
+    state.draftPhotos.forEach(p => { if(p.url) URL.revokeObjectURL(p.url); });
+    state.draftPhotos = []; state.draftItems = [];
+    renderPhotoStrip(); renderDraftItems();
+    $("rSupplier").value = ""; $("rIssueNotes").value = "";
+    $("rFunction").value = "";
+    applySelPaint($("rFunction"));
+    $("rDate").value = localISO();
+    $("rInvoice").value = ""; $("invWarn").textContent = ""; state.invDup = null;
+    state.fullState = "yes";
+    $("segFull").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === "yes"));
+    $("segFull").querySelector('[data-v="issue"]').classList.remove("warn");
+    $("rIssueWrap").style.display = "none";
+    toast(photoFail ? "Delivery saved but " + photoFail + " photo(s) failed to upload" : "Delivery saved");
+  }catch(e){
+  }finally{
+    state.busy = false;
+    btn.disabled = false; btn.textContent = "Save delivery";
+  }
+}
+function blobToB64(blob){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1]);
+    r.onerror = () => rej(new Error("Could not read the file"));
+    r.readAsDataURL(blob);
+  });
+}
+async function readDocket(){
+  if(!state.draftPhotos.length) return;
+  const btn = $("btnReadDocket");
+  if(btn.disabled) return;
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.textContent = "Reading docket\u2026";
+  try{
+    const files = [];
+    for(const p of state.draftPhotos.slice(0, 6)){
+      files.push({
+        media_type: p.isPdf ? "application/pdf" : "image/jpeg",
+        data_b64: await blobToB64(p.blob)
+      });
+    }
+    const cats = [...new Set(state.shelf.map(r => r.category))];
+    const { data, error } = await sb.functions.invoke("read-docket", {body: {files, categories: cats, supplier: $("rSupplier").value.trim() || null}});
+    if(error){
+      let msg = "Could not read the docket";
+      try{
+        const body = await error.context.json();
+        if(body && body.error) msg = body.error;
+      }catch(_){}
+      throw new Error(msg);
+    }
+    if(data && data.error) throw new Error(data.error);
+    if(data.supplier && !$("rSupplier").value.trim()) $("rSupplier").value = data.supplier;
+    if(data.invoice_number && !$("rInvoice").value.trim()){
+      $("rInvoice").value = String(data.invoice_number).slice(0, 40);
+      checkInvoiceDup();
+    }
+    const catMap = {};
+    cats.forEach(c => catMap[c.toLowerCase()] = c);
+    let added = 0;
+    (data.items || []).forEach(it => {
+      if(!it || !it.name) return;
+      const cat = it.category ? (catMap[String(it.category).toLowerCase()] || null) : null;
+      const st = ["fridge","freezer","dry"].includes(it.storage) ? it.storage : null;
+      let expiry = null;
+      if(cat && st){
+        const row = state.shelf.find(r => r.category === cat && r.storage === st);
+        if(row) expiry = localISO(new Date(Date.now() + row.days * 86400000));
+      }
+      state.draftItems.push({
+        name: String(it.name).slice(0, 120),
+        category: cat,
+        storage: st,
+        qty: (typeof it.quantity === "number" && it.quantity > 0) ? it.quantity : null,
+        unit: it.unit ? String(it.unit).slice(0, 20) : null,
+        expiry,
+        short: false,
+        allocs: null
+      });
+      added++;
+    });
+    renderDraftItems();
+    if(added) toast(added + " items read. Check the list, remove any that are wrong, then save.");
+    else toast("No items found on the docket", {type:"err"});
+  }catch(e){
+    toast(e.message || "Could not read the docket", {type:"err"});
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+// APP-JS-PART1-END
+// ============================================================
+// USE FIRST
+// ============================================================
+async function renderUseFirst(){
+  const box = $("ufList");
+  const q = $("ufSearch").value.trim();
+  const searching = q.length >= 2;
+  try{
+    let qb;
+    if(searching){
+      const safe = q.replace(/[,%()]/g, " ").trim();
+      qb = sb.from("stock_items")
+        .select("*, deliveries(supplier, delivered_at), catering_functions(name, event_date, colour)")
+        .or("item_name.ilike.%" + safe + "%,category.ilike.%" + safe + "%")
+        .order("created_at", {ascending:false}).limit(80);
+    }else{
+      qb = sb.from("stock_items")
+        .select("*, deliveries(supplier, delivered_at), catering_functions(name, event_date, colour)")
+        .eq("status", "in_stock")
+        .order("expiry_date", {ascending:true, nullsFirst:false}).limit(400);
+    }
+    const items = await run(qb);
+    state.ufItems = items;
+
+    const fnMap = {};
+    let genCount = 0;
+    items.forEach(i => {
+      if(i.function_id && i.catering_functions){
+        (fnMap[i.function_id] = fnMap[i.function_id] || {fn: i.catering_functions, n: 0}).n++;
+      } else genCount++;
+    });
+    let leg = '<button class="all' + (state.ufFnFilter == null ? " on" : "") + '" data-f="">All (' + items.length + ")</button>";
+    leg += '<button class="gen' + (state.ufFnFilter === "gen" ? " on" : "") + '" data-f="gen">General (' + genCount + ")</button>";
+    Object.keys(fnMap).forEach(id => {
+      const e = fnMap[id];
+      leg += '<button style="background:' + esc(e.fn.colour || "#546e64") + ';"' +
+        (state.ufFnFilter === +id ? ' class="on"' : "") + ' data-f="' + id + '">' + esc(e.fn.name) + " (" + e.n + ")</button>";
+    });
+    $("ufLegend").innerHTML = leg;
+    $("ufLegend").querySelectorAll("button").forEach(b =>
+      b.addEventListener("click", () => {
+        const v = b.dataset.f;
+        state.ufFnFilter = v === "" ? null : (v === "gen" ? "gen" : +v);
+        refreshCurrentTab();
+      })
+    );
+
+    let list = items;
+    if(state.ufFnFilter === "gen") list = items.filter(i => !i.function_id);
+    else if(typeof state.ufFnFilter === "number") list = items.filter(i => i.function_id === state.ufFnFilter);
+
+    if(!list.length){
+      box.innerHTML = '<div class="empty">' +
+        (searching ? 'Nothing found for "' + esc(q) + '".'
+          : "Nothing in stock" + (state.ufFnFilter != null ? " for this filter" : "") + ".<br>Add items when you receive a delivery and they show up here by storage area.") +
+        "</div>";
+      updateBulkBar();
+      return;
+    }
+
+    box.innerHTML = boardHtml(list, searching, false);
+    wireBoard(box, items);
+    updateBulkBar();
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load the list. Check the connection.</div>';
+  }
+}
+async function renderUnallocated(){
+  const box = $("uaList");
+  try{
+    const items = await run(
+      sb.from("stock_items")
+        .select("*, deliveries(supplier, delivered_at), catering_functions(name, event_date, colour)")
+        .eq("status", "in_stock").is("function_id", null)
+        .order("expiry_date", {ascending:true, nullsFirst:false}).limit(400)
+    );
+    state.ufItems = items;
+    if(!items.length){
+      box.innerHTML = '<div class="empty">Everything in stock is allocated. Nothing waiting here.</div>';
+      updateBulkBar();
+      return;
+    }
+    box.innerHTML = boardHtml(items, false, true);
+    wireBoard(box, items);
+    updateBulkBar();
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load the list. Check the connection.</div>';
+  }
+}
+async function renderDvUnalloc(){
+  const box = $("dvUnList");
+  try{
+    const items = await run(
+      sb.from("stock_items")
+        .select("item_name, quantity, unit, deliveries(supplier)")
+        .eq("status", "in_stock").is("function_id", null).limit(500)
+    );
+    if(!items.length){
+      box.innerHTML = '<div class="empty">Nothing unallocated right now.</div>';
+      return;
+    }
+    const groups = {};
+    items.forEach(i => {
+      const k = i.item_name.trim().toLowerCase();
+      const g = groups[k] = groups[k] || {name: i.item_name, n: 0, qty: {}, sups: new Set()};
+      g.n++;
+      if(i.quantity){ const u = i.unit || "x"; g.qty[u] = (g.qty[u] || 0) + i.quantity; }
+      if(i.deliveries && i.deliveries.supplier) g.sups.add(i.deliveries.supplier);
+    });
+    const rows = Object.values(groups).sort((a, b) => b.n - a.n);
+    box.innerHTML = rows.map(g => {
+      const qtyTxt = Object.keys(g.qty).map(u => (Math.round(g.qty[u] * 100) / 100) + " " + (u === "x" ? "" : u)).join(" + ");
+      const meta = [
+        g.n + (g.n === 1 ? " line" : " lines"),
+        qtyTxt,
+        [...g.sups].join(", ")
+      ].filter(Boolean).join(" \u00b7 ");
+      return '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(g.name) + "</div>" +
+        '<div class="s">' + esc(meta) + "</div></div>" +
+        (g.n > 1 ? '<span class="pill warn">' + g.n + "\u00d7</span>" : "") + "</div>";
+    }).join("");
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load.</div>';
+  }
+}
+function boardHtml(list, searching, showAlloc){
+  const cols = {fridge: [], freezer: [], dry: [], none: []};
+  list.forEach(i => (cols[i.storage] || cols.none).push(i));
+  const colHtml = st =>
+    '<div class="uf-col" data-storage="' + st + '"><div class="uf-col-h">' + storageLabel(st) +
+    '<span class="cnt">' + cols[st].length + "</span></div>" +
+    cols[st].map(i => ufRowHtml(i, searching, showAlloc)).join("") + "</div>";
+  return '<div class="uf-board">' + colHtml("fridge") + colHtml("freezer") + colHtml("dry") + "</div>" +
+    (cols.none.length
+      ? '<div class="uf-group">No storage set<span class="cnt">' + cols.none.length + "</span></div>" +
+        '<div class="small muted" style="margin:-2px 0 8px;">Drag these into a column, or tap to edit.</div>' +
+        cols.none.map(i => ufRowHtml(i, searching, showAlloc)).join("")
+      : "");
+}
+function ufRowHtml(i, searching, showAlloc){
+  let cls = "rail-none";
+  if(i.expiry_date){
+    const d = daysUntil(i.expiry_date);
+    cls = d <= 0 ? "rail-bad" : d <= 3 ? "rail-warn" : "rail-ok";
+  }
+  let d1 = "\u2013", d2 = "";
+  const rec = i.deliveries && i.deliveries.delivered_at ? new Date(i.deliveries.delivered_at) : null;
+  if(rec){ d1 = String(rec.getDate()); d2 = rec.toLocaleDateString("en-AU", {month:"short"}); }
+  const inStock = i.status === "in_stock";
+  const isSel = state.selectMode && state.selected.has(i.id);
+  const col = i.function_id && i.catering_functions ? (i.catering_functions.colour || "#546e64") : null;
+  const tint = col ? hexTint(col, 0.13) : "#f0efe9";
+  const evWarn = i.catering_functions && i.catering_functions.event_date && i.expiry_date && i.expiry_date < i.catering_functions.event_date;
+  const statusPill = !inStock
+    ? (i.status === "used" ? ' <span class="pill plain">Used</span>'
+      : i.status === "binned" ? ' <span class="pill bad">Binned</span>'
+      : ' <span class="pill bad">Not received</span>')
+    : "";
+  let useBy = "";
+  if(i.expiry_date){
+    const d = daysUntil(i.expiry_date);
+    useBy = d < 0 ? "overdue, was " + fmtDate(i.expiry_date) : d === 0 ? "use by today" : "use by " + fmtDate(i.expiry_date);
+  }
+  const meta = [
+    i.quantity ? i.quantity + " " + (i.unit || "") : "",
+    useBy,
+    searching && i.deliveries ? "delivered " + fmtDateTime(i.deliveries.delivered_at) + (i.deliveries.supplier ? " from " + i.deliveries.supplier : "") : ""
+  ].filter(Boolean).join(" \u00b7 ");
+  const draggable = inStock && !state.selectMode ? ' draggable="true"' : "";
+  return '<div class="uf-row' + (isSel ? " selected" : "") + '" data-id="' + i.id + '" data-tint="' + tint + '"' + draggable +
+    (isSel ? "" : ' style="background:' + tint + ';"') + ">" +
+    '<div class="uf-rail ' + cls + '"><div class="d1">' + d1 + '</div><div class="d2">' + esc(d2) + "</div></div>" +
+    (state.selectMode && inStock ? '<span class="sel-dot"></span>' : "") +
+    '<div class="uf-main" data-id="' + i.id + '"><div class="uf-name">' + esc(i.item_name) + statusPill +
+    (evWarn ? ' <span class="pill warn">Expires before event</span>' : "") + "</div>" +
+    '<div class="uf-meta">' + fnChip(i.catering_functions, i.function_id) + (meta ? " <span>" + esc(meta) + "</span>" : "") + "</div></div>" +
+    (!state.selectMode && inStock ?
+      '<div class="uf-acts">' +
+      (showAlloc ? '<button class="btn btn-secondary btn-xs" data-alloc="' + i.id + '">Allocate</button>' : "") +
+      '<button class="btn btn-ghost btn-xs" data-mark="used" data-id="' + i.id + '">Used</button>' +
+      '<button class="btn btn-danger btn-xs" data-mark="binned" data-id="' + i.id + '">Bin</button>' +
+      "</div>" : "") +
+    "</div>";
+}
+function wireBoard(box, items){
+  box.querySelectorAll(".uf-main").forEach(el =>
+    el.addEventListener("click", () => {
+      const it = items.find(x => x.id === +el.dataset.id);
+      if(!it) return;
+      if(state.selectMode){
+        if(it.status !== "in_stock") return;
+        const row = el.closest(".uf-row");
+        const on = !state.selected.has(it.id);
+        if(on) state.selected.add(it.id); else state.selected.delete(it.id);
+        row.classList.toggle("selected", on);
+        row.style.background = on ? "" : (row.dataset.tint || "");
+        updateBulkBar();
+      } else if(state.mode === "kitchen") kitchenItemModal(it);
+      else itemModal(it);
+    })
+  );
+  box.querySelectorAll("[data-mark]").forEach(b =>
+    b.addEventListener("click", () => {
+      const it = items.find(x => x.id === +b.dataset.id);
+      if(it) markModal(it, b.dataset.mark);
+    })
+  );
+  box.querySelectorAll("[data-alloc]").forEach(b =>
+    b.addEventListener("click", () => {
+      const it = items.find(x => x.id === +b.dataset.alloc);
+      if(!it) return;
+      pickFunction(async (fnId, fn) => {
+        try{
+          if(fnId === "NR"){
+            await run(sb.from("stock_items").update({status:"not_received", short_or_wrong:true, status_changed_at: new Date().toISOString()}).eq("id", it.id));
+            if(it.delivery_id) await run(sb.from("deliveries").update({received_in_full:false}).eq("id", it.delivery_id));
+            toast("Marked as not received");
+          }else{
+            if(fn && it.expiry_date && it.expiry_date < fn.event_date &&
+               !confirm("Use by " + fmtDate(it.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+            await run(sb.from("stock_items").update({function_id: fnId}).eq("id", it.id));
+            toast("Allocated to " + (fn ? fn.name : "general stock"));
+          }
+          refreshCurrentTab();
+        }catch(e){}
+      });
+    })
+  );
+  box.querySelectorAll('.uf-row[draggable="true"]').forEach(r =>
+    r.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", r.dataset.id))
+  );
+  box.querySelectorAll(".uf-col").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drag"); });
+    col.addEventListener("dragleave", () => col.classList.remove("drag"));
+    col.addEventListener("drop", async e => {
+      e.preventDefault(); col.classList.remove("drag");
+      const id = +e.dataTransfer.getData("text/plain");
+      if(!id) return;
+      try{
+        await run(sb.from("stock_items").update({storage: col.dataset.storage}).eq("id", id));
+        toast("Moved to " + storageLabel(col.dataset.storage).toLowerCase());
+        refreshCurrentTab();
+      }catch(err){}
+    });
+  });
+}
+function fnChip(fnObj, fnId){
+  if(!fnId || !fnObj) return '<span class="pill plain">General</span>';
+  return '<span class="pill" style="background:' + esc(fnObj.colour || "#546e64") + '; color:#fff;">' + esc(fnObj.name) + "</span>";
+}
+function storageLabel(s){
+  return s === "fridge" ? "Fridge" : s === "freezer" ? "Freezer" : s === "dry" ? "Dry" : "No location";
+}
+function updateBulkBar(){
+  $("bulkBar").style.display = state.selectMode ? "flex" : "none";
+  $("bulkCount").textContent = state.selected.size + " selected";
+}
+async function pickFunction(cb){
+  let fns = [];
+  try{
+    fns = await run(
+      sb.from("catering_functions").select("id, name, event_date, colour")
+        .gte("event_date", localISO(new Date(Date.now() - 10 * 86400000)))
+        .order("event_date", {ascending:true}).limit(30)
+    );
+  }catch(e){ return; }
+  const m = openModal(
+    "<h2>Allocate to</h2>" +
+    '<button class="btn fnpick" data-fn="" style="background:#8a938e;">General stock</button>' +
+    (state.mode === "admin" ? '<button class="btn fnpick" data-fn="NR" style="background:var(--red);">NOT RECEIVED</button>' : "") +
+    fns.map(f => '<button class="btn fnpick" data-fn="' + f.id + '" style="background:' + esc(f.colour || "#546e64") + ';">' + esc(f.name) + " \u00b7 " + esc(fmtDate(f.event_date)) + "</button>").join("")
+  );
+  m.querySelectorAll(".fnpick").forEach(b =>
+    b.addEventListener("click", () => {
+      const raw = b.dataset.fn;
+      const id = raw === "" ? null : (raw === "NR" ? "NR" : +raw);
+      closeModal();
+      cb(id, typeof id === "number" ? fns.find(f => f.id === id) : null);
+    })
+  );
+}
+function markModal(i, status){
+  const isBin = status === "binned";
+  const hasQty = i.quantity != null && i.quantity > 0;
+  const m = openModal(
+    "<h2>" + (isBin ? "Bin: " : "Used: ") + esc(i.item_name) + "</h2>" +
+    (hasQty
+      ? '<div class="field"><label>How much?</label><div class="seg" id="mkSeg">' +
+        '<button data-v="all">All (' + i.quantity + " " + esc(i.unit || "") + ')</button>' +
+        '<button data-v="some">Some</button></div></div>' +
+        '<div class="field" id="mkQtyWrap" style="display:none;"><label for="mkQty">Quantity ' + (isBin ? "binned" : "used") + '</label>' +
+        '<input id="mkQty" type="number" inputmode="decimal" step="any" min="0" max="' + i.quantity + '" value="' + i.quantity + '"></div>'
+      : "") +
+    '<div class="field"><label for="mkNote">Note (optional)</label><textarea id="mkNote" rows="2" placeholder="' +
+    (isBin ? "e.g. dropped on the floor, spoiled, freezer failure" : "e.g. Saturday breakfast service") + '"></textarea></div>' +
+    '<button class="btn ' + (isBin ? "btn-danger" : "btn-primary") + '" id="btnMkGo" style="width:100%;">' + (isBin ? "Bin it" : "Mark used") + "</button>"
+  );
+  let mode = "all";
+  const segEl = m.querySelector("#mkSeg");
+  if(segEl) wireSeg(segEl, "all", v => {
+    mode = v;
+    m.querySelector("#mkQtyWrap").style.display = v === "some" ? "" : "none";
+  });
+  m.querySelector("#btnMkGo").addEventListener("click", async () => {
+    const note = m.querySelector("#mkNote").value.trim() || null;
+    try{
+      if(hasQty && mode === "some"){
+        const aq = parseFloat(m.querySelector("#mkQty").value);
+        if(!(aq > 0)){ toast("Enter a quantity", {type:"err"}); return; }
+        if(aq > i.quantity){ toast("Only " + i.quantity + " " + (i.unit || "") + " in stock", {type:"err"}); return; }
+        if(aq < i.quantity){
+          const ins = await run(sb.from("stock_items").insert({
+            delivery_id: i.delivery_id,
+            item_name: i.item_name,
+            category: i.category,
+            storage: i.storage,
+            quantity: aq,
+            unit: i.unit,
+            expiry_date: i.expiry_date,
+            function_id: i.function_id,
+            status,
+            status_note: note,
+            status_changed_at: new Date().toISOString()
+          }).select().single());
+          await run(sb.from("stock_items").update({quantity: Math.round((i.quantity - aq) * 100) / 100}).eq("id", i.id));
+          closeModal();
+          toast(aq + " " + (i.unit || "") + (isBin ? " binned" : " marked used"), {undo: async () => {
+            try{
+              await run(sb.from("stock_items").delete().eq("id", ins.id));
+              await run(sb.from("stock_items").update({quantity: i.quantity}).eq("id", i.id));
+              refreshCurrentTab();
+            }catch(e){}
+          }});
+          refreshCurrentTab();
+          return;
+        }
+      }
+      await run(sb.from("stock_items").update({status, status_note: note, status_changed_at: new Date().toISOString()}).eq("id", i.id));
+      closeModal();
+      toast(isBin ? "Binned" : "Marked as used", {undo: async () => {
+        try{
+          await run(sb.from("stock_items").update({status:"in_stock", status_note:null, status_changed_at:null}).eq("id", i.id));
+          refreshCurrentTab();
+        }catch(e){}
+      }});
+      refreshCurrentTab();
+    }catch(e){}
+  });
+}
+async function itemModal(i){
+  let allocFns = [];
+  try{
+    const from = localISO(new Date(Date.now() - 10 * 86400000));
+    allocFns = await run(
+      sb.from("catering_functions").select("id, name, event_date, colour")
+        .gte("event_date", from).order("event_date", {ascending:true}).limit(60)
+    );
+  }catch(e){}
+  const inStock = !i.status || i.status === "in_stock";
+  const m = openModal(
+    "<h2>" + esc(i.item_name) + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' +
+    esc([i.category, i.deliveries ? "From " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : ""].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+    (i.catering_functions
+      ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">Currently tagged to <b>' +
+        esc(i.catering_functions.name) + "</b>.</p>"
+      : "") +
+    '<div class="grid2">' +
+    '<div class="field"><label for="imQty">Quantity</label><div style="display:flex; gap:8px;">' +
+    '<input id="imQty" type="number" inputmode="decimal" step="any" min="0" value="' + (i.quantity ?? "") + '" style="flex:1;">' +
+    '<input id="imUnit" list="unitList" value="' + esc(i.unit || "") + '" style="flex:1;"></div></div>' +
+    '<div class="field"><label for="imStorage">Storage</label><select id="imStorage"><option value="">None</option>' +
+    ["fridge","freezer","dry"].map(s => '<option value="' + s + '"' + (i.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") +
+    "</select></div></div>" +
+    '<div class="field"><label for="imExpiry">Use by</label><input type="date" id="imExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
+    '<button class="btn btn-primary" id="btnImSave">Save changes</button>' +
+    (inStock && i.catering_functions ? '<button class="btn btn-secondary" id="btnImReturn" style="width:100%; margin-top:8px;">Return to general stock</button>' : "") +
+    (inStock ? '<button class="btn btn-ghost" id="btnImNotRec" style="width:100%; margin-top:8px; color:var(--red);">Mark as not received</button>' : "") +
+    (inStock ? "<h3>Allocate to a function</h3>" +
+    '<p class="small muted">Move all or part of this item onto a function so it gets costed there. A part allocation splits the line.</p>' +
+    '<div class="grid2">' +
+    '<div class="field"><label for="imAllocFn">Function</label><select id="imAllocFn"><option value="">Choose\u2026</option>' +
+    '<option value="NR" style="background:var(--red); color:#fff;">NOT RECEIVED</option>' +
+    allocFns.map(f => fnOptionHtml(f, null)).join("") +
+    "</select></div>" +
+    (i.quantity
+      ? '<div class="field"><label for="imAllocQty">Quantity to allocate</label><input id="imAllocQty" type="number" inputmode="decimal" step="any" min="0" max="' + i.quantity + '" value="' + i.quantity + '"></div>'
+      : "") +
+    "</div>" +
+    '<button class="btn btn-ghost" id="btnAllocate" style="width:100%;">Allocate</button>' : "")
+  );
+  m.querySelector("#btnImSave").addEventListener("click", async () => {
+    const qv = m.querySelector("#imQty").value;
+    try{
+      await run(sb.from("stock_items").update({
+        storage: m.querySelector("#imStorage").value || null,
+        quantity: qv === "" ? null : +qv,
+        unit: m.querySelector("#imUnit").value.trim() || null,
+        expiry_date: m.querySelector("#imExpiry").value || null
+      }).eq("id", i.id));
+      closeModal(); toast("Saved"); refreshCurrentTab();
+    }catch(e){}
+  });
+  const rb = m.querySelector("#btnImReturn");
+  if(rb) rb.addEventListener("click", async () => {
+    try{
+      await run(sb.from("stock_items").update({function_id: null}).eq("id", i.id));
+      closeModal(); toast("Returned to general stock"); refreshCurrentTab();
+    }catch(e){}
+  });
+  const nr = m.querySelector("#btnImNotRec");
+  if(nr) nr.addEventListener("click", async () => {
+    if(!confirm("Mark " + i.item_name + " as not received? It comes off the stock list and the delivery gets flagged.")) return;
+    try{
+      await run(sb.from("stock_items").update({status:"not_received", short_or_wrong:true, status_changed_at: new Date().toISOString()}).eq("id", i.id));
+      if(i.delivery_id) await run(sb.from("deliveries").update({received_in_full:false}).eq("id", i.delivery_id));
+      closeModal(); toast("Marked as not received"); refreshCurrentTab();
+    }catch(e){}
+  });
+  const afSel = m.querySelector("#imAllocFn");
+  if(afSel) paintSelect(afSel, () => allocFns);
+  const ab = m.querySelector("#btnAllocate");
+  if(ab) ab.addEventListener("click", async () => {
+    const fval = m.querySelector("#imAllocFn").value;
+    if(!fval){ toast("Choose a function first", {type:"err"}); return; }
+    if(fval === "NR"){
+      const aqEl0 = m.querySelector("#imAllocQty");
+      const aq0 = aqEl0 ? parseFloat(aqEl0.value) : null;
+      try{
+        if(i.quantity && aq0 != null && aq0 > 0 && aq0 < i.quantity){
+          await run(sb.from("stock_items").insert({
+            delivery_id: i.delivery_id,
+            item_name: i.item_name,
+            category: i.category,
+            storage: i.storage,
+            quantity: aq0,
+            unit: i.unit,
+            expiry_date: i.expiry_date,
+            status: "not_received",
+            short_or_wrong: true,
+            status_changed_at: new Date().toISOString()
+          }));
+          await run(sb.from("stock_items").update({quantity: Math.round((i.quantity - aq0) * 100) / 100}).eq("id", i.id));
+        }else{
+          await run(sb.from("stock_items").update({status:"not_received", short_or_wrong:true, status_changed_at: new Date().toISOString()}).eq("id", i.id));
+        }
+        if(i.delivery_id) await run(sb.from("deliveries").update({received_in_full:false}).eq("id", i.delivery_id));
+        closeModal(); toast("Marked as not received"); refreshCurrentTab();
+      }catch(e){}
+      return;
+    }
+    const fnId = +fval;
+    const fn = allocFns.find(f => f.id === fnId);
+    if(fn && i.expiry_date && i.expiry_date < fn.event_date){
+      if(!confirm("Use by " + fmtDate(i.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+    }
+    try{
+      const aqEl = m.querySelector("#imAllocQty");
+      const aq = aqEl ? parseFloat(aqEl.value) : null;
+      if(i.quantity && aq != null){
+        if(!(aq > 0)){ toast("Enter a quantity to allocate", {type:"err"}); return; }
+        if(aq > i.quantity){ toast("Only " + i.quantity + " " + (i.unit || "") + " in stock", {type:"err"}); return; }
+        if(aq < i.quantity){
+          await run(sb.from("stock_items").insert({
+            delivery_id: i.delivery_id,
+            item_name: i.item_name,
+            category: i.category,
+            storage: i.storage,
+            quantity: aq,
+            unit: i.unit,
+            expiry_date: i.expiry_date,
+            function_id: fnId
+          }));
+          await run(sb.from("stock_items").update({quantity: Math.round((i.quantity - aq) * 100) / 100}).eq("id", i.id));
+          closeModal();
+          toast(aq + " " + (i.unit || "") + " allocated to " + (fn ? fn.name : "the function"));
+          refreshCurrentTab();
+          return;
+        }
+      }
+      await run(sb.from("stock_items").update({function_id: fnId}).eq("id", i.id));
+      closeModal();
+      toast("Allocated to " + (fn ? fn.name : "the function"));
+      refreshCurrentTab();
+    }catch(e){}
+  });
+}
+// ============================================================
+// FUNCTIONS
+// ============================================================
+async function renderFunctions(){
+  try{
+    const rows = await run(
+      sb.from("catering_functions")
+        .select("*, deliveries(id, supplier, delivered_at), function_wrapups(*)")
+        .order("event_date", {ascending:false}).limit(80)
+    );
+    const today = localISO();
+    const up = rows.filter(r => r.event_date >= today).sort((a, b) => a.event_date.localeCompare(b.event_date));
+    const past = rows.filter(r => r.event_date < today).slice(0, 20);
+    $("fnUpcoming").innerHTML = up.length ? up.map(r => fnCardHtml(r, false)).join("")
+      : '<div class="empty">No upcoming functions. Add one so deliveries can be tagged to it.</div>';
+    $("fnPast").innerHTML = past.length ? past.map(r => fnCardHtml(r, true)).join("")
+      : '<div class="empty">No past functions yet.</div>';
+    document.querySelectorAll("#fnUpcoming .rowcard, #fnPast .rowcard").forEach(el =>
+      el.addEventListener("click", () => {
+        const fn = rows.find(x => x.id === +el.dataset.id);
+        if(!fn) return;
+        if(state.mode === "kitchen") functionDetailRO(fn);
+        else functionDetail(fn);
+      })
+    );
+    renderGroupBookings();
+  }catch(e){
+    $("fnUpcoming").innerHTML = '<div class="empty">Could not load functions.</div>';
+    $("fnPast").innerHTML = "";
+  }
+}
+function fnCardHtml(r, isPast){
+  const wrapped = r.function_wrapups && r.function_wrapups.length;
+  const badge = isPast
+    ? (wrapped ? '<span class="pill ok">Wrapped up</span>' : '<span class="pill warn">Wrap up pending</span>')
+    : '<span class="pill plain">' + esc(fmtDate(r.event_date)) + "</span>";
+  const sub = [
+    isPast ? fmtDate(r.event_date) : "",
+    (r.meal_types || []).join(", "),
+    r.heads ? r.heads + " heads" : "",
+    (r.deliveries ? r.deliveries.length : 0) + " deliveries"
+  ].filter(Boolean).join(" \u00b7 ");
+  return '<div class="rowcard" data-id="' + r.id + '"><div class="l"><div class="t">' +
+    '<span class="fndot" style="background:' + esc(r.colour || "#546e64") + ';"></span>' + esc(r.name) +
+    '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + badge + "</div></div>";
+}
+const FN_PALETTE = ["#c2402f","#ea580c","#b45309","#a16207","#4d7c0f","#15803d","#0f766e","#7c3aed","#9333ea","#c026d3","#be185d","#e11d48","#78350f","#6d28d9"];
+function nextColour(){
+  const used = {};
+  state.functions.forEach(f => { if(f.colour) used[f.colour] = (used[f.colour] || 0) + 1; });
+  let best = FN_PALETTE[0], bc = Infinity;
+  FN_PALETTE.forEach(c => { const n = used[c] || 0; if(n < bc){ bc = n; best = c; } });
+  return best;
+}
+const MEAL_TYPES = ["Breakfast","Morning tea","Lunch","Afternoon tea","Dinner","Canapes"];
+function headsBreakdown(fn){
+  return [
+    fn.heads_infant ? fn.heads_infant + " infants" : "",
+    fn.heads_child ? fn.heads_child + " children" : "",
+    fn.heads_teen ? fn.heads_teen + " teens" : "",
+    fn.heads_adult ? fn.heads_adult + " adults" : ""
+  ].filter(Boolean).join(" \u00b7 ");
+}
+function functionForm(fn){
+  const sel = new Set(fn && fn.meal_types ? fn.meal_types : []);
+  let selColour = fn && fn.colour ? fn.colour : nextColour();
+  const m = openModal(
+    "<h2>" + (fn ? "Edit function" : "Add a function") + "</h2>" +
+    '<div class="field"><label for="fmName">Name</label><input id="fmName" placeholder="e.g. Nguyen 50th" value="' + esc(fn ? fn.name : "") + '"></div>' +
+    '<div class="field"><label>Meal services</label><div class="chips" id="fmMeals">' +
+    MEAL_TYPES.map(t => '<button type="button" data-v="' + esc(t) + '"' + (sel.has(t) ? ' class="on"' : "") + ">" + esc(t) + "</button>").join("") +
+    "</div></div>" +
+    '<div class="field"><label>Colour</label><div class="swatches" id="fmColours">' +
+    FN_PALETTE.map(c => '<button type="button" data-c="' + c + '" style="background:' + c + ';"' + (c === selColour ? ' class="on"' : "") + "></button>").join("") +
+    "</div></div>" +
+    '<div class="grid2"><div class="field"><label for="fmDate">Date</label><input type="date" id="fmDate" value="' + esc(fn ? fn.event_date : "") + '"></div>' +
+    '<div class="field"><label>Total heads</label><div class="totline" id="fmHeadsShow">&ndash;</div></div></div>' +
+    '<div class="field"><label>Heads breakdown</label><div class="grid4">' +
+    '<input type="number" inputmode="numeric" min="0" id="fmInf" placeholder="Infants" value="' + esc(fn && fn.heads_infant != null ? fn.heads_infant : "") + '">' +
+    '<input type="number" inputmode="numeric" min="0" id="fmChd" placeholder="Children" value="' + esc(fn && fn.heads_child != null ? fn.heads_child : "") + '">' +
+    '<input type="number" inputmode="numeric" min="0" id="fmTeen" placeholder="Teens" value="' + esc(fn && fn.heads_teen != null ? fn.heads_teen : "") + '">' +
+    '<input type="number" inputmode="numeric" min="0" id="fmAdt" placeholder="Adults" value="' + esc(fn && fn.heads_adult != null ? fn.heads_adult : "") + '">' +
+    '</div><div class="small muted" style="margin-top:5px;">Fill any that apply, the total updates itself.</div></div>' +
+    '<div class="grid2"><div class="field"><label for="fmRef">RMS / group ref</label><input id="fmRef" placeholder="e.g. T-12345" value="' + esc(fn && fn.group_ref ? fn.group_ref : "") + '"></div>' +
+    '<div class="field"><label for="fmLink">Confirmation form link</label><input id="fmLink" placeholder="Paste the group&#39;s link" value="' + esc(fn && fn.group_link ? fn.group_link : "") + '"></div></div>' +
+    '<div class="field"><label for="fmNotes">Notes</label><textarea id="fmNotes" rows="2">' + esc(fn ? fn.notes || "" : "") + "</textarea></div>" +
+    '<button class="btn btn-primary" id="btnFmSave">' + (fn ? "Save changes" : "Add function") + "</button>"
+  );
+  m.querySelectorAll("#fmMeals button").forEach(b =>
+    b.addEventListener("click", () => {
+      b.classList.toggle("on");
+      if(b.classList.contains("on")) sel.add(b.dataset.v); else sel.delete(b.dataset.v);
+    })
+  );
+  m.querySelectorAll("#fmColours button").forEach(b =>
+    b.addEventListener("click", () => {
+      m.querySelectorAll("#fmColours button").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      selColour = b.dataset.c;
+    })
+  );
+  const legacyHeads = fn && fn.heads != null ? fn.heads : null;
+  const calcHeads = () => {
+    const vals = ["fmInf","fmChd","fmTeen","fmAdt"].map(id => m.querySelector("#" + id).value);
+    if(vals.every(v => v === "")) return legacyHeads;
+    return vals.reduce((t, v) => t + (+v || 0), 0);
+  };
+  const showHeads = () => {
+    const h = calcHeads();
+    m.querySelector("#fmHeadsShow").textContent = h == null ? "\u2013" : h;
+  };
+  ["fmInf","fmChd","fmTeen","fmAdt"].forEach(id => m.querySelector("#" + id).addEventListener("input", showHeads));
+  showHeads();
+  m.querySelector("#btnFmSave").addEventListener("click", async () => {
+    const name = m.querySelector("#fmName").value.trim();
+    const date = m.querySelector("#fmDate").value;
+    if(!name || !date){ toast("Name and date are needed", {type:"err"}); return; }
+    const n = id => { const v = m.querySelector("#" + id).value; return v === "" ? null : +v; };
+    const payload = {
+      name, event_date: date,
+      heads: calcHeads(),
+      heads_infant: n("fmInf"),
+      heads_child: n("fmChd"),
+      heads_teen: n("fmTeen"),
+      heads_adult: n("fmAdt"),
+      meal_types: sel.size ? [...sel] : null,
+      colour: selColour,
+      group_ref: m.querySelector("#fmRef").value.trim() || null,
+      group_link: m.querySelector("#fmLink").value.trim() || null,
+      notes: m.querySelector("#fmNotes").value.trim() || null
+    };
+    try{
+      if(fn) await run(sb.from("catering_functions").update(payload).eq("id", fn.id));
+      else await run(sb.from("catering_functions").insert(payload));
+      closeModal(); toast(fn ? "Saved" : "Function added");
+      renderFunctions(); loadFunctionPicker();
+    }catch(e){}
+  });
+}
+async function functionDetail(fn){
+  let allItems = [];
+  try{
+    allItems = await run(sb.from("stock_items").select("*").eq("function_id", fn.id));
+  }catch(e){}
+  const tagged = allItems.filter(i => i.status === "in_stock");
+  const wu = fn.function_wrapups && fn.function_wrapups.length ? fn.function_wrapups[0] : null;
+  const dels = (fn.deliveries || []).slice().sort((a, b) => (b.delivered_at || "").localeCompare(a.delivered_at || ""));
+  const m = openModal(
+    '<h2><span class="fndot" style="background:' + esc(fn.colour || "#546e64") + '; width:14px; height:14px;"></span>' + esc(fn.name) + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' + esc([
+      fmtDate(fn.event_date),
+      (fn.meal_types || []).join(", "),
+      fn.heads ? fn.heads + " heads" : ""
+    ].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+    (headsBreakdown(fn) ? '<p class="small muted" style="margin-top:-4px;">' + esc(headsBreakdown(fn)) + "</p>" : "") +
+    (fn.group_ref || fn.group_link
+      ? '<p class="small muted" style="margin-top:-4px;">' +
+        (fn.group_ref ? "RMS ref: <b>" + esc(fn.group_ref) + "</b>" : "") +
+        (fn.group_link ? (fn.group_ref ? " &middot; " : "") + '<a href="' + esc(fn.group_link) + '" target="_blank" rel="noopener" style="color:var(--brand-dark);">confirmation form</a>' : "") +
+        "</p>"
+      : "") +
+    '<button class="btn btn-ghost btn-sm" id="btnFnEdit">Edit details</button>' +
+    "<h3>Food check</h3>" +
+    foodCheckHtml(fn, allItems) +
+    "<h3>Deliveries tagged</h3>" +
+    (dels.length
+      ? dels.map(d => '<div class="small" style="padding:6px 0; border-bottom:1px solid var(--line);">' +
+          esc((d.supplier || "Delivery") + " \u00b7 " + fmtDateTime(d.delivered_at)) + "</div>").join("")
+      : '<p class="small muted">None yet. Tag deliveries to this function when receiving them: Deliveries tab, then + Receive.</p>') +
+    "<h3>Leftovers still in stock</h3>" +
+    (tagged.length
+      ? '<p class="small muted">After the function, return whatever was not used. Returned items go back to general stock and are not costed to this function.</p>' +
+        tagged.map(i =>
+          '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(i.item_name) +
+          (i.expiry_date && i.expiry_date < fn.event_date ? ' <span class="pill warn">Expires before event</span>' : "") + "</div>" +
+          '<div class="s">' + esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : "", storageLabel(i.storage)].filter(Boolean).join(" \u00b7 ")) + "</div></div>" +
+          '<button class="btn btn-secondary btn-sm" data-ret="' + i.id + '">Return</button></div>'
+        ).join("") +
+        '<button class="btn btn-secondary" id="btnRetAll" style="width:100%; margin-top:6px;">Return all to general stock</button>'
+      : '<p class="small muted">Nothing tagged to this function is left in stock.</p>') +
+    "<h3>Wrap up</h3>" +
+    (wu ? '<p class="small" style="background:var(--green-bg); color:var(--green); padding:8px 12px; border-radius:9px; font-weight:600;">Saved ' +
+          esc(fmtDateTime(wu.created_at)) + (wu.entered_by ? " by " + esc(wu.entered_by) : "") + ". You can update it below.</p>" : "") +
+    '<div class="field"><label for="wuMeals">Unused meals</label><input type="number" inputmode="numeric" min="0" id="wuMeals" value="' + esc(wu && wu.unused_meals != null ? wu.unused_meals : "") + '"></div>' +
+    '<div class="field"><label for="wuBy">Entered by</label><input id="wuBy" list="receiverList" value="' + esc(wu ? wu.entered_by || "" : "") + '"></div>' +
+    '<div class="field"><label for="wuNotes">Notes</label><textarea id="wuNotes" rows="2" placeholder="e.g. dessert barely touched, mains all went">' + esc(wu ? wu.notes || "" : "") + "</textarea></div>" +
+    '<button class="btn btn-primary" id="btnWuSave">Save wrap up</button>'
+  );
+  m.querySelector("#btnFnEdit").addEventListener("click", () => { closeModal(); functionForm(fn); });
+  m.querySelectorAll("[data-ret]").forEach(b =>
+    b.addEventListener("click", async () => {
+      try{
+        await run(sb.from("stock_items").update({function_id: null}).eq("id", +b.dataset.ret));
+        toast("Returned to general stock");
+        closeModal(); renderFunctions();
+      }catch(e){}
+    })
+  );
+  const ra = m.querySelector("#btnRetAll");
+  if(ra) ra.addEventListener("click", async () => {
+    try{
+      await run(sb.from("stock_items").update({function_id: null}).eq("function_id", fn.id).eq("status", "in_stock"));
+      toast("All leftovers returned to general stock");
+      closeModal(); renderFunctions();
+    }catch(e){}
+  });
+  m.querySelector("#btnWuSave").addEventListener("click", async () => {
+    const meals = m.querySelector("#wuMeals").value;
+    try{
+      await run(sb.from("function_wrapups").upsert({
+        function_id: fn.id,
+        unused_meals: meals === "" ? null : +meals,
+        entered_by: m.querySelector("#wuBy").value.trim() || null,
+        notes: m.querySelector("#wuNotes").value.trim() || null
+      }, {onConflict: "function_id"}));
+      closeModal(); toast("Wrap up saved"); renderFunctions();
+    }catch(e){}
+  });
+}
+// ============================================================
+// FOOD CHECK (admin, per function)
+// ============================================================
+function foodCheckHtml(fn, allItems){
+  const inStock = allItems.filter(i => i.status === "in_stock");
+  const used = allItems.filter(i => i.status === "used").length;
+  const binned = allItems.filter(i => i.status === "binned").length;
+  const nr = allItems.filter(i => i.status === "not_received").length;
+  if(!allItems.length) return '<p class="small muted">No food allocated to this function yet. Allocate items from the Dashboard, an order, or when receiving.</p>';
+  const groups = {};
+  inStock.forEach(i => {
+    const k = i.item_name.trim().toLowerCase();
+    const g = groups[k] = groups[k] || {name: i.item_name, qty: {}, noQty: 0, lines: 0};
+    g.lines++;
+    if(i.quantity != null){ const u = (i.unit || "").trim().toLowerCase() || "x"; g.qty[u] = (g.qty[u] || 0) + +i.quantity; }
+    else g.noQty++;
+  });
+  const heads = fn.heads;
+  const perHead = (q, u) => {
+    if(!heads) return "";
+    if(u === "kg") return Math.round(q * 1000 / heads) + " g / head";
+    if(u === "l") return Math.round(q * 1000 / heads) + " ml / head";
+    if(u === "g") return Math.round(q / heads * 10) / 10 + " g / head";
+    if(u === "ml") return Math.round(q / heads) + " ml / head";
+    if(u === "dozen") return Math.round(q * 12 / heads * 10) / 10 + " ea / head";
+    if(u === "ea" || u === "each" || u === "x") return Math.round(q / heads * 100) / 100 + " ea / head";
+    return "";
+  };
+  const rows = Object.values(groups).sort((a, b) => a.name.localeCompare(b.name)).map(g => {
+    const qtyTxt = Object.keys(g.qty).map(u => (Math.round(g.qty[u] * 100) / 100) + (u === "x" ? "" : " " + u)).join(" + ") +
+      (g.noQty ? (Object.keys(g.qty).length ? " + " : "") + g.noQty + " line" + (g.noQty > 1 ? "s" : "") + " with no qty" : "");
+    const us = Object.keys(g.qty);
+    const ph = us.length === 1 ? perHead(g.qty[us[0]], us[0]) : "";
+    return '<div class="xc-row"><span><b>' + esc(g.name) + "</b> &middot; " + esc(qtyTxt) + '</span><span class="r">' + esc(ph) + "</span></div>";
+  }).join("");
+  return (heads ? "" : '<p class="small" style="background:var(--amber-bg); color:var(--amber); padding:8px 12px; border-radius:9px; font-weight:600;">Set the heads on this function to get per-head numbers.</p>') +
+    (rows || '<p class="small muted">Nothing currently in stock for this function.</p>') +
+    '<p class="small muted" style="margin-top:8px;">' + inStock.length + " line" + (inStock.length === 1 ? "" : "s") + " in stock &middot; " + used + " used &middot; " + binned + " binned" + (nr ? " &middot; " + nr + " not received" : "") + "</p>";
+}
+// ============================================================
+// KITCHEN MODE: item modal and read-only function view
+// ============================================================
+function kitchenItemModal(i){
+  const inStock = !i.status || i.status === "in_stock";
+  if(!inStock){
+    openModal(
+      "<h2>" + esc(i.item_name) + "</h2>" +
+      '<p class="small muted" style="margin-top:2px;">' +
+      esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : ""].filter(Boolean).join(" · ")) + "</p>" +
+      '<p class="small">' +
+      (i.status === "used" ? '<span class="pill plain">Already marked used</span>'
+        : i.status === "binned" ? '<span class="pill bad">Already binned</span>'
+        : '<span class="pill bad">Marked not received</span>') +
+      (i.status_note ? ' <span class="muted">&ldquo;' + esc(i.status_note) + "&rdquo;</span>" : "") + "</p>" +
+      '<p class="small muted">If that is wrong, admin mode can restore it from Item history.</p>'
+    );
+    return;
+  }
+  const m = openModal(
+    "<h2>" + esc(i.item_name) + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' +
+    esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : "",
+         i.deliveries ? "from " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : ""].filter(Boolean).join(" · ")) + "</p>" +
+    '<div style="margin:0 0 14px;">' + fnChip(i.catering_functions, i.function_id) +
+    (i.expiry_date ? ' <span class="pill ' + (daysUntil(i.expiry_date) <= 0 ? "bad" : daysUntil(i.expiry_date) <= 3 ? "warn" : "ok") + '">use by ' + esc(fmtDate(i.expiry_date)) + "</span>" : "") + "</div>" +
+    '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
+    '<button class="btn" id="kiUsed" style="flex:1; background:var(--green); color:#fff;">Used</button>' +
+    '<button class="btn btn-danger" id="kiBin" style="flex:1;">Bin</button>' +
+    "</div>" +
+    '<button class="btn btn-secondary" id="kiAlloc" style="width:100%;">Allocate to a function</button>' +
+    "<h3>Fix the label</h3>" +
+    '<div class="grid2">' +
+    '<div class="field"><label for="kiExpiry">Use by (from the product)</label><input type="date" id="kiExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
+    '<div class="field"><label for="kiStorage">Storage</label><select id="kiStorage"><option value="">None</option>' +
+    ["fridge","freezer","dry"].map(s => '<option value="' + s + '"' + (i.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") +
+    "</select></div></div>" +
+    '<button class="btn btn-ghost" id="kiSave" style="width:100%;">Save changes</button>' +
+    '<p class="small muted" style="margin:10px 0 0;">Wrong name, quantity or category? That gets fixed in admin mode.</p>'
+  );
+  m.querySelector("#kiUsed").addEventListener("click", () => { closeModal(); markModal(i, "used"); });
+  m.querySelector("#kiBin").addEventListener("click", () => { closeModal(); markModal(i, "binned"); });
+  m.querySelector("#kiAlloc").addEventListener("click", () => {
+    closeModal();
+    pickFunction(async (fnId, fn) => {
+      try{
+        if(fn && i.expiry_date && i.expiry_date < fn.event_date &&
+           !confirm("Use by " + fmtDate(i.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+        await run(sb.from("stock_items").update({function_id: fnId}).eq("id", i.id));
+        toast("Allocated to " + (fn ? fn.name : "general stock"));
+        refreshCurrentTab();
+      }catch(e){}
+    });
+  });
+  m.querySelector("#kiSave").addEventListener("click", async () => {
+    try{
+      await run(sb.from("stock_items").update({
+        expiry_date: m.querySelector("#kiExpiry").value || null,
+        storage: m.querySelector("#kiStorage").value || null
+      }).eq("id", i.id));
+      closeModal(); toast("Saved"); refreshCurrentTab();
+    }catch(e){}
+  });
+}
+async function functionDetailRO(fn){
+  let tagged = [];
+  try{
+    tagged = await run(
+      sb.from("stock_items").select("*").eq("function_id", fn.id).eq("status", "in_stock")
+        .order("expiry_date", {ascending:true, nullsFirst:false})
+    );
+  }catch(e){}
+  const dels = (fn.deliveries || []).slice().sort((a, b) => (b.delivered_at || "").localeCompare(a.delivered_at || ""));
+  openModal(
+    '<h2><span class="fndot" style="background:' + esc(fn.colour || "#546e64") + '; width:14px; height:14px;"></span>' + esc(fn.name) + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' + esc([
+      fmtDate(fn.event_date),
+      (fn.meal_types || []).join(", "),
+      fn.heads ? fn.heads + " heads" : ""
+    ].filter(Boolean).join(" · ")) + "</p>" +
+    (headsBreakdown(fn) ? '<p class="small muted" style="margin-top:-4px;">' + esc(headsBreakdown(fn)) + "</p>" : "") +
+    (fn.notes ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">' + esc(fn.notes) + "</p>" : "") +
+    "<h3>Food set aside for this function</h3>" +
+    (tagged.length
+      ? tagged.map(i =>
+          '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(i.item_name) + "</div>" +
+          '<div class="s">' + esc([i.quantity ? i.quantity + " " + (i.unit || "") : "", storageLabel(i.storage), i.expiry_date ? "use by " + fmtDate(i.expiry_date) : ""].filter(Boolean).join(" · ")) + "</div></div></div>"
+        ).join("")
+      : '<p class="small muted">Nothing allocated yet.</p>') +
+    "<h3>Deliveries tagged</h3>" +
+    (dels.length
+      ? dels.map(d => '<div class="small" style="padding:6px 0; border-bottom:1px solid var(--line);">' +
+          esc((d.supplier || "Delivery") + " · " + fmtDateTime(d.delivered_at)) + "</div>").join("")
+      : '<p class="small muted">None yet.</p>')
+  );
+}
+// ============================================================
+// GROUP BOOKINGS FROM THE CONFIRMATION BUILDER (admin)
+// ============================================================
+function bookingStatusPill(s){
+  return s === "submitted" ? '<span class="pill ok">Submitted</span>'
+    : s === "resubmitted" ? '<span class="pill ok">Resubmitted</span>'
+    : s === "draft" ? '<span class="pill warn">Draft</span>'
+    : '<span class="pill plain">Sent</span>';
+}
+function bookingHeads(b){
+  return [
+    b.heads_infants ? b.heads_infants + " infants" : "",
+    b.heads_kids ? b.heads_kids + " kids" : "",
+    b.heads_teens ? b.heads_teens + " teens" : "",
+    b.heads_adults ? b.heads_adults + " adults" : "",
+    b.heads_day_visitors ? b.heads_day_visitors + " day visitors" : ""
+  ].filter(Boolean).join(" · ");
+}
+function bookingMealTypes(b){
+  const known = {};
+  MEAL_TYPES.forEach(t => known[t.toLowerCase()] = t);
+  const out = [];
+  (b.meals || []).forEach(mm => {
+    let t = (mm.meal_type || String(mm.label || "").split("·")[0] || "").trim();
+    if(!t) return;
+    const mapped = known[t.toLowerCase()] || t;
+    if(!out.includes(mapped)) out.push(mapped);
+  });
+  return out.length ? out : null;
+}
+function bookingNotes(b){
+  const bits = [];
+  if(b.departure_date && b.arrival_date && b.departure_date !== b.arrival_date)
+    bits.push("On site " + fmtDate(b.arrival_date) + " to " + fmtDate(b.departure_date));
+  const dn = (b.dietary || []).length;
+  if(dn) bits.push(dn + " dietary entr" + (dn === 1 ? "y" : "ies") + " on the booking");
+  return bits.length ? bits.join(". ") : null;
+}
+async function renderGroupBookings(){
+  const box = $("gbList");
+  if(!box || state.mode !== "admin") return;
+  try{
+    const from = localISO(new Date(Date.now() - 2 * 86400000));
+    const bookings = await run(
+      sb.from("group_bookings").select("*").eq("has_catering", true)
+        .or("departure_date.gte." + from + ",departure_date.is.null")
+        .order("arrival_date", {ascending:true, nullsFirst:false}).limit(40)
+    );
+    const fns = await run(
+      sb.from("catering_functions").select("id, name, booking_id").not("booking_id", "is", null).limit(200)
+    );
+    if(!bookings.length){
+      box.innerHTML = '<div class="empty">No catering groups yet. They appear here automatically once the confirmation builder bridge is live.</div>';
+      return;
+    }
+    const linked = {};
+    fns.forEach(f => { if(f.booking_id) linked[f.booking_id] = f; });
+    box.innerHTML = bookings.map(b => {
+      const lk = linked[b.id] ? ' <span class="pill" style="background:var(--brand); color:#fff;">Linked</span>' : "";
+      const sub = [
+        [b.arrival_date ? fmtDate(b.arrival_date) : "", b.departure_date ? fmtDate(b.departure_date) : ""].filter(Boolean).join(" → "),
+        b.heads_total ? b.heads_total + " heads" : "",
+        b.rms_ref || ""
+      ].filter(Boolean).join(" · ");
+      return '<div class="rowcard" data-id="' + b.id + '"><div class="l"><div class="t">' + esc(b.group_name || "Group") +
+        '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + bookingStatusPill(b.status) + lk + "</div></div>";
+    }).join("");
+    box.querySelectorAll(".rowcard").forEach(el =>
+      el.addEventListener("click", () => {
+        const b = bookings.find(x => x.id === +el.dataset.id);
+        if(b) bookingModal(b, linked[b.id] || null);
+      })
+    );
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load groups. Has the v2.1 schema been run?</div>';
+  }
+}
+function bookingModal(b, linkedFn){
+  const mealsHtml = (b.meals || []).length
+    ? "<h3>Meal selections</h3>" + (b.meals || []).map(mm => {
+        const subs = mm.subs && Object.keys(mm.subs).length
+          ? Object.keys(mm.subs).map(k => k + ": " + mm.subs[k]).join(", ") : "";
+        return '<div class="xc-row"><span><b>' + esc(mm.label || mm.meal_type || "Meal") + "</b>" +
+          (mm.dish ? " · " + esc(mm.dish) : "") +
+          (subs ? '<br><span class="small muted">' + esc(subs) + "</span>" : "") + "</span>" +
+          '<span class="r">' + esc(mm.time || "") + "</span></div>";
+      }).join("")
+    : "";
+  const dietHtml = (b.dietary || []).length
+    ? "<h3>Dietary</h3>" + (b.dietary || []).map(dd =>
+        '<div class="xc-row"><span>' + esc(Object.values(dd).filter(v => v !== "" && v != null).join(" · ")) + "</span></div>"
+      ).join("")
+    : "";
+  const m = openModal(
+    "<h2>" + esc(b.group_name || "Group") + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' + esc([
+      b.group_type,
+      [b.arrival_date ? fmtDate(b.arrival_date) : "", b.departure_date ? fmtDate(b.departure_date) : ""].filter(Boolean).join(" → "),
+      b.heads_total ? b.heads_total + " heads" : "",
+      b.rms_ref ? "RMS " + b.rms_ref : ""
+    ].filter(Boolean).join(" · ")) + "</p>" +
+    '<div style="margin:0 0 10px;">' + bookingStatusPill(b.status) +
+    (linkedFn ? ' <span class="pill" style="background:var(--brand); color:#fff;">Linked to ' + esc(linkedFn.name) + "</span>" : "") + "</div>" +
+    (bookingHeads(b) ? '<p class="small muted" style="margin-top:-4px;">' + esc(bookingHeads(b)) + "</p>" : "") +
+    (b.organiser_name || b.organiser_email || b.organiser_phone
+      ? '<p class="small muted" style="margin-top:-4px;">Organiser: ' + esc([b.organiser_name, b.organiser_phone, b.organiser_email].filter(Boolean).join(" · ")) + "</p>" : "") +
+    (b.form_link ? '<p class="small" style="margin-top:-4px;"><a href="' + esc(b.form_link) + '" target="_blank" rel="noopener" style="color:var(--brand-dark);">Open the confirmation form</a></p>' : "") +
+    (b.status === "draft" ? '<p class="small" style="background:var(--amber-bg); color:var(--amber); padding:8px 12px; border-radius:9px; font-weight:600;">Still a draft — numbers and meals may change before the group submits.</p>' : "") +
+    mealsHtml + dietHtml +
+    (linkedFn
+      ? '<button class="btn btn-primary" id="gbOpenFn" style="margin-top:14px;">Open the function</button>' +
+        '<button class="btn btn-secondary" id="gbSyncFn" style="width:100%; margin-top:8px;">Update function from this booking</button>'
+      : '<button class="btn btn-primary" id="gbCreate" style="margin-top:14px;">Create the function</button>' +
+        '<button class="btn btn-ghost" id="gbLink" style="width:100%; margin-top:8px;">Link to an existing function</button>')
+  );
+  const cr = m.querySelector("#gbCreate");
+  if(cr) cr.addEventListener("click", async () => {
+    if(!b.arrival_date){ toast("This booking has no arrival date yet", {type:"err"}); return; }
+    try{
+      await run(sb.from("catering_functions").insert({
+        name: b.group_name || "Group",
+        event_date: b.arrival_date,
+        heads: b.heads_total,
+        heads_adult: b.heads_adults,
+        heads_teen: b.heads_teens,
+        heads_child: b.heads_kids,
+        heads_infant: b.heads_infants,
+        meal_types: bookingMealTypes(b),
+        colour: nextColour(),
+        group_ref: b.rms_ref || null,
+        group_link: b.form_link || null,
+        booking_id: b.id,
+        notes: bookingNotes(b)
+      }));
+      closeModal();
+      toast("Function created from " + (b.group_name || "the booking"));
+      renderFunctions(); loadFunctionPicker();
+    }catch(e){}
+  });
+  const lk = m.querySelector("#gbLink");
+  if(lk) lk.addEventListener("click", async () => {
+    let fns = [];
+    try{
+      fns = await run(
+        sb.from("catering_functions").select("id, name, event_date, colour, group_ref, group_link")
+          .gte("event_date", localISO(new Date(Date.now() - 10 * 86400000)))
+          .order("event_date", {ascending:true}).limit(30)
+      );
+    }catch(e){ return; }
+    if(!fns.length){ toast("No upcoming functions to link to", {type:"err"}); return; }
+    const lm = openModal(
+      "<h2>Link " + esc(b.group_name || "the booking") + " to</h2>" +
+      fns.map(f => '<button class="btn fnpick" data-fn="' + f.id + '" style="background:' + esc(f.colour || "#546e64") + ';">' + esc(f.name) + " · " + esc(fmtDate(f.event_date)) + "</button>").join("")
+    );
+    lm.querySelectorAll(".fnpick").forEach(bt =>
+      bt.addEventListener("click", async () => {
+        const f = fns.find(x => x.id === +bt.dataset.fn);
+        try{
+          await run(sb.from("catering_functions").update({
+            booking_id: b.id,
+            group_ref: (f && f.group_ref) ? f.group_ref : (b.rms_ref || null),
+            group_link: (f && f.group_link) ? f.group_link : (b.form_link || null)
+          }).eq("id", +bt.dataset.fn));
+          closeModal();
+          toast("Linked to " + (f ? f.name : "the function"));
+          renderFunctions();
+        }catch(e){}
+      })
+    );
+  });
+  const op = m.querySelector("#gbOpenFn");
+  if(op) op.addEventListener("click", async () => {
+    try{
+      const fn = await run(
+        sb.from("catering_functions")
+          .select("*, deliveries(id, supplier, delivered_at), function_wrapups(*)")
+          .eq("id", linkedFn.id).single()
+      );
+      closeModal();
+      functionDetail(fn);
+    }catch(e){}
+  });
+  const sy = m.querySelector("#gbSyncFn");
+  if(sy) sy.addEventListener("click", async () => {
+    if(!confirm("Update " + linkedFn.name + " with this booking's name, dates, heads and meals?")) return;
+    try{
+      await run(sb.from("catering_functions").update({
+        name: b.group_name || linkedFn.name,
+        event_date: b.arrival_date || undefined,
+        heads: b.heads_total,
+        heads_adult: b.heads_adults,
+        heads_teen: b.heads_teens,
+        heads_child: b.heads_kids,
+        heads_infant: b.heads_infants,
+        meal_types: bookingMealTypes(b),
+        group_ref: b.rms_ref || null,
+        group_link: b.form_link || null
+      }).eq("id", linkedFn.id));
+      closeModal();
+      toast("Function updated from the booking");
+      renderFunctions(); loadFunctionPicker();
+    }catch(e){}
+  });
+}
+// ============================================================
+// ORDERS AND ARRIVALS
+// ============================================================
+const ORDER_SELECT = "*, catering_functions(id, name, event_date, colour), order_items(*)";
+function ordCardHtml(o){
+  const items = o.order_items || [];
+  let when = '<span class="pill plain">No date</span>';
+  if(o.expected_date){
+    const d = daysUntil(o.expected_date);
+    when = d === 0 ? '<span class="pill warn">Today</span>'
+      : d < 0 ? '<span class="pill bad">' + (-d) + "d overdue</span>"
+      : '<span class="pill plain">' + esc(fmtDate(o.expected_date)) + "</span>";
+  }
+  const st = o.status === "received" ? ' <span class="pill ok">Received</span>'
+    : o.status === "cancelled" ? ' <span class="pill plain">Cancelled</span>' : "";
+  const sub = [
+    items.length + " item" + (items.length === 1 ? "" : "s"),
+    o.catering_functions ? "for " + o.catering_functions.name : "General stock",
+    o.notes || ""
+  ].filter(Boolean).join(" · ");
+  return '<div class="rowcard" data-id="' + o.id + '"><div class="l"><div class="t">' + esc(o.supplier || "Order") +
+    '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + when + st + "</div></div>";
+}
+async function renderArrivals(){
+  const box = $("arrList");
+  try{
+    const rows = await run(
+      sb.from("orders").select(ORDER_SELECT).eq("status", "open")
+        .order("expected_date", {ascending:true, nullsFirst:false}).limit(60)
+    );
+    state.orders = rows;
+    const b = $("arrBadge");
+    if(b){ b.style.display = rows.length ? "" : "none"; b.textContent = rows.length; }
+    if(!rows.length){
+      box.innerHTML = '<div class="empty">Nothing waiting to arrive.<br>When the office enters an order it shows up here to tick off.</div>';
+      return;
+    }
+    box.innerHTML = rows.map(o => ordCardHtml(o)).join("");
+    box.querySelectorAll(".rowcard").forEach(el =>
+      el.addEventListener("click", () => {
+        const o = rows.find(x => x.id === +el.dataset.id);
+        if(o) confirmOrderModal(o);
+      })
+    );
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load. Check the connection.</div>';
+  }
+}
+function confirmOrderModal(o){
+  const items = (o.order_items || []).slice();
+  const marks = {};
+  items.forEach(it => marks[it.id] = {mode: "ok", qty: it.quantity});
+  const extras = [];
+  const photos = [];
+  const cats = [...new Set(state.shelf.map(r => r.category))];
+  const catOpts = '<option value="">Choose&hellip;</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
+  const m = openModal(
+    "<h2>" + esc(o.supplier || "Delivery") + " arrived</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' + esc([
+      o.expected_date ? "expected " + fmtDate(o.expected_date) : "",
+      o.catering_functions ? "for " + o.catering_functions.name : "General stock"
+    ].filter(Boolean).join(" · ")) + "</p>" +
+    (o.notes ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">' + esc(o.notes) + "</p>" : "") +
+    "<h3>Tick off the order</h3>" +
+    '<div id="coRows"></div>' +
+    "<h3>Anything extra?</h3>" +
+    '<div id="coExtras"></div>' +
+    '<button class="btn btn-ghost btn-sm" id="coAddExtra" style="width:100%;">+ Something arrived that is not on the order</button>' +
+    '<div id="coExtraForm" style="display:none; background:#efece6; border-radius:12px; padding:12px; margin-top:8px;">' +
+    '<div class="grid2">' +
+    '<div class="field"><label>Item</label><input id="cxName" list="nameList" autocomplete="off"></div>' +
+    '<div class="field"><label>Category</label><select id="cxCat">' + catOpts + "</select></div></div>" +
+    '<div class="grid2">' +
+    '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="cxQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="cxUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
+    '<div class="field"><label>Storage</label><select id="cxStorage"><option value="">Choose&hellip;</option><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select></div></div>' +
+    '<button class="btn btn-secondary btn-sm" id="cxAdd" style="width:100%;">Add it</button>' +
+    "</div>" +
+    "<h3>Details</h3>" +
+    '<div class="field"><label for="coBy">Received by</label><input id="coBy" list="receiverList" placeholder="Your name" autocomplete="off"></div>' +
+    '<div class="field"><label>Docket</label>' +
+    '<button class="btn btn-secondary" id="coAddPhoto" style="width:100%;">&#128247; Add docket photo</button>' +
+    '<input type="file" id="coPhotoInput" accept="image/*,application/pdf" style="display:none;">' +
+    '<div id="coStrip" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div></div>' +
+    '<button class="btn btn-primary" id="coSave">Save arrival</button>'
+  );
+  const expTxt = it => (it.quantity != null ? it.quantity + " " + (it.unit || "") + " expected" : "qty not set") +
+    [it.category, it.storage ? storageLabel(it.storage) : ""].filter(Boolean).map(x => " · " + x).join("");
+  const drawRows = () => {
+    m.querySelector("#coRows").innerHTML = items.length ? items.map(it => {
+      const mk = marks[it.id];
+      return '<div class="ord-row" data-oi="' + it.id + '"><div class="nm">' + esc(it.item_name) +
+        '<div class="sub">' + esc(expTxt(it)) + "</div>" +
+        '<div class="ord-qty" style="display:' + (mk.mode === "part" ? "flex" : "none") + ';">' +
+        '<input type="number" inputmode="decimal" step="any" min="0" class="oq" value="' + (mk.qty ?? "") + '" placeholder="Qty">' +
+        '<span class="small muted">' + esc(it.unit || "") + " actually arrived</span></div></div>" +
+        '<div class="ord-seg">' +
+        '<button data-m="ok" class="' + (mk.mode === "ok" ? "on-ok" : "") + '">All here</button>' +
+        '<button data-m="part" class="' + (mk.mode === "part" ? "on-part" : "") + '">Adjust</button>' +
+        '<button data-m="none" class="' + (mk.mode === "none" ? "on-none" : "") + '">Missing</button>' +
+        "</div></div>";
+    }).join("") : '<p class="small muted">No items were listed on this order. Add what arrived below.</p>';
+    m.querySelectorAll(".ord-row").forEach(row => {
+      const id = +row.dataset.oi;
+      row.querySelectorAll("[data-m]").forEach(b =>
+        b.addEventListener("click", () => { marks[id].mode = b.dataset.m; drawRows(); })
+      );
+      const oq = row.querySelector(".oq");
+      if(oq) oq.addEventListener("input", () => { marks[id].qty = oq.value === "" ? null : +oq.value; });
+    });
+  };
+  const drawExtras = () => {
+    m.querySelector("#coExtras").innerHTML = extras.map((x, i) =>
+      '<div class="draft-item"><div class="n">' + esc(x.name) +
+      '<div class="small muted">' + esc([x.qty ? x.qty + " " + (x.unit || "") : "", x.category, x.storage ? storageLabel(x.storage) : ""].filter(Boolean).join(" · ")) + "</div></div>" +
+      '<button class="x" data-i="' + i + '">&times;</button></div>'
+    ).join("");
+    m.querySelectorAll("#coExtras .x").forEach(b =>
+      b.addEventListener("click", () => { extras.splice(+b.dataset.i, 1); drawExtras(); })
+    );
+  };
+  const drawStrip = () => {
+    m.querySelector("#coStrip").innerHTML = photos.map((p, i) =>
+      '<div style="position:relative;">' +
+      (p.isPdf
+        ? '<div style="width:84px; height:84px; border-radius:10px; border:1px solid var(--line); background:#efece4; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--muted);">PDF</div>'
+        : '<img src="' + p.url + '" style="width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid var(--line);">') +
+      '<button class="coRm" data-i="' + i + '" style="position:absolute; top:-7px; right:-7px; width:26px; height:26px; border-radius:50%; background:var(--red); color:#fff; border:2px solid #fff; font-weight:700; cursor:pointer; line-height:1;">&times;</button></div>'
+    ).join("");
+    m.querySelectorAll(".coRm").forEach(b =>
+      b.addEventListener("click", () => {
+        const p = photos[+b.dataset.i];
+        if(p && p.url) URL.revokeObjectURL(p.url);
+        photos.splice(+b.dataset.i, 1);
+        drawStrip();
+      })
+    );
+  };
+  m.querySelector("#coAddExtra").addEventListener("click", () => {
+    const f = m.querySelector("#coExtraForm");
+    f.style.display = f.style.display === "none" ? "" : "none";
+  });
+  m.querySelector("#cxAdd").addEventListener("click", () => {
+    const name = m.querySelector("#cxName").value.trim();
+    if(!name){ toast("Give the item a name", {type:"err"}); return; }
+    extras.push({
+      name,
+      category: m.querySelector("#cxCat").value || null,
+      storage: m.querySelector("#cxStorage").value || null,
+      qty: m.querySelector("#cxQty").value ? +m.querySelector("#cxQty").value : null,
+      unit: m.querySelector("#cxUnit").value.trim() || null
+    });
+    ["cxName","cxQty","cxUnit"].forEach(id => m.querySelector("#" + id).value = "");
+    drawExtras();
+  });
+  m.querySelector("#coAddPhoto").addEventListener("click", () => m.querySelector("#coPhotoInput").click());
+  m.querySelector("#coPhotoInput").addEventListener("change", async e => {
+    const f = e.target.files[0];
+    if(f){
+      if(f.type === "application/pdf"){
+        if(f.size > 8 * 1024 * 1024) toast("Keep PDFs under 8 MB", {type:"err"});
+        else photos.push({blob: f, url: "", isPdf: true});
+      }else if(f.type && f.type.startsWith("image/")){
+        const blob = await compressImage(f);
+        photos.push({blob, url: URL.createObjectURL(blob), isPdf: false});
+      }else{
+        toast("Only photos and PDFs can be attached", {type:"err"});
+      }
+      drawStrip();
+    }
+    e.target.value = "";
+  });
+  m.querySelector("#coSave").addEventListener("click", async () => {
+    if(state.busy) return;
+    for(const it of items){
+      const mk = marks[it.id];
+      if(mk.mode === "part" && !(mk.qty > 0)){ toast("Enter what actually arrived for " + it.item_name, {type:"err"}); return; }
+    }
+    if(photos.length === 0 && !confirm("Save without a docket photo?")) return;
+    state.busy = true;
+    const btn = m.querySelector("#coSave");
+    btn.disabled = true; btn.textContent = "Saving…";
+    try{
+      const shorts = [];
+      items.forEach(it => {
+        const mk = marks[it.id];
+        if(mk.mode === "none") shorts.push(it.item_name + (it.quantity != null ? " (" + it.quantity + " " + (it.unit || "") + ")" : "") + " missing");
+        else if(mk.mode === "part" && it.quantity != null && mk.qty < it.quantity) shorts.push(it.item_name + " short: " + mk.qty + " of " + it.quantity + " " + (it.unit || ""));
+      });
+      const del = await run(sb.from("deliveries").insert({
+        supplier: o.supplier,
+        order_id: o.id,
+        function_id: o.function_id,
+        received_by: m.querySelector("#coBy").value.trim() || null,
+        received_in_full: shorts.length === 0,
+        issue_notes: shorts.length ? shorts.join(". ") : null
+      }).select().single());
+      let photoFail = 0;
+      const photoRows = [];
+      for(let i = 0; i < photos.length; i++){
+        const p = photos[i];
+        const path = del.id + "/" + Date.now() + "_" + i + (p.isPdf ? ".pdf" : ".jpg");
+        const { error } = await sb.storage.from("dockets").upload(path, p.blob, {contentType: p.isPdf ? "application/pdf" : "image/jpeg"});
+        if(error){ photoFail++; console.error(error); } else photoRows.push({delivery_id: del.id, path});
+      }
+      if(photoRows.length) await run(sb.from("delivery_photos").insert(photoRows));
+      const autoExp = (cat, st) => {
+        if(!cat || !st) return null;
+        const r = state.shelf.find(x => x.category === cat && x.storage === st);
+        return r ? localISO(new Date(Date.now() + r.days * 86400000)) : null;
+      };
+      const rows = [];
+      items.forEach(it => {
+        const mk = marks[it.id];
+        const base = {
+          delivery_id: del.id,
+          item_name: it.item_name,
+          category: it.category,
+          storage: it.storage,
+          unit: it.unit,
+          expiry_date: autoExp(it.category, it.storage),
+          function_id: o.function_id
+        };
+        if(mk.mode === "none"){
+          rows.push({...base, quantity: it.quantity, status: "not_received", short_or_wrong: true, status_changed_at: new Date().toISOString()});
+          return;
+        }
+        const got = mk.mode === "part" ? mk.qty : it.quantity;
+        rows.push({...base, quantity: got});
+        if(mk.mode === "part" && it.quantity != null && mk.qty < it.quantity){
+          rows.push({...base, quantity: Math.round((it.quantity - mk.qty) * 100) / 100, status: "not_received", short_or_wrong: true, status_changed_at: new Date().toISOString()});
+        }
+      });
+      extras.forEach(x => {
+        rows.push({
+          delivery_id: del.id,
+          item_name: x.name,
+          category: x.category,
+          storage: x.storage,
+          quantity: x.qty,
+          unit: x.unit,
+          expiry_date: autoExp(x.category, x.storage),
+          function_id: o.function_id
+        });
+      });
+      if(rows.length) await run(sb.from("stock_items").insert(rows));
+      await run(sb.from("orders").update({status: "received", received_at: new Date().toISOString()}).eq("id", o.id));
+      photos.forEach(p => { if(p.url) URL.revokeObjectURL(p.url); });
+      closeModal();
+      toast(photoFail ? "Arrival saved but " + photoFail + " photo(s) failed to upload"
+        : (shorts.length ? "Saved, " + shorts.length + " short item" + (shorts.length > 1 ? "s" : "") + " flagged" : "Arrival saved, all in"));
+      refreshCurrentTab();
+      updateArrBadge();
+    }catch(e){
+    }finally{
+      state.busy = false;
+      btn.disabled = false; btn.textContent = "Save arrival";
+    }
+  });
+  drawRows(); drawExtras();
+}
+async function renderOrders(){
+  const bo = $("ordOpen"), bd = $("ordDone");
+  await loadFunctionPicker();
+  try{
+    const rows = await run(
+      sb.from("orders").select(ORDER_SELECT)
+        .order("created_at", {ascending:false}).limit(80)
+    );
+    const open = rows.filter(r => r.status === "open")
+      .sort((a, b) => (a.expected_date || "9999").localeCompare(b.expected_date || "9999"));
+    const done = rows.filter(r => r.status !== "open").slice(0, 15);
+    bo.innerHTML = open.length ? open.map(o => ordCardHtml(o)).join("")
+      : '<div class="empty">No orders waiting. Add one and the kitchen sees it on their Arrivals tab.</div>';
+    bd.innerHTML = done.length ? done.map(o => ordCardHtml(o)).join("") : '<div class="empty">Nothing yet.</div>';
+    document.querySelectorAll("#ordOpen .rowcard, #ordDone .rowcard").forEach(el =>
+      el.addEventListener("click", () => {
+        const o = rows.find(x => x.id === +el.dataset.id);
+        if(!o) return;
+        if(o.status === "open") orderForm(o);
+        else orderViewModal(o);
+      })
+    );
+  }catch(e){
+    bo.innerHTML = '<div class="empty">Could not load orders.</div>';
+    bd.innerHTML = "";
+  }
+}
+function orderForm(o){
+  const draft = o ? (o.order_items || []).map(it => ({name: it.item_name, category: it.category, storage: it.storage, qty: it.quantity, unit: it.unit})) : [];
+  const cats = [...new Set(state.shelf.map(r => r.category))];
+  const catOpts = '<option value="">Choose&hellip;</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
+  const m = openModal(
+    "<h2>" + (o ? "Edit order" : "New order") + "</h2>" +
+    '<div class="grid2">' +
+    '<div class="field"><label for="omSupplier">Supplier</label><input id="omSupplier" list="supplierList" value="' + esc(o ? o.supplier || "" : "") + '" autocomplete="off"></div>' +
+    '<div class="field"><label for="omDate">Expected on</label><input type="date" id="omDate" value="' + esc(o ? o.expected_date || "" : "") + '"></div></div>' +
+    '<div class="field"><label for="omFn">This order is for</label><select id="omFn"><option value="">General stock</option>' +
+    state.functions.map(f => fnOptionHtml(f, o ? o.function_id : null)).join("") + "</select></div>" +
+    '<div class="field"><label for="omNotes">Note for the kitchen</label><textarea id="omNotes" rows="2" placeholder="e.g. comes on the afternoon truck">' + esc(o ? o.notes || "" : "") + "</textarea></div>" +
+    "<h3>Items on the order</h3>" +
+    '<div id="omList"></div>' +
+    '<div class="grid2" style="margin-top:10px;">' +
+    '<div class="field"><label>Item</label><input id="omIName" list="nameList" autocomplete="off"></div>' +
+    '<div class="field"><label>Category</label><select id="omICat">' + catOpts + "</select></div></div>" +
+    '<div class="grid2">' +
+    '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="omIQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="omIUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
+    '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select></div></div>' +
+    '<button class="btn btn-ghost" id="omAddItem" style="width:100%;">+ Add item</button>' +
+    '<button class="btn btn-primary" id="omSave" style="margin-top:14px;">' + (o ? "Save order" : "Add order") + "</button>" +
+    (o ? '<div style="display:flex; gap:8px; margin-top:8px;">' +
+      '<button class="btn btn-secondary" id="omReceive" style="flex:1;">Receive it now</button>' +
+      '<button class="btn btn-danger" id="omCancel" style="flex:1;">Cancel order</button></div>' : "")
+  );
+  paintSelect(m.querySelector("#omFn"), () => state.functions);
+  const drawItems = () => {
+    m.querySelector("#omList").innerHTML = draft.length ? draft.map((x, i) =>
+      '<div class="draft-item"><div class="n">' + esc(x.name) +
+      '<div class="small muted">' + esc([x.qty ? x.qty + " " + (x.unit || "") : "", x.category, x.storage ? storageLabel(x.storage) : ""].filter(Boolean).join(" · ")) + "</div></div>" +
+      '<button class="x" data-i="' + i + '">&times;</button></div>'
+    ).join("") : '<p class="small muted" style="margin:0;">Nothing on it yet.</p>';
+    m.querySelectorAll("#omList .x").forEach(b =>
+      b.addEventListener("click", () => { draft.splice(+b.dataset.i, 1); drawItems(); })
+    );
+  };
+  m.querySelector("#omAddItem").addEventListener("click", () => {
+    const name = m.querySelector("#omIName").value.trim();
+    if(!name){ toast("Give the item a name", {type:"err"}); return; }
+    draft.push({
+      name,
+      category: m.querySelector("#omICat").value || null,
+      storage: m.querySelector("#omIStorage").value || null,
+      qty: m.querySelector("#omIQty").value ? +m.querySelector("#omIQty").value : null,
+      unit: m.querySelector("#omIUnit").value.trim() || null
+    });
+    ["omIName","omIQty","omIUnit"].forEach(id => m.querySelector("#" + id).value = "");
+    drawItems();
+    m.querySelector("#omIName").focus();
+  });
+  m.querySelector("#omSave").addEventListener("click", async () => {
+    const supplier = m.querySelector("#omSupplier").value.trim();
+    if(!supplier){ toast("Enter the supplier", {type:"err"}); return; }
+    const payload = {
+      supplier,
+      expected_date: m.querySelector("#omDate").value || null,
+      function_id: m.querySelector("#omFn").value ? +m.querySelector("#omFn").value : null,
+      notes: m.querySelector("#omNotes").value.trim() || null
+    };
+    try{
+      let oid;
+      if(o){
+        await run(sb.from("orders").update(payload).eq("id", o.id));
+        oid = o.id;
+        await run(sb.from("order_items").delete().eq("order_id", oid));
+      }else{
+        const ins = await run(sb.from("orders").insert(payload).select().single());
+        oid = ins.id;
+      }
+      if(draft.length){
+        await run(sb.from("order_items").insert(draft.map(x => ({
+          order_id: oid, item_name: x.name, category: x.category, storage: x.storage, quantity: x.qty, unit: x.unit
+        }))));
+      }
+      closeModal(); toast(o ? "Order saved" : "Order added, the kitchen can see it now");
+      renderOrders(); updateArrBadge();
+    }catch(e){}
+  });
+  const rc = m.querySelector("#omReceive");
+  if(rc) rc.addEventListener("click", async () => {
+    try{
+      const fresh = await run(sb.from("orders").select(ORDER_SELECT).eq("id", o.id).single());
+      closeModal();
+      confirmOrderModal(fresh);
+    }catch(e){}
+  });
+  const cc = m.querySelector("#omCancel");
+  if(cc) cc.addEventListener("click", async () => {
+    if(!confirm("Cancel this order? The kitchen stops seeing it on Arrivals.")) return;
+    try{
+      await run(sb.from("orders").update({status: "cancelled"}).eq("id", o.id));
+      closeModal(); toast("Order cancelled"); renderOrders(); updateArrBadge();
+    }catch(e){}
+  });
+  drawItems();
+}
+function orderViewModal(o){
+  const items = o.order_items || [];
+  const m = openModal(
+    "<h2>" + esc(o.supplier || "Order") + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' + esc([
+      o.status === "received" ? "Received " + fmtDateTime(o.received_at) : "Cancelled",
+      o.expected_date ? "was expected " + fmtDate(o.expected_date) : "",
+      o.catering_functions ? "for " + o.catering_functions.name : ""
+    ].filter(Boolean).join(" · ")) + "</p>" +
+    (items.length ? "<h3>Items ordered</h3>" + items.map(it =>
+      '<div class="small" style="padding:6px 0; border-bottom:1px solid var(--line);">' +
+      esc([it.item_name, it.quantity != null ? it.quantity + " " + (it.unit || "") : ""].filter(Boolean).join(" · ")) + "</div>").join("") : "") +
+    (o.status === "received"
+      ? '<p class="small muted" style="margin-top:12px;">The received delivery, its docket and any shorts are in the Deliveries tab.</p>'
+      : '<button class="btn btn-secondary" id="ovReopen" style="width:100%; margin-top:14px;">Reopen this order</button>')
+  );
+  const rb = m.querySelector("#ovReopen");
+  if(rb) rb.addEventListener("click", async () => {
+    try{
+      await run(sb.from("orders").update({status: "open"}).eq("id", o.id));
+      closeModal(); toast("Order reopened"); renderOrders(); updateArrBadge();
+    }catch(e){}
+  });
+}
+// APP-JS-PART2-END
+// ============================================================
+// DELIVERIES
+// ============================================================
+async function renderDeliveries(){
+  const box = $("delList");
+  try{
+    const rows = await run(
+      sb.from("deliveries")
+        .select("*, catering_functions(name), orders(id, expected_date), delivery_photos(id, path), stock_items(id, item_name, category, quantity, unit, storage, status)")
+        .order("delivered_at", {ascending:false}).limit(40)
+    );
+    if(!rows.length){
+      box.innerHTML = '<div class="empty">No deliveries yet. Log the first one from the Receive tab.</div>';
+      return;
+    }
+    box.innerHTML = rows.map(d => {
+      const sub = [
+        fmtDateTime(d.delivered_at),
+        d.invoice_number ? "inv " + d.invoice_number : "",
+        d.catering_functions ? "for " + d.catering_functions.name : "General stock",
+        (d.delivery_photos || []).length + " photo" + ((d.delivery_photos || []).length === 1 ? "" : "s"),
+        (d.stock_items || []).length ? (d.stock_items || []).length + " items" : ""
+      ].filter(Boolean).join(" \u00b7 ");
+      const badge = d.received_in_full ? '<span class="pill ok">Full</span>' : '<span class="pill bad">Issue</span>';
+      return '<div class="rowcard" data-id="' + d.id + '"><div class="l"><div class="t">' + esc(d.supplier || "Delivery") +
+        '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + badge + "</div></div>";
+    }).join("");
+    box.querySelectorAll(".rowcard").forEach(el =>
+      el.addEventListener("click", () => {
+        const d = rows.find(x => x.id === +el.dataset.id);
+        if(d) deliveryModal(d);
+      })
+    );
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load deliveries.</div>';
+  }
+}
+async function deliveryModal(d){
+  let fns = [];
+  try{
+    fns = await run(
+      sb.from("catering_functions").select("id, name, event_date, colour")
+        .gte("event_date", localISO(new Date(Date.now() - 10 * 86400000)))
+        .order("event_date", {ascending:true}).limit(30)
+    );
+  }catch(e){}
+  const photos = (d.delivery_photos || []).map(p =>
+    p.path.endsWith(".pdf")
+      ? '<a class="linkline" href="' + pubUrl(p.path) + '" target="_blank" rel="noopener">Open PDF docket</a>'
+      : '<img class="docket" src="' + pubUrl(p.path) + '" alt="Docket photo">'
+  ).join("");
+  const stockItems = d.stock_items || [];
+  const selectable = stockItems.filter(x => x.status === "in_stock").length;
+  const itemsHtml = stockItems.length
+    ? "<h3>Items</h3>" +
+      (selectable && fns.length
+        ? '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
+          '<select id="dvFn" style="flex:2;"><option value="">General stock</option>' +
+          '<option value="NR" style="background:var(--red); color:#fff;">NOT RECEIVED</option>' +
+          fns.map(f => fnOptionHtml(f, null)).join("") +
+          "</select>" +
+          '<button class="btn btn-secondary btn-sm" id="dvApply" style="flex:1;">Allocate ticked</button></div>' +
+          '<label class="small" style="display:flex; align-items:center; gap:8px; margin-bottom:6px; font-weight:600; cursor:pointer;"><input type="checkbox" id="dvAll" style="width:20px; height:20px;"> Select all</label>'
+        : "") +
+      stockItems.map(i =>
+        '<div class="small dvrow" data-id="' + i.id + '" style="padding:8px 6px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px;' + (i.status === "in_stock" ? " cursor:pointer;" : "") + '">' +
+        (i.status === "in_stock" ? '<input type="checkbox" class="dvchk" data-id="' + i.id + '" style="width:20px; height:20px; flex:none;">' : "") +
+        "<span>" + esc([
+          i.item_name,
+          i.quantity ? i.quantity + " " + (i.unit || "") : "",
+          storageLabel(i.storage),
+          i.status === "not_received" ? "not received" : (i.status !== "in_stock" ? i.status : "")
+        ].filter(Boolean).join(" \u00b7 ")) + "</span></div>"
+      ).join("")
+    : "";
+  const m = openModal(
+    "<h2>" + esc(d.supplier || "Delivery") + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' +
+    esc([fmtDateTime(d.delivered_at),
+         d.invoice_number ? "inv " + d.invoice_number : "",
+         d.catering_functions ? "for " + d.catering_functions.name : "General stock",
+         d.received_by ? "received by " + d.received_by : "",
+         d.orders ? "ticked off against an order" + (d.orders.expected_date ? " expected " + fmtDate(d.orders.expected_date) : "") : ""].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+    (d.received_in_full
+      ? '<span class="pill ok">Received in full</span>'
+      : '<span class="pill bad">Issue flagged</span>' +
+        (d.issue_notes ? '<p class="small" style="background:var(--red-bg); color:var(--red); padding:9px 12px; border-radius:9px; font-weight:600;">' + esc(d.issue_notes) + "</p>" : "")) +
+    (photos ? "<h3>Docket</h3>" + photos : '<p class="small muted" style="margin-top:12px;">No docket photo.</p>') +
+    itemsHtml +
+    '<div id="fiWrap" style="margin-top:16px;">' +
+    (d.received_in_full
+      ? '<button class="btn btn-ghost" id="btnFlagIssue" style="width:100%;">Flag an issue with this delivery</button>'
+      : '<button class="btn btn-ghost" id="btnFlagIssue" style="width:100%;">Update issue notes</button>') +
+    "</div>" +
+    '<button class="btn btn-danger" id="btnDelDelete" style="width:100%; margin-top:10px;">Delete this delivery</button>'
+  );
+  m.querySelectorAll(".dvrow").forEach(r => {
+    const chk = r.querySelector(".dvchk");
+    if(!chk) return;
+    r.addEventListener("click", e => {
+      if(e.target !== chk) chk.checked = !chk.checked;
+      r.classList.toggle("dvsel", chk.checked);
+    });
+  });
+  const da = m.querySelector("#dvAll");
+  if(da) da.addEventListener("change", () => {
+    m.querySelectorAll(".dvchk").forEach(c => {
+      c.checked = da.checked;
+      c.closest(".dvrow").classList.toggle("dvsel", da.checked);
+    });
+  });
+  const dvSel = m.querySelector("#dvFn");
+  if(dvSel) paintSelect(dvSel, () => fns);
+  const ap = m.querySelector("#dvApply");
+  if(ap) ap.addEventListener("click", async () => {
+    const ids = [...m.querySelectorAll(".dvchk:checked")].map(c => +c.dataset.id);
+    if(!ids.length){ toast("Tick some items first", {type:"err"}); return; }
+    const val = m.querySelector("#dvFn").value;
+    try{
+      if(val === "NR"){
+        await run(sb.from("stock_items").update({status:"not_received", short_or_wrong:true, status_changed_at: new Date().toISOString()}).in("id", ids));
+        await run(sb.from("deliveries").update({received_in_full:false}).eq("id", d.id));
+        closeModal();
+        toast(ids.length + " item" + (ids.length > 1 ? "s" : "") + " marked as not received");
+      }else{
+        const fnId = val ? +val : null;
+        const fn = fnId ? fns.find(f => f.id === fnId) : null;
+        await run(sb.from("stock_items").update({function_id: fnId}).in("id", ids));
+        closeModal();
+        toast(ids.length + " item" + (ids.length > 1 ? "s" : "") + " allocated to " + (fn ? fn.name : "general stock"));
+      }
+      renderDeliveries();
+    }catch(e){}
+  });
+  m.querySelector("#btnDelDelete").addEventListener("click", async () => {
+    const n = stockItems.length;
+    if(!confirm("Delete this delivery" + (n ? " and its " + n + " item" + (n > 1 ? "s" : "") : "") + "? This cannot be undone.")) return;
+    if(!confirm("Really delete? The docket and items disappear from every screen, including history.")) return;
+    try{
+      const paths = (d.delivery_photos || []).map(p => p.path);
+      if(paths.length){ try{ await sb.storage.from("dockets").remove(paths); }catch(_){} }
+      await run(sb.from("deliveries").delete().eq("id", d.id));
+      closeModal(); toast("Delivery deleted"); renderDeliveries();
+    }catch(e){}
+  });
+  m.querySelector("#btnFlagIssue").addEventListener("click", () => {
+    m.querySelector("#fiWrap").innerHTML =
+      '<div class="field"><label for="fiNotes">What was short or wrong?</label>' +
+      '<textarea id="fiNotes" rows="2">' + esc(d.issue_notes || "") + "</textarea></div>" +
+      '<button class="btn btn-primary" id="btnSaveIssue">Save issue</button>';
+    m.querySelector("#btnSaveIssue").addEventListener("click", async () => {
+      try{
+        await run(sb.from("deliveries").update({
+          received_in_full: false,
+          issue_notes: m.querySelector("#fiNotes").value.trim() || null
+        }).eq("id", d.id));
+        closeModal(); toast("Issue saved"); renderDeliveries();
+      }catch(e){}
+    });
+  });
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+async function renderSettings(){
+  renderHints();
+  const box = $("slBody");
+  try{
+    await loadShelf();
+    if(!state.shelf.length){
+      box.innerHTML = '<div class="empty">No shelf life defaults found. Run the schema SQL to seed them, or add categories below.</div>';
+      return;
+    }
+    box.innerHTML = state.shelf.map(r =>
+      '<div class="sl-row"><div class="c">' + esc(r.category) + "</div>" +
+      '<span class="pill ' + esc(r.storage) + ' st">' + storageLabel(r.storage) + "</span>" +
+      '<input type="number" inputmode="numeric" min="1" value="' + r.days + '" data-id="' + r.id + '" data-orig="' + r.days + '">' +
+      '<button class="del" data-del="' + r.id + '" title="Delete">&times;</button></div>'
+    ).join("");
+    box.querySelectorAll("input").forEach(inp =>
+      inp.addEventListener("input", () => inp.classList.toggle("dirty", inp.value !== inp.dataset.orig))
+    );
+    box.querySelectorAll("[data-del]").forEach(b =>
+      b.addEventListener("click", async () => {
+        if(!confirm("Delete this shelf life default?")) return;
+        try{
+          await run(sb.from("shelf_life_defaults").delete().eq("id", +b.dataset.del));
+          toast("Deleted"); renderSettings();
+        }catch(e){}
+      })
+    );
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load shelf life defaults.</div>';
+  }
+}
+async function saveShelfChanges(){
+  const dirty = [...document.querySelectorAll("#slBody input.dirty")];
+  if(!dirty.length){ toast("No changes to save"); return; }
+  try{
+    for(const inp of dirty){
+      const v = +inp.value;
+      if(!v || v < 1) continue;
+      await run(sb.from("shelf_life_defaults").update({days: v}).eq("id", +inp.dataset.id));
+    }
+    toast("Shelf life defaults saved");
+    renderSettings();
+  }catch(e){}
+}
+async function addShelfRow(){
+  const cat = $("nsCategory").value.trim();
+  const days = +$("nsDays").value;
+  if(!cat || !days){ toast("Category and days are needed", {type:"err"}); return; }
+  try{
+    await run(sb.from("shelf_life_defaults").insert({category: cat, storage: $("nsStorage").value, days}));
+    $("nsCategory").value = ""; $("nsDays").value = "";
+    toast("Added"); renderSettings();
+  }catch(e){}
+}
+
+async function renderHints(){
+  const box = $("hintsBody");
+  try{
+    const rows = await run(sb.from("supplier_hints").select("*").order("supplier"));
+    if(!rows.length){
+      box.innerHTML = '<div class="empty">No hints yet. Add one when a supplier\'s docket reads badly.</div>';
+      return;
+    }
+    box.innerHTML = rows.map(r =>
+      '<div class="rowcard" data-id="' + r.id + '"><div class="l"><div class="t">' + esc(r.supplier) + "</div>" +
+      '<div class="s">' + esc(r.hints.length > 90 ? r.hints.slice(0, 90) + "\u2026" : r.hints) + "</div></div></div>"
+    ).join("");
+    box.querySelectorAll(".rowcard").forEach(el =>
+      el.addEventListener("click", () => {
+        const r = rows.find(x => x.id === +el.dataset.id);
+        if(r) hintForm(r);
+      })
+    );
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load hints.</div>';
+  }
+}
+function hintForm(row){
+  const m = openModal(
+    "<h2>" + (row ? "Edit supplier hint" : "Add a supplier hint") + "</h2>" +
+    '<p class="small muted">Describe how this supplier\'s docket is laid out: where the real items sit, what the section headings mean and what to ignore.</p>' +
+    '<div class="field"><label for="hSupplier">Supplier</label><input id="hSupplier" list="supplierList" value="' + esc(row ? row.supplier : "") + '"></div>' +
+    '<div class="field"><label for="hHints">Hint</label><textarea id="hHints" rows="7" placeholder="e.g. Real items always have a numeric code in the left column. Section headers name the storage area. Ignore the summary and carton count blocks.">' + esc(row ? row.hints : "") + "</textarea></div>" +
+    '<button class="btn btn-primary" id="btnHintSave">' + (row ? "Save changes" : "Add hint") + "</button>" +
+    (row ? '<button class="btn btn-danger" id="btnHintDelete" style="width:100%; margin-top:8px;">Delete hint</button>' : "")
+  );
+  m.querySelector("#btnHintSave").addEventListener("click", async () => {
+    const supplier = m.querySelector("#hSupplier").value.trim();
+    const hints = m.querySelector("#hHints").value.trim();
+    if(!supplier || !hints){ toast("Supplier and hint are both needed", {type:"err"}); return; }
+    try{
+      if(row) await run(sb.from("supplier_hints").update({supplier, hints}).eq("id", row.id));
+      else await run(sb.from("supplier_hints").upsert({supplier, hints}, {onConflict:"supplier"}));
+      closeModal(); toast("Hint saved"); renderHints();
+    }catch(e){}
+  });
+  const db = m.querySelector("#btnHintDelete");
+  if(db) db.addEventListener("click", async () => {
+    if(!confirm("Delete the hint for " + row.supplier + "?")) return;
+    try{
+      await run(sb.from("supplier_hints").delete().eq("id", row.id));
+      closeModal(); toast("Deleted"); renderHints();
+    }catch(e){}
+  });
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function historyModal(){
+  let rows = [];
+  try{
+    rows = await run(
+      sb.from("stock_items")
+        .select("*, deliveries(supplier), catering_functions(name)")
+        .in("status", ["used","binned","not_received"])
+        .order("status_changed_at", {ascending:false, nullsFirst:false})
+        .limit(120)
+    );
+  }catch(e){ return; }
+  let filter = "all";
+  const m = openModal(
+    "<h2>Item history</h2>" +
+    '<div class="seg" id="histSeg" style="margin:10px 0 4px;">' +
+    '<button data-v="all" class="on">All</button>' +
+    '<button data-v="used">Used</button>' +
+    '<button data-v="binned">Binned</button>' +
+    '<button data-v="not_received">Not received</button></div>' +
+    '<div id="histList"></div>'
+  );
+  const draw = () => {
+    const list = rows.filter(r => filter === "all" || r.status === filter);
+    if(!list.length){
+      m.querySelector("#histList").innerHTML = '<div class="empty">Nothing here yet. Items land here when they are marked used, binned or not received.</div>';
+      return;
+    }
+    let html = "", lastDay = "";
+    list.forEach(r => {
+      const day = r.status_changed_at
+        ? new Date(r.status_changed_at).toLocaleDateString("en-AU", {weekday:"short", day:"numeric", month:"short"})
+        : "Date unknown";
+      if(day !== lastDay){ html += '<div class="uf-group">' + esc(day) + "</div>"; lastDay = day; }
+      const meta = [
+        r.quantity ? r.quantity + " " + (r.unit || "") : "",
+        r.category,
+        r.deliveries ? r.deliveries.supplier : "",
+        r.catering_functions ? "for " + r.catering_functions.name : "",
+        r.status_note ? "\u201c" + r.status_note + "\u201d" : ""
+      ].filter(Boolean).join(" \u00b7 ");
+      const pill = r.status === "binned" ? '<span class="pill bad">Binned</span>'
+        : r.status === "not_received" ? '<span class="pill bad">Not received</span>'
+        : '<span class="pill ok">Used</span>';
+      html += '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(r.item_name) +
+        " " + pill + "</div>" +
+        '<div class="s">' + esc(meta) + "</div></div>" +
+        '<button class="btn btn-ghost btn-sm" data-res="' + r.id + '">Restore</button></div>';
+    });
+    m.querySelector("#histList").innerHTML = html;
+    m.querySelectorAll("[data-res]").forEach(b =>
+      b.addEventListener("click", async () => {
+        try{
+          await run(sb.from("stock_items").update({status:"in_stock", status_changed_at:null, short_or_wrong:false}).eq("id", +b.dataset.res));
+          rows = rows.filter(x => x.id !== +b.dataset.res);
+          toast("Restored to stock");
+          draw(); refreshCurrentTab();
+        }catch(e){}
+      })
+    );
+  };
+  m.querySelectorAll("#histSeg button").forEach(b =>
+    b.addEventListener("click", () => {
+      m.querySelectorAll("#histSeg button").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      filter = b.dataset.v;
+      draw();
+    })
+  );
+  draw();
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+async function checkInvoiceDup(){
+  const v = $("rInvoice").value.trim();
+  const w = $("invWarn");
+  w.textContent = "";
+  state.invDup = null;
+  if(!v) return;
+  try{
+    const rows = await run(sb.from("deliveries").select("id, supplier, delivered_at, invoice_number").ilike("invoice_number", v).limit(3));
+    if(rows.length){
+      state.invDup = rows[0];
+      w.textContent = "Already entered: " + (rows[0].supplier || "delivery") + ", " + fmtDateTime(rows[0].delivered_at);
+    }
+  }catch(e){}
+}
+async function addDocketFile(f){
+  if(!f) return;
+  if(f.type === "application/pdf"){
+    if(f.size > 8 * 1024 * 1024){ toast("Keep PDFs under 8 MB", {type:"err"}); return; }
+    state.draftPhotos.push({blob: f, url: "", isPdf: true});
+  }else if(f.type && f.type.startsWith("image/")){
+    const blob = await compressImage(f);
+    state.draftPhotos.push({blob, url: URL.createObjectURL(blob), isPdf: false});
+  }else{
+    toast("Only photos and PDFs can be attached", {type:"err"});
+    return;
+  }
+  renderPhotoStrip();
+}
+function bindStatic(){
+  document.querySelectorAll(".tabbar button").forEach(b =>
+    b.addEventListener("click", () => showTab(b.dataset.tab))
+  );
+  $("btnMode").addEventListener("click", () => {
+    if(state.mode === "admin") setMode("kitchen");
+    else askAdminPin();
+  });
+  $("btnGoReceive").addEventListener("click", () => {
+    if(state.mode === "kitchen"){ showTab("arrivals"); return; }
+    state.dvPane = "receive"; showTab("deliveries");
+  });
+  $("btnBackArr").addEventListener("click", () => showTab("arrivals"));
+  $("btnNoOrder").addEventListener("click", () => { state.dvPane = "receive"; showTab("deliveries"); });
+  $("btnAddOrder").addEventListener("click", () => orderForm(null));
+  document.querySelectorAll(".dl-side button").forEach(b =>
+    b.addEventListener("click", () => showDeliveryPane(b.dataset.dv))
+  );
+  $("btnGoUnalloc").addEventListener("click", () => showTab("unalloc"));
+  wireSeg($("segFull"), "yes", v => {
+    state.fullState = v;
+    $("rIssueWrap").style.display = v === "issue" ? "block" : "none";
+    $("segFull").querySelector('[data-v="issue"]').classList.toggle("warn", v === "issue");
+  });
+  wireSeg($("segStorage"), "", v => { state.itemStorage = v; autoExpiry(); });
+  $("iCategory").addEventListener("change", autoExpiry);
+  $("rFunction").addEventListener("change", renderDraftItems);
+  $("btnAddPhoto").addEventListener("click", () => $("photoInput").click());
+  $("photoInput").addEventListener("change", async e => {
+    await addDocketFile(e.target.files[0]);
+    e.target.value = "";
+  });
+  $("btnReadDocket").addEventListener("click", readDocket);
+  $("btnAddItem").addEventListener("click", addItemFromForm);
+  $("btnSaveDelivery").addEventListener("click", saveDelivery);
+  $("btnAddFunction").addEventListener("click", () => functionForm(null));
+  let invT;
+  $("rInvoice").addEventListener("input", () => {
+    clearTimeout(invT);
+    invT = setTimeout(checkInvoiceDup, 400);
+  });
+  let ufSearchT;
+  $("ufSearch").addEventListener("input", () => {
+    clearTimeout(ufSearchT);
+    ufSearchT = setTimeout(refreshCurrentTab, 300);
+  });
+  $("btnUfSelect").addEventListener("click", () => setSelectMode(!state.selectMode));
+  $("btnUaSelect").addEventListener("click", () => setSelectMode(!state.selectMode));
+  $("bulkAlloc").addEventListener("click", () => {
+    if(!state.selected.size){ toast("Tap items to select them first", {type:"err"}); return; }
+    pickFunction(async (fnId, fn) => {
+      const ids = [...state.selected];
+      if(fnId === "NR"){
+        if(!confirm("Mark " + ids.length + " item" + (ids.length > 1 ? "s" : "") + " as not received? Their deliveries get flagged.")) return;
+        try{
+          await run(sb.from("stock_items").update({status:"not_received", short_or_wrong:true, status_changed_at: new Date().toISOString()}).in("id", ids));
+          const delIds = [...new Set(state.ufItems.filter(x => ids.includes(x.id) && x.delivery_id).map(x => x.delivery_id))];
+          if(delIds.length) await run(sb.from("deliveries").update({received_in_full:false}).in("id", delIds));
+          toast(ids.length + " marked as not received");
+          setSelectMode(false);
+        }catch(e){}
+        return;
+      }
+      if(fn){
+        const warn = ids.filter(id => {
+          const it = state.ufItems.find(x => x.id === id);
+          return it && it.expiry_date && it.expiry_date < fn.event_date;
+        }).length;
+        if(warn && !confirm(warn + " of these expire before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+      }
+      try{
+        await run(sb.from("stock_items").update({function_id: fnId}).in("id", ids));
+        toast(ids.length + " item" + (ids.length > 1 ? "s" : "") + " allocated to " + (fn ? fn.name : "general stock"));
+        setSelectMode(false);
+      }catch(e){}
+    });
+  });
+  const bulkStatus = async (status, label) => {
+    if(!state.selected.size){ toast("Tap items to select them first", {type:"err"}); return; }
+    const ids = [...state.selected];
+    if(!confirm("Mark " + ids.length + " item" + (ids.length > 1 ? "s" : "") + " as " + label + "?")) return;
+    try{
+      await run(sb.from("stock_items").update({status, status_changed_at: new Date().toISOString()}).in("id", ids));
+      toast(ids.length + " marked as " + label);
+      setSelectMode(false);
+    }catch(e){}
+  };
+  $("bulkAll").addEventListener("click", () => {
+    let list = state.ufItems.filter(i => i.status === "in_stock");
+    if(state.ufFnFilter === "gen") list = list.filter(i => !i.function_id);
+    else if(typeof state.ufFnFilter === "number") list = list.filter(i => i.function_id === state.ufFnFilter);
+    if(state.selected.size === list.length) state.selected.clear();
+    else list.forEach(i => state.selected.add(i.id));
+    updateBulkBar();
+    refreshCurrentTab();
+  });
+  $("bulkUsed").addEventListener("click", () => bulkStatus("used", "used"));
+  $("bulkBin").addEventListener("click", () => bulkStatus("binned", "binned"));
+  $("btnDraftSelect").addEventListener("click", () => {
+    state.draftSelect = !state.draftSelect;
+    state.draftSelected.clear();
+    $("btnDraftSelect").textContent = state.draftSelect ? "Cancel" : "Select";
+    $("draftBulkRow").style.display = state.draftSelect ? "flex" : "none";
+    renderDraftItems();
+  });
+  $("btnDraftAll").addEventListener("click", () => {
+    if(state.draftSelected.size === state.draftItems.length) state.draftSelected.clear();
+    else state.draftItems.forEach((_, i) => state.draftSelected.add(i));
+    renderDraftItems();
+  });
+  $("btnDraftAlloc").addEventListener("click", () => {
+    if(!state.draftSelected.size){ toast("Tap items to select them first", {type:"err"}); return; }
+    pickFunction((fnId, fn) => {
+      [...state.draftSelected].forEach(ix => {
+        const it = state.draftItems[ix];
+        if(!it) return;
+        if(fnId === "NR"){ it.short = true; it.allocs = null; }
+        else if(!it.short) it.allocs = [{fnId, qty: it.qty ?? null}];
+      });
+      state.draftSelect = false; state.draftSelected.clear();
+      $("btnDraftSelect").textContent = "Select";
+      $("draftBulkRow").style.display = "none";
+      renderDraftItems();
+      toast(fnId === "NR" ? "Marked as not received" : "Allocated to " + (fn ? fn.name : "general stock"));
+    });
+  });
+  $("btnDraftRemove").addEventListener("click", () => {
+    if(!state.draftSelected.size){ toast("Tap items to select them first", {type:"err"}); return; }
+    [...state.draftSelected].sort((a, b) => b - a).forEach(ix => state.draftItems.splice(ix, 1));
+    state.draftSelect = false; state.draftSelected.clear();
+    $("btnDraftSelect").textContent = "Select";
+    $("draftBulkRow").style.display = "none";
+    renderDraftItems();
+  });
+  const rz = $("pane-receive");
+  ["dragover","dragenter"].forEach(ev =>
+    rz.addEventListener(ev, e => {
+      if(e.dataTransfer && [...e.dataTransfer.types].includes("Files")){
+        e.preventDefault(); rz.classList.add("dragging");
+      }
+    })
+  );
+  rz.addEventListener("dragleave", e => { if(e.target === rz) rz.classList.remove("dragging"); });
+  rz.addEventListener("drop", async e => {
+    if(!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault(); rz.classList.remove("dragging");
+    for(const f of [...e.dataTransfer.files]) await addDocketFile(f);
+  });
+  $("btnSaveShelf").addEventListener("click", saveShelfChanges);
+  $("btnAddShelf").addEventListener("click", addShelfRow);
+  $("btnAddHint").addEventListener("click", () => hintForm(null));
+  $("ufHistory").addEventListener("click", historyModal);
+  window.addEventListener("online", () => online(true));
+  window.addEventListener("offline", () => online(false));
+}
+function startApp(){
+  bindStatic();
+  $("rDate").value = localISO();
+  loadShelf();
+  loadFunctionPicker();
+  loadDatalists();
+  setMode(readStore("wslr_mode") === "admin" ? "admin" : "kitchen", false);
+}
+function boot(){
+  if(!SUPABASE_URL || !SUPABASE_ANON_KEY){
+    $("setupOverlay").style.display = "flex";
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if(APP_PIN){
+    $("pinOverlay").style.display = "flex";
+    const tryPin = () => {
+      if($("pinInput").value === APP_PIN){
+        $("pinOverlay").style.display = "none";
+        startApp();
+      }else{
+        $("pinErr").textContent = "Wrong PIN";
+        $("pinInput").value = "";
+      }
+    };
+    $("pinBtn").addEventListener("click", tryPin);
+    $("pinInput").addEventListener("keydown", e => { if(e.key === "Enter") tryPin(); });
+    $("pinInput").focus();
+  }else{
+    startApp();
+  }
+}
+document.addEventListener("DOMContentLoaded", boot);
+// APP-JS-END
+</script>
+</body>
+</html>
