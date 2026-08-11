@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
   --bg:#f7f5f0;
@@ -331,6 +332,17 @@ body.kitchen .rowcard{padding:15px 16px;}
 .xc-row .r{flex:none; text-align:right; color:var(--muted);}
 .loading{text-align:center; color:var(--muted); padding:30px;}
 a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weight:600; margin:10px 0; cursor:pointer; text-decoration:underline;}
+/* Barcode scanner */
+#scanRoot{position:fixed; inset:0; z-index:150; background:rgba(12,18,16,.96); display:flex; align-items:center; justify-content:center; padding:18px;}
+#scanRoot .scan-card{width:100%; max-width:480px;}
+#scanRoot h2{color:#fff; margin:0 0 4px; text-align:center;}
+#scanRoot .scan-sub{color:#c9d2ce; font-size:13px; text-align:center; margin:0 0 12px;}
+#scanReader{width:100%; border-radius:14px; overflow:hidden; background:#000; min-height:220px;}
+#scanReader video{border-radius:14px;}
+#scanRoot .scan-msg{color:#c9d2ce; font-size:13px; text-align:center; margin:10px 0 12px; min-height:18px;}
+#scanRoot .btn-ghost{color:#fff; border-color:rgba(255,255,255,.4);}
+.btn-scan{flex:none; width:54px; display:flex; align-items:center; justify-content:center; padding:0;}
+.btn-scan svg{display:block;}
 </style>
 </head>
 <body>
@@ -386,6 +398,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   <button class="btn btn-primary" id="btnGoReceive" style="margin-bottom:12px;">+ Receive a delivery</button>
   <div style="display:flex; gap:8px; margin-bottom:12px;">
     <input id="ufSearch" placeholder="Search items, e.g. chicken" autocomplete="off" style="flex:1;">
+    <button class="btn btn-secondary btn-scan" id="btnUfScan" title="Scan a barcode to find the item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5h2v14H2zM5 5h1v14H5zM7.5 5h2v14h-2zM11 5h1v14h-1zM13.5 5h1v14h-1zM16 5h2.5v14H16zM20 5h2v14h-2z"/></svg></button>
     <button class="btn btn-ghost" id="btnUfSelect" style="flex:none;">Select</button>
   </div>
   <div class="fnlegend" id="ufLegend"></div>
@@ -475,11 +488,15 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     </div>
     <div class="field">
       <label>Docket</label>
-      <button class="btn btn-secondary" id="btnAddPhoto" style="width:100%;">&#128247; Add docket, order or screenshot</button>
-      <input type="file" id="photoInput" accept="image/*,application/pdf" style="display:none;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" id="btnTakePhoto" style="flex:1;">&#128247; Take photo</button>
+        <button class="btn btn-secondary" id="btnAddPhoto" style="flex:1;">&#128193; Upload file</button>
+      </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+      <input type="file" id="photoInput" accept="image/*,application/pdf" multiple style="display:none;">
       <div id="photoStrip"></div>
       <button class="btn btn-ghost" id="btnReadDocket" style="width:100%; margin-top:10px; display:none;">&#10024; Read items from docket</button>
-      <div class="small muted" style="margin-top:6px;">On a computer you can drag photos or PDFs anywhere onto this screen.</div>
+      <div class="small muted" style="margin-top:6px;">Take photo opens the camera on a tablet or phone. On a computer you can drag photos or PDFs anywhere onto this screen.</div>
     </div>
     <div class="field">
       <label>Delivery received in full?</label>
@@ -507,7 +524,10 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     <div class="grid2">
       <div class="field">
         <label for="iName">Item</label>
-        <input id="iName" list="nameList" placeholder="e.g. Chicken thigh" autocomplete="off">
+        <div style="display:flex; gap:8px;">
+          <input id="iName" list="nameList" placeholder="e.g. Chicken thigh" autocomplete="off" style="flex:1;">
+          <button class="btn btn-secondary btn-scan" id="btnScanItem" title="Scan the barcode"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5h2v14H2zM5 5h1v14H5zM7.5 5h2v14h-2zM11 5h1v14h-1zM13.5 5h1v14h-1zM16 5h2.5v14H16zM20 5h2v14h-2z"/></svg></button>
+        </div>
         <datalist id="nameList"></datalist>
       </div>
       <div class="field">
@@ -595,7 +615,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   </div>
   <div class="card">
     <h2>About</h2>
-    <p class="small muted" id="verLine">WSLR Kitchen v2.1. One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Groups sent through the confirmation builder land under Functions in admin, ready to become functions with one tap; the bridge lives in the Apps Script (Code-with-kitchen-sync.gs).<br><br>If you see a "relation does not exist" error, run wslr-kitchen-v2-schema.sql in the Supabase SQL editor.</p>
+    <p class="small muted" id="verLine">WSLR Kitchen v2.2 (adds barcode scanning and tablet camera buttons; needs the barcodes table in Supabase). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Groups sent through the confirmation builder land under Functions in admin, ready to become functions with one tap; the bridge lives in the Apps Script (Code-with-kitchen-sync.gs).<br><br>If you see a "relation does not exist" error, run wslr-kitchen-v2-schema.sql in the Supabase SQL editor.</p>
   </div>
 </section>
 
@@ -1110,10 +1130,144 @@ async function compressImage(file, maxDim = 1600, q = 0.72){
     return blob || file;
   }catch(e){ return file; }
 }
+
+// ============================================================
+// BARCODE SCANNING
+// ============================================================
+let scanPending = null;   // barcode scanned in the receive form, waiting to be linked to an item name
+
+function scanFormats(){
+  try{
+    const F = Html5QrcodeSupportedFormats;
+    return [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.ITF, F.QR_CODE];
+  }catch(e){ return undefined; }
+}
+function scanBarcode(onCode){
+  if(typeof Html5Qrcode === "undefined"){
+    toast("The scanner could not load. Check the connection, then refresh the page.", {type:"err"});
+    return;
+  }
+  const old = $("scanRoot");
+  if(old) old.remove();
+  const ov = document.createElement("div");
+  ov.id = "scanRoot";
+  ov.innerHTML =
+    '<div class="scan-card">' +
+    "<h2>Scan barcode</h2>" +
+    '<p class="scan-sub">Hold the barcode flat, 10–20 cm from the camera.</p>' +
+    '<div id="scanReader"></div>' +
+    '<div class="scan-msg" id="scanMsg">Starting camera…</div>' +
+    '<button class="btn btn-ghost" id="scanCancel" style="width:100%;">Cancel</button>' +
+    "</div>";
+  document.body.appendChild(ov);
+  let done = false;
+  let scanner = null;
+  const teardown = () => {
+    const rm = () => ov.remove();
+    if(scanner){ scanner.stop().then(() => { try{ scanner.clear(); }catch(e){} rm(); }).catch(rm); }
+    else rm();
+  };
+  ov.querySelector("#scanCancel").addEventListener("click", () => { done = true; teardown(); });
+  try{
+    scanner = new Html5Qrcode("scanReader", {formatsToSupport: scanFormats(), verbose: false, experimentalFeatures: {useBarCodeDetectorIfSupported: true}});
+  }catch(e){
+    console.error(e);
+    ov.querySelector("#scanMsg").textContent = "The scanner could not start.";
+    return;
+  }
+  scanner.start(
+    {facingMode: "environment"},
+    {
+      fps: 10,
+      aspectRatio: 1.333,
+      qrbox: (w, h) => ({width: Math.max(50, Math.round(w * 0.9)), height: Math.max(50, Math.round(Math.min(h * 0.6, w * 0.5)))})
+    },
+    text => {
+      if(done) return;
+      const code = String(text).trim();
+      if(!code) return;
+      done = true;
+      if(navigator.vibrate){ try{ navigator.vibrate(60); }catch(e){} }
+      teardown();
+      onCode(code);
+    },
+    () => {}
+  ).then(() => {
+    if(!done) ov.querySelector("#scanMsg").textContent = "Looking for a barcode…";
+  }).catch(err => {
+    console.error(err);
+    const msg = ov.querySelector("#scanMsg");
+    if(msg) msg.textContent = "Could not open the camera. Allow camera access for this site in the browser settings, then try again.";
+  });
+}
+async function lookupBarcode(code){
+  try{
+    const { data, error } = await sb.from("barcodes").select("*").eq("code", code).limit(1);
+    if(!error && data && data.length){
+      return {known: true, item_name: data[0].item_name, category: data[0].category, storage: data[0].storage, unit: data[0].unit};
+    }
+  }catch(e){}
+  try{
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(code) + ".json?fields=product_name,brands,quantity", {signal: ctl.signal});
+    clearTimeout(t);
+    if(r.ok){
+      const j = await r.json();
+      if(j && j.status === 1 && j.product){
+        const p = j.product;
+        const name = [
+          p.brands ? String(p.brands).split(",")[0].trim() : "",
+          p.product_name ? String(p.product_name).trim() : "",
+          p.quantity ? String(p.quantity).trim() : ""
+        ].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+        if(name) return {known: false, suggestion: name.slice(0, 120)};
+      }
+    }
+  }catch(e){}
+  return {known: false};
+}
+async function saveBarcode(code, item){
+  if(!code || !item || !item.name) return;
+  try{
+    await sb.from("barcodes").upsert({
+      code,
+      item_name: item.name,
+      category: item.category || null,
+      storage: item.storage || null,
+      unit: item.unit || null,
+      updated_at: new Date().toISOString()
+    });
+  }catch(e){}
+}
+function applyScanToReceive(hit, code){
+  if(hit.known){
+    scanPending = null;
+    $("iName").value = hit.item_name;
+    if(hit.category) $("iCategory").value = hit.category;
+    if(hit.storage){
+      const b = $("segStorage").querySelector('[data-v="' + hit.storage + '"]');
+      if(b) b.click();
+    }
+    if(hit.unit) $("iUnit").value = hit.unit;
+    autoExpiry();
+    toast('Filled in "' + hit.item_name + '" — check the quantity, then add it.');
+    $("iQty").focus();
+  }else{
+    scanPending = code;
+    if(hit.suggestion){
+      $("iName").value = hit.suggestion;
+      toast("New barcode. Fix the name if needed, then add the item — it will be remembered.");
+    }else{
+      toast("New barcode. Type the item name once, add it, and it will be remembered.");
+      $("iName").focus();
+    }
+  }
+}
 function addItemFromForm(){
   const name = $("iName").value.trim();
   if(!name){ toast("Give the item a name first", {type:"err"}); return; }
-  state.draftItems.push({
+  const added = {
     name,
     category: $("iCategory").value || null,
     storage: state.itemStorage || null,
@@ -1122,7 +1276,9 @@ function addItemFromForm(){
     expiry: $("iExpiry").value || null,
     short: false,
     allocs: null
-  });
+  };
+  state.draftItems.push(added);
+  if(scanPending){ saveBarcode(scanPending, added); scanPending = null; }
   renderDraftItems();
   $("iName").value = ""; $("iQty").value = ""; $("iExpiry").value = "";
   if($("iCategory").value && state.itemStorage) autoExpiry();
@@ -1221,6 +1377,7 @@ async function saveDelivery(){
     applySelPaint($("rFunction"));
     $("rDate").value = localISO();
     $("rInvoice").value = ""; $("invWarn").textContent = ""; state.invDup = null;
+    scanPending = null;
     state.fullState = "yes";
     $("segFull").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === "yes"));
     $("segFull").querySelector('[data-v="issue"]').classList.remove("warn");
@@ -2421,7 +2578,7 @@ function confirmOrderModal(o){
     '<button class="btn btn-ghost btn-sm" id="coAddExtra" style="width:100%;">+ Something arrived that is not on the order</button>' +
     '<div id="coExtraForm" style="display:none; background:#efece6; border-radius:12px; padding:12px; margin-top:8px;">' +
     '<div class="grid2">' +
-    '<div class="field"><label>Item</label><input id="cxName" list="nameList" autocomplete="off"></div>' +
+    '<div class="field"><label>Item</label><div style="display:flex; gap:8px;"><input id="cxName" list="nameList" autocomplete="off" style="flex:1;"><button class="btn btn-secondary btn-scan" id="cxScan" title="Scan the barcode"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5h2v14H2zM5 5h1v14H5zM7.5 5h2v14h-2zM11 5h1v14h-1zM13.5 5h1v14h-1zM16 5h2.5v14H16zM20 5h2v14h-2z"/></svg></button></div></div>' +
     '<div class="field"><label>Category</label><select id="cxCat">' + catOpts + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="cxQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="cxUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
@@ -2431,8 +2588,12 @@ function confirmOrderModal(o){
     "<h3>Details</h3>" +
     '<div class="field"><label for="coBy">Received by</label><input id="coBy" list="receiverList" placeholder="Your name" autocomplete="off"></div>' +
     '<div class="field"><label>Docket</label>' +
-    '<button class="btn btn-secondary" id="coAddPhoto" style="width:100%;">&#128247; Add docket photo</button>' +
-    '<input type="file" id="coPhotoInput" accept="image/*,application/pdf" style="display:none;">' +
+    '<div style="display:flex; gap:8px;">' +
+    '<button class="btn btn-secondary" id="coTakePhoto" style="flex:1;">&#128247; Take photo</button>' +
+    '<button class="btn btn-secondary" id="coAddPhoto" style="flex:1;">&#128193; Upload file</button>' +
+    "</div>" +
+    '<input type="file" id="coCameraInput" accept="image/*" capture="environment" style="display:none;">' +
+    '<input type="file" id="coPhotoInput" accept="image/*,application/pdf" multiple style="display:none;">' +
     '<div id="coStrip" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div></div>' +
     '<button class="btn btn-primary" id="coSave">Save arrival</button>'
   );
@@ -2492,34 +2653,59 @@ function confirmOrderModal(o){
     const f = m.querySelector("#coExtraForm");
     f.style.display = f.style.display === "none" ? "" : "none";
   });
+  let cxScanPending = null;
   m.querySelector("#cxAdd").addEventListener("click", () => {
     const name = m.querySelector("#cxName").value.trim();
     if(!name){ toast("Give the item a name", {type:"err"}); return; }
-    extras.push({
+    const ex = {
       name,
       category: m.querySelector("#cxCat").value || null,
       storage: m.querySelector("#cxStorage").value || null,
       qty: m.querySelector("#cxQty").value ? +m.querySelector("#cxQty").value : null,
       unit: m.querySelector("#cxUnit").value.trim() || null
-    });
+    };
+    extras.push(ex);
+    if(cxScanPending){ saveBarcode(cxScanPending, ex); cxScanPending = null; }
     ["cxName","cxQty","cxUnit"].forEach(id => m.querySelector("#" + id).value = "");
     drawExtras();
   });
+  m.querySelector("#cxScan").addEventListener("click", () => scanBarcode(async code => {
+    const hit = await lookupBarcode(code);
+    if(hit.known){
+      cxScanPending = null;
+      m.querySelector("#cxName").value = hit.item_name;
+      if(hit.category) m.querySelector("#cxCat").value = hit.category;
+      if(hit.storage) m.querySelector("#cxStorage").value = hit.storage;
+      if(hit.unit) m.querySelector("#cxUnit").value = hit.unit;
+      toast('Filled in "' + hit.item_name + '"');
+    }else{
+      cxScanPending = code;
+      if(hit.suggestion) m.querySelector("#cxName").value = hit.suggestion;
+      toast("New barcode. " + (hit.suggestion ? "Fix the name if needed" : "Type the item name") + ", then Add it — it will be remembered.");
+    }
+  }));
+  const addCoFile = async f => {
+    if(!f) return;
+    if(f.type === "application/pdf"){
+      if(f.size > 8 * 1024 * 1024) toast("Keep PDFs under 8 MB", {type:"err"});
+      else photos.push({blob: f, url: "", isPdf: true});
+    }else if(f.type && f.type.startsWith("image/")){
+      const blob = await compressImage(f);
+      photos.push({blob, url: URL.createObjectURL(blob), isPdf: false});
+    }else{
+      toast("Only photos and PDFs can be attached", {type:"err"});
+    }
+  };
+  m.querySelector("#coTakePhoto").addEventListener("click", () => m.querySelector("#coCameraInput").click());
+  m.querySelector("#coCameraInput").addEventListener("change", async e => {
+    await addCoFile(e.target.files[0]);
+    drawStrip();
+    e.target.value = "";
+  });
   m.querySelector("#coAddPhoto").addEventListener("click", () => m.querySelector("#coPhotoInput").click());
   m.querySelector("#coPhotoInput").addEventListener("change", async e => {
-    const f = e.target.files[0];
-    if(f){
-      if(f.type === "application/pdf"){
-        if(f.size > 8 * 1024 * 1024) toast("Keep PDFs under 8 MB", {type:"err"});
-        else photos.push({blob: f, url: "", isPdf: true});
-      }else if(f.type && f.type.startsWith("image/")){
-        const blob = await compressImage(f);
-        photos.push({blob, url: URL.createObjectURL(blob), isPdf: false});
-      }else{
-        toast("Only photos and PDFs can be attached", {type:"err"});
-      }
-      drawStrip();
-    }
+    for(const f of [...e.target.files]) await addCoFile(f);
+    drawStrip();
     e.target.value = "";
   });
   m.querySelector("#coSave").addEventListener("click", async () => {
@@ -3163,11 +3349,32 @@ function bindStatic(){
   wireSeg($("segStorage"), "", v => { state.itemStorage = v; autoExpiry(); });
   $("iCategory").addEventListener("change", autoExpiry);
   $("rFunction").addEventListener("change", renderDraftItems);
-  $("btnAddPhoto").addEventListener("click", () => $("photoInput").click());
-  $("photoInput").addEventListener("change", async e => {
+  $("btnTakePhoto").addEventListener("click", () => $("cameraInput").click());
+  $("cameraInput").addEventListener("change", async e => {
     await addDocketFile(e.target.files[0]);
     e.target.value = "";
   });
+  $("btnAddPhoto").addEventListener("click", () => $("photoInput").click());
+  $("photoInput").addEventListener("change", async e => {
+    for(const f of [...e.target.files]) await addDocketFile(f);
+    e.target.value = "";
+  });
+  $("btnScanItem").addEventListener("click", () => scanBarcode(async code => {
+    applyScanToReceive(await lookupBarcode(code), code);
+  }));
+  $("btnUfScan").addEventListener("click", () => scanBarcode(async code => {
+    const hit = await lookupBarcode(code);
+    if(hit.known){
+      $("ufSearch").value = hit.item_name;
+      refreshCurrentTab();
+    }else if(hit.suggestion){
+      $("ufSearch").value = hit.suggestion;
+      refreshCurrentTab();
+      toast("Barcode not linked yet — searching by its product name.");
+    }else{
+      toast("This barcode is not linked to an item yet. Scan it when receiving a delivery to link it.", {type:"err"});
+    }
+  }));
   $("btnReadDocket").addEventListener("click", readDocket);
   $("btnAddItem").addEventListener("click", addItemFromForm);
   $("btnSaveDelivery").addEventListener("click", saveDelivery);
