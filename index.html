@@ -2006,7 +2006,7 @@ function feedUrl(){
   const k = feedKey();
   return base + (base.indexOf("?") > -1 ? "&" : "?") + "cb=" + Date.now() + (k ? "&key=" + encodeURIComponent(k) : "");
 }
-async function fetchSheetRows(){
+async function fetchSheetFeed(){
   const url = feedUrl();
   if(!url) throw new Error("no-url");
   let res;
@@ -2018,7 +2018,22 @@ async function fetchSheetRows(){
   try{ data = JSON.parse(text); }
   catch(e){ throw new Error("The feed did not return JSON. Redeploy it as a web app with access set to \"Anyone\"."); }
   if(!data || data.ok !== true) throw new Error((data && data.error) || "The feed returned an error.");
-  return Array.isArray(data.rows) ? data.rows : [];
+  if(!Array.isArray(data.rows)) data.rows = [];
+  return data;
+}
+// When the feed comes back empty, say why rather than just "0 groups".
+function feedNote(data){
+  if(data && data.rows && data.rows.length) return "";
+  const d = data && data.diag;
+  if(!d) return " The sheet answered but sent no rows. Open the feed URL with ?tabs=1 to see which tabs it can read.";
+  const why = [];
+  if(d.skippedNotCatering) why.push(d.skippedNotCatering + " have Catering not set to Yes");
+  if(d.skippedNoArrivalDate) why.push(d.skippedNoArrivalDate + " have no arrival date it could read");
+  if(d.skippedNoName) why.push(d.skippedNoName + " have no group name");
+  return " It read the tab \u201c" + (d.tab || "?") + "\u201d and checked " +
+    (d.rowsScanned || 0) + " row" + (d.rowsScanned === 1 ? "" : "s") + ". " +
+    (d.cateringColumn ? "Catering is column " + d.cateringColumn + ". " : "That tab has no Catering column, so it is probably the wrong one. ") +
+    (why.length ? why.join(", ") + "." : "");
 }
 function setSyncMsg(cls, msg){
   state.sheetSync = {phase: cls || "idle", msg: msg, at: Date.now()};
@@ -2040,9 +2055,13 @@ async function syncSheetFunctions(){
     return {skipped:true};
   }
   setSyncMsg("", "Checking the sheet…");
-  let feed;
-  try{ feed = await fetchSheetRows(); }
+  let data, feed;
+  try{ data = await fetchSheetFeed(); feed = data.rows; }
   catch(e){ setSyncMsg("bad", e.message === "no-url" ? "No sheet connected yet." : e.message); return {failed:true}; }
+  if(!feed.length){
+    setSyncMsg("bad", "The sheet has no groups with Catering set to Yes." + feedNote(data));
+    return {added:0, updated:0, dropped:0};
+  }
 
   try{
     const existing = await run(
@@ -2106,6 +2125,7 @@ async function syncSheetFunctions(){
     for(const d of dropped) await run(sb.from("catering_functions").update({sheet_state:"dropped"}).eq("id", d.id));
 
     const bits = [feed.length + " catering group" + (feed.length === 1 ? "" : "s") + " on the sheet"];
+    if(data.sheet) bits[0] += " (" + data.sheet + ")";
     if(inserts.length) bits.push(inserts.length + " added");
     if(updates.length) bits.push(updates.length + " updated");
     if(dropped.length) bits.push(dropped.length + " no longer listed");
@@ -2128,9 +2148,16 @@ async function saveFeedSettings(){
   if(!url){ msg.textContent = "Cleared. Functions will only show what you add by hand."; return; }
   msg.textContent = "Testing…";
   try{
-    const rows = await fetchSheetRows();
+    const data = await fetchSheetFeed();
+    const n = data.rows.length;
+    if(!n){
+      msg.className = "syncmsg bad";
+      msg.textContent = "Connected, but no group on the sheet has Catering set to Yes." + feedNote(data);
+      return;
+    }
     msg.className = "syncmsg good";
-    msg.textContent = "Working. " + rows.length + " group" + (rows.length === 1 ? "" : "s") + " with catering on the sheet.";
+    msg.textContent = "Working. " + n + " group" + (n === 1 ? "" : "s") + " with catering on the " +
+      (data.sheet ? data.sheet + " tab." : "sheet.");
     lastSheetSync = 0;
     toast("Sheet connected");
   }catch(e){
