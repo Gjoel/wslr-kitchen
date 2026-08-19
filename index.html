@@ -162,6 +162,19 @@ section.active{display:block;}
 .swatches button.on{border-color:var(--ink);}
 .fnpick{width:100%; color:#fff; margin-bottom:8px; justify-content:flex-start;}
 
+/* Sheet synced vs added by hand */
+.rowcard.fn-manual{background:#f2eee2; border-color:#dcd5c2; border-style:dashed;}
+.pill.sheet{background:var(--brand-soft); color:var(--brand-dark);}
+.pill.manual{background:#e4ddcb; color:#6b6252;}
+.fnkey{display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:0 0 10px; font-size:13px; color:var(--muted);}
+.fnkey span{display:inline-flex; align-items:center; gap:7px;}
+.fnkey i{width:28px; height:17px; border-radius:5px; border:1px solid var(--line); background:#fff; display:inline-block;}
+.fnkey i.man{background:#f2eee2; border-color:#dcd5c2; border-style:dashed;}
+.syncrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.syncmsg{font-size:13px; color:var(--muted); margin:0;}
+.syncmsg.bad{color:var(--red); font-weight:600;}
+.syncmsg.good{color:var(--green); font-weight:600;}
+
 /* Bulk bar and receive drop zone */
 .bulkbar{position:fixed; left:0; right:0; bottom:0; z-index:90; background:var(--ink); color:#fff; display:flex; gap:8px; align-items:center; padding:10px 14px calc(10px + env(safe-area-inset-bottom, 0px));}
 #pane-receive.dragging{outline:3px dashed var(--brand); outline-offset:-3px; border-radius:16px;}
@@ -435,11 +448,20 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 <!-- ============ FUNCTIONS ============ -->
 <section id="sec-functions">
   <button class="btn btn-primary adm-only" id="btnAddFunction" style="margin-bottom:14px;">+ Add a function</button>
-  <div class="card adm-only">
+  <div class="card adm-only" id="sheetSyncCard">
+    <h2 style="margin-bottom:4px;">Confirmations sheet</h2>
+    <p class="muted small" style="margin:0 0 10px;">Every group on the confirmations sheet with <b>Catering</b> set to Yes appears in the list below on its own. Anything you add here by hand sits alongside them in a different shade.</p>
+    <div class="syncrow">
+      <button class="btn btn-secondary btn-sm" id="btnSheetSync" style="width:auto;">Sync now</button>
+      <p class="syncmsg" id="sheetSyncMsg">Checking&hellip;</p>
+    </div>
+  </div>
+  <div class="card adm-only" id="gbCard" style="display:none;">
     <h2 style="margin-bottom:4px;">Groups from the confirmation builder</h2>
     <p class="muted small" style="margin:0 0 10px;">Catering groups sent through the builder land here automatically. Tap one to create its function with dates, heads and menu prefilled.</p>
     <div id="gbList"><div class="loading">Loading&hellip;</div></div>
   </div>
+  <div class="fnkey"><span><i></i> From the confirmations sheet</span><span><i class="man"></i> Added here by hand</span></div>
   <h3 class="uf-group">Upcoming</h3>
   <div id="fnUpcoming"><div class="loading">Loading&hellip;</div></div>
   <h3 class="uf-group">Recent</h3>
@@ -609,13 +631,23 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     <button class="btn btn-ghost" id="btnAddHint" style="width:100%; margin-top:10px;">+ Add a supplier hint</button>
   </div>
   <div class="card">
+    <h2>Confirmations sheet</h2>
+    <p class="muted small" style="margin-top:-6px;">Paste the web app URL from the <code style="background:#efece4; padding:1px 5px; border-radius:5px;">kitchen-confirmations-feed.gs</code> Apps Script deployment. Groups with Catering set to Yes then appear under Functions on their own.</p>
+    <div class="field"><label for="stFeedUrl">Feed URL</label><input id="stFeedUrl" placeholder="https://script.google.com/macros/s/&hellip;/exec" autocomplete="off"></div>
+    <div class="field"><label for="stFeedKey">Shared key (optional)</label><input id="stFeedKey" placeholder="Leave blank unless you set SHARED_KEY in the script" autocomplete="off"></div>
+    <div class="syncrow">
+      <button class="btn btn-secondary" id="btnSaveFeed" style="width:auto;">Save and test</button>
+      <p class="syncmsg" id="feedTestMsg"></p>
+    </div>
+  </div>
+  <div class="card">
     <h2>Kitchen and admin modes</h2>
     <p class="small muted" style="margin-top:-6px;">Every device opens in <b>kitchen mode</b>: tick off arrivals, mark items used or binned, allocate to functions, and fix use by dates and storage. Everything else lives in <b>admin mode</b>, behind the Admin button in the header.<br><br>
     The admin PIN is set in the <code style="background:#efece4; padding:1px 5px; border-radius:5px;">ADMIN_PIN</code> constant at the top of the script in this file &mdash; open the file in a text editor to change it. A device that has unlocked admin stays in admin until you tap Exit admin.</p>
   </div>
   <div class="card">
     <h2>About</h2>
-    <p class="small muted" id="verLine">WSLR Kitchen v2.2 (adds barcode scanning and tablet camera buttons; needs the barcodes table in Supabase). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Groups sent through the confirmation builder land under Functions in admin, ready to become functions with one tap; the bridge lives in the Apps Script (Code-with-kitchen-sync.gs).<br><br>If you see a "relation does not exist" error, run wslr-kitchen-v2-schema.sql in the Supabase SQL editor.</p>
+    <p class="small muted" id="verLine">WSLR Kitchen v2.3 (Functions now build themselves from the confirmations sheet). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Functions you add in the app sit alongside them in a paler dashed card so the two are easy to tell apart. The link is the Apps Script web app in kitchen-confirmations-feed.gs; paste its URL under Settings, Confirmations sheet.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql and then wslr-kitchen-v2.3-sheet-sync.sql in the Supabase SQL editor.</p>
   </div>
 </section>
 
@@ -641,6 +673,11 @@ const SUPABASE_ANON_KEY = "sb_publishable_G5ZTmaaLwa8qbkFMBmUCeQ_sJs753qH";
 const APP_PIN = "";            // optional lock on the WHOLE app, e.g. "2519"; leave "" to disable
 const ADMIN_PIN = "2519";      // PIN for admin mode - CHANGE THIS. "" means no PIN (not recommended)
 
+// Confirmations sheet feed - the Apps Script web app URL from kitchen-confirmations-feed.gs.
+// You can leave these blank and paste the URL under Settings > Confirmations sheet instead.
+const SHEET_FEED_URL = "";
+const SHEET_FEED_KEY = "";     // only if you set SHARED_KEY in the Apps Script
+
 // ============================================================
 let sb = null;
 const state = {
@@ -660,6 +697,7 @@ const state = {
   draftPhotos: [],    // {blob, url}
   fullState: "yes",
   itemStorage: "",
+  sheetSync: {phase:"idle", msg:"", at:null},
   busy: false
 };
 
@@ -849,8 +887,8 @@ async function loadFunctionPicker(){
   try{
     const from = localISO(new Date(Date.now() - 3 * 86400000));
     state.functions = await run(
-      sb.from("catering_functions").select("id, name, event_date, heads, colour")
-        .gte("event_date", from).order("event_date", {ascending:true}).limit(40)
+      sb.from("catering_functions").select("id, name, event_date, end_date, heads, colour, source, sheet_state")
+        .gte("event_date", from).order("event_date", {ascending:true}).limit(60)
     );
     $("rFunction").innerHTML = '<option value="">General stock</option>' +
       state.functions.map(f => fnOptionHtml(f, null)).join("");
@@ -895,7 +933,7 @@ function fnChipById(fnId){
   return '<span class="pill" style="background:' + esc(f && f.colour ? f.colour : "#546e64") + '; color:#fff;">' + esc(f ? f.name : "Function") + "</span>";
 }
 function fnOptionHtml(f, selectedId){
-  return '<option value="' + f.id + '"' + (selectedId === f.id ? " selected" : "") + ' style="background:' + esc(f.colour || "#546e64") + '; color:#fff;">' + esc(f.name) + " \u00b7 " + esc(fmtDate(f.event_date)) + "</option>";
+  return '<option value="' + f.id + '"' + (selectedId === f.id ? " selected" : "") + ' style="background:' + esc(f.colour || "#546e64") + '; color:#fff;">' + esc(f.name) + " \u00b7 " + esc(fmtDate(f.event_date)) + (f && f.source === "sheet" ? "" : " \u00b7 added here") + "</option>";
 }
 function applySelPaint(sel){
   const list = sel._fnlist ? sel._fnlist() : [];
@@ -1953,12 +1991,172 @@ async function itemModal(i){
 // ============================================================
 // FUNCTIONS
 // ============================================================
-async function renderFunctions(){
+// ---------- confirmations sheet ----------
+// Pulls the Confirmations tab of the Google Sheet through a small Apps Script
+// web app (kitchen-confirmations-feed.gs) and keeps catering_functions in step
+// with it. Rows that came from the sheet carry source = "sheet"; anything you
+// add in the app stays source = "manual" and renders in a different shade.
+let lastSheetSync = 0;
+
+function feedUrlBase(){ return (readStore("wslr_feed_url") || SHEET_FEED_URL || "").trim(); }
+function feedKey(){ return (readStore("wslr_feed_key") || SHEET_FEED_KEY || "").trim(); }
+function feedUrl(){
+  const base = feedUrlBase();
+  if(!base) return "";
+  const k = feedKey();
+  return base + (base.indexOf("?") > -1 ? "&" : "?") + "cb=" + Date.now() + (k ? "&key=" + encodeURIComponent(k) : "");
+}
+async function fetchSheetRows(){
+  const url = feedUrl();
+  if(!url) throw new Error("no-url");
+  let res;
+  try{ res = await fetch(url, {method:"GET", redirect:"follow", cache:"no-store"}); }
+  catch(e){ throw new Error("Could not reach the sheet. Check the deployment is set to \"Anyone\" and the URL ends in /exec."); }
+  if(!res.ok) throw new Error("The sheet feed replied " + res.status + ".");
+  const text = await res.text();
+  let data;
+  try{ data = JSON.parse(text); }
+  catch(e){ throw new Error("The feed did not return JSON. Redeploy it as a web app with access set to \"Anyone\"."); }
+  if(!data || data.ok !== true) throw new Error((data && data.error) || "The feed returned an error.");
+  return Array.isArray(data.rows) ? data.rows : [];
+}
+function setSyncMsg(cls, msg){
+  state.sheetSync = {phase: cls || "idle", msg: msg, at: Date.now()};
+  const el = $("sheetSyncMsg");
+  if(el){
+    el.className = "syncmsg" + (cls === "bad" ? " bad" : cls === "good" ? " good" : "");
+    el.textContent = msg;
+  }
+}
+function pickColour(used){
+  let best = FN_PALETTE[0], bc = Infinity;
+  FN_PALETTE.forEach(c => { const cnt = used[c] || 0; if(cnt < bc){ bc = cnt; best = c; } });
+  used[best] = (used[best] || 0) + 1;
+  return best;
+}
+async function syncSheetFunctions(){
+  if(!feedUrlBase()){
+    setSyncMsg("", "No sheet connected yet. Add the feed URL under Settings, Confirmations sheet.");
+    return {skipped:true};
+  }
+  setSyncMsg("", "Checking the sheet…");
+  let feed;
+  try{ feed = await fetchSheetRows(); }
+  catch(e){ setSyncMsg("bad", e.message === "no-url" ? "No sheet connected yet." : e.message); return {failed:true}; }
+
+  try{
+    const existing = await run(
+      sb.from("catering_functions")
+        .select("id, name, event_date, end_date, colour, source, sheet_ref, sheet_status, sheet_state, group_ref, group_link")
+    );
+    const bySheetRef = {}, used = {};
+    const mkey = (name, date) => String(name || "").replace(/\s+/g, " ").trim().toLowerCase() + "|" + date;
+    existing.forEach(f => {
+      if(f.sheet_ref) bySheetRef[f.sheet_ref] = f;
+      if(f.colour) used[f.colour] = (used[f.colour] || 0) + 1;
+    });
+
+    const live = {};
+    feed.forEach(r => { if(r && r.ref && r.arrival) live[r.ref] = true; });
+
+    // anything already here for the same group and date that the sheet is not
+    // currently claiming: either you added it by hand, or its Ref changed in the
+    // sheet. Either way, adopt it instead of listing the group twice.
+    const twins = {};
+    existing.forEach(f => {
+      if(f.sheet_ref && live[f.sheet_ref]) return;
+      twins[mkey(f.name, f.event_date)] = f;
+    });
+
+    const inserts = [], updates = [];
+    feed.forEach(r => {
+      if(!r || !r.ref || !r.arrival) return;
+      const want = {
+        name: r.name || "Group",
+        event_date: r.arrival,
+        end_date: r.departure || r.arrival,
+        sheet_status: r.status || null,
+        sheet_state: "active",
+        group_ref: r.rms || null,
+        group_link: r.link || null
+      };
+      const cur = bySheetRef[r.ref];
+      if(!cur){
+        const k = mkey(want.name, want.event_date), twin = twins[k];
+        if(twin){
+          delete twins[k];
+          live[r.ref] = true;
+          if(twin.sheet_ref) live[twin.sheet_ref] = true;
+          updates.push({id: twin.id, patch: Object.assign({source:"sheet", sheet_ref:r.ref}, want)});
+          return;
+        }
+        inserts.push(Object.assign({source:"sheet", sheet_ref:r.ref, colour:pickColour(used)}, want));
+      }else{
+        const patch = {};
+        Object.keys(want).forEach(k => { if((cur[k] || null) !== (want[k] || null)) patch[k] = want[k]; });
+        if(Object.keys(patch).length) updates.push({id: cur.id, patch: patch});
+      }
+    });
+    const dropped = existing.filter(f =>
+      f.source === "sheet" && f.sheet_ref && !live[f.sheet_ref] && f.sheet_state !== "dropped"
+    );
+
+    if(inserts.length) await run(sb.from("catering_functions").insert(inserts));
+    for(const u of updates) await run(sb.from("catering_functions").update(u.patch).eq("id", u.id));
+    for(const d of dropped) await run(sb.from("catering_functions").update({sheet_state:"dropped"}).eq("id", d.id));
+
+    const bits = [feed.length + " catering group" + (feed.length === 1 ? "" : "s") + " on the sheet"];
+    if(inserts.length) bits.push(inserts.length + " added");
+    if(updates.length) bits.push(updates.length + " updated");
+    if(dropped.length) bits.push(dropped.length + " no longer listed");
+    bits.push("checked " + new Date().toLocaleTimeString("en-AU", {hour:"numeric", minute:"2-digit"}));
+    setSyncMsg("good", bits.join(" · "));
+    if(inserts.length || updates.length || dropped.length) loadFunctionPicker();
+    return {added:inserts.length, updated:updates.length, dropped:dropped.length};
+  }catch(e){
+    setSyncMsg("bad", "Read the sheet but could not save the changes. " + (e.message || ""));
+    return {failed:true};
+  }
+}
+async function saveFeedSettings(){
+  const url = ($("stFeedUrl").value || "").trim();
+  const key = ($("stFeedKey").value || "").trim();
+  store("wslr_feed_url", url);
+  store("wslr_feed_key", key);
+  const msg = $("feedTestMsg");
+  msg.className = "syncmsg";
+  if(!url){ msg.textContent = "Cleared. Functions will only show what you add by hand."; return; }
+  msg.textContent = "Testing…";
+  try{
+    const rows = await fetchSheetRows();
+    msg.className = "syncmsg good";
+    msg.textContent = "Working. " + rows.length + " group" + (rows.length === 1 ? "" : "s") + " with catering on the sheet.";
+    lastSheetSync = 0;
+    toast("Sheet connected");
+  }catch(e){
+    msg.className = "syncmsg bad";
+    msg.textContent = e.message === "no-url" ? "No URL entered." : e.message;
+  }
+}
+function fnDateLabel(r){
+  const a = fmtDate(r.event_date);
+  if(!r.end_date || r.end_date === r.event_date) return a;
+  return a + " → " + fmtDate(r.end_date);
+}
+function isSheetFn(r){ return !!(r && r.source === "sheet"); }
+
+async function renderFunctions(force){
+  if(!feedUrlBase()){
+    setSyncMsg("", "No sheet connected yet. Add the feed URL under Settings, Confirmations sheet.");
+  }else if(force === true || Date.now() - lastSheetSync > 60000){
+    lastSheetSync = Date.now();
+    try{ await syncSheetFunctions(); }catch(e){}
+  }
   try{
     const rows = await run(
       sb.from("catering_functions")
         .select("*, deliveries(id, supplier, delivered_at), function_wrapups(*)")
-        .order("event_date", {ascending:false}).limit(80)
+        .order("event_date", {ascending:false}).limit(200)
     );
     const today = localISO();
     const up = rows.filter(r => r.event_date >= today).sort((a, b) => a.event_date.localeCompare(b.event_date));
@@ -1985,16 +2183,21 @@ function fnCardHtml(r, isPast){
   const wrapped = r.function_wrapups && r.function_wrapups.length;
   const badge = isPast
     ? (wrapped ? '<span class="pill ok">Wrapped up</span>' : '<span class="pill warn">Wrap up pending</span>')
-    : '<span class="pill plain">' + esc(fmtDate(r.event_date)) + "</span>";
+    : '<span class="pill plain">' + esc(fnDateLabel(r)) + "</span>";
+  const tag = isSheetFn(r)
+    ? (r.sheet_state === "dropped"
+        ? '<span class="pill warn">No longer on the sheet</span>'
+        : '<span class="pill sheet">' + esc(r.sheet_status || "From the sheet") + "</span>")
+    : '<span class="pill manual">Added here</span>';
   const sub = [
-    isPast ? fmtDate(r.event_date) : "",
+    isPast ? fnDateLabel(r) : "",
     (r.meal_types || []).join(", "),
     r.heads ? r.heads + " heads" : "",
     (r.deliveries ? r.deliveries.length : 0) + " deliveries"
   ].filter(Boolean).join(" \u00b7 ");
-  return '<div class="rowcard" data-id="' + r.id + '"><div class="l"><div class="t">' +
+  return '<div class="rowcard' + (isSheetFn(r) ? "" : " fn-manual") + '" data-id="' + r.id + '"><div class="l"><div class="t">' +
     '<span class="fndot" style="background:' + esc(r.colour || "#546e64") + ';"></span>' + esc(r.name) +
-    '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + badge + "</div></div>";
+    '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + badge + tag + "</div></div>";
 }
 const FN_PALETTE = ["#c2402f","#ea580c","#b45309","#a16207","#4d7c0f","#15803d","#0f766e","#7c3aed","#9333ea","#c026d3","#be185d","#e11d48","#78350f","#6d28d9"];
 function nextColour(){
@@ -2018,6 +2221,9 @@ function functionForm(fn){
   let selColour = fn && fn.colour ? fn.colour : nextColour();
   const m = openModal(
     "<h2>" + (fn ? "Edit function" : "Add a function") + "</h2>" +
+    (fn && fn.source === "sheet"
+      ? '<p class="small muted" style="margin-top:-8px;">This one comes from the confirmations sheet, so its name and dates refresh from the sheet every time this page loads. Change those in the sheet. Meals, heads, colour and notes stay exactly as you set them here.</p>'
+      : "") +
     '<div class="field"><label for="fmName">Name</label><input id="fmName" placeholder="e.g. Nguyen 50th" value="' + esc(fn ? fn.name : "") + '"></div>' +
     '<div class="field"><label>Meal services</label><div class="chips" id="fmMeals">' +
     MEAL_TYPES.map(t => '<button type="button" data-v="' + esc(t) + '"' + (sel.has(t) ? ' class="on"' : "") + ">" + esc(t) + "</button>").join("") +
@@ -2100,10 +2306,14 @@ async function functionDetail(fn){
   const m = openModal(
     '<h2><span class="fndot" style="background:' + esc(fn.colour || "#546e64") + '; width:14px; height:14px;"></span>' + esc(fn.name) + "</h2>" +
     '<p class="small muted" style="margin-top:2px;">' + esc([
-      fmtDate(fn.event_date),
+      fnDateLabel(fn),
       (fn.meal_types || []).join(", "),
       fn.heads ? fn.heads + " heads" : ""
     ].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+    '<p class="small" style="margin-top:-4px;">' + (isSheetFn(fn)
+      ? '<span class="pill sheet">From the confirmations sheet</span>' +
+        (fn.sheet_state === "dropped" ? ' <span class="pill warn">No longer listed there</span>' : "")
+      : '<span class="pill manual">Added here by hand</span>') + "</p>" +
     (headsBreakdown(fn) ? '<p class="small muted" style="margin-top:-4px;">' + esc(headsBreakdown(fn)) + "</p>" : "") +
     (fn.group_ref || fn.group_link
       ? '<p class="small muted" style="margin-top:-4px;">' +
@@ -2284,7 +2494,7 @@ async function functionDetailRO(fn){
   openModal(
     '<h2><span class="fndot" style="background:' + esc(fn.colour || "#546e64") + '; width:14px; height:14px;"></span>' + esc(fn.name) + "</h2>" +
     '<p class="small muted" style="margin-top:2px;">' + esc([
-      fmtDate(fn.event_date),
+      fnDateLabel(fn),
       (fn.meal_types || []).join(", "),
       fn.heads ? fn.heads + " heads" : ""
     ].filter(Boolean).join(" · ")) + "</p>" +
@@ -2343,7 +2553,7 @@ function bookingNotes(b){
   return bits.length ? bits.join(". ") : null;
 }
 async function renderGroupBookings(){
-  const box = $("gbList");
+  const box = $("gbList"), card = $("gbCard");
   if(!box || state.mode !== "admin") return;
   try{
     const from = localISO(new Date(Date.now() - 2 * 86400000));
@@ -2356,9 +2566,11 @@ async function renderGroupBookings(){
       sb.from("catering_functions").select("id, name, booking_id").not("booking_id", "is", null).limit(200)
     );
     if(!bookings.length){
-      box.innerHTML = '<div class="empty">No catering groups yet. They appear here automatically once the confirmation builder bridge is live.</div>';
+      if(card) card.style.display = "none";
+      box.innerHTML = "";
       return;
     }
+    if(card) card.style.display = "";
     const linked = {};
     fns.forEach(f => { if(f.booking_id) linked[f.booking_id] = f; });
     box.innerHTML = bookings.map(b => {
@@ -2378,7 +2590,8 @@ async function renderGroupBookings(){
       })
     );
   }catch(e){
-    box.innerHTML = '<div class="empty">Could not load groups. Has the v2.1 schema been run?</div>';
+    if(card) card.style.display = "none";
+    box.innerHTML = "";
   }
 }
 function bookingModal(b, linkedFn){
@@ -3491,6 +3704,12 @@ function bindStatic(){
     e.preventDefault(); rz.classList.remove("dragging");
     for(const f of [...e.dataTransfer.files]) await addDocketFile(f);
   });
+  const bss = $("btnSheetSync");
+  if(bss) bss.addEventListener("click", () => renderFunctions(true));
+  const bsf = $("btnSaveFeed");
+  if(bsf) bsf.addEventListener("click", saveFeedSettings);
+  const sfu = $("stFeedUrl"); if(sfu) sfu.value = readStore("wslr_feed_url") || SHEET_FEED_URL || "";
+  const sfk = $("stFeedKey"); if(sfk) sfk.value = readStore("wslr_feed_key") || SHEET_FEED_KEY || "";
   $("btnSaveShelf").addEventListener("click", saveShelfChanges);
   $("btnAddShelf").addEventListener("click", addShelfRow);
   $("btnAddHint").addEventListener("click", () => hintForm(null));
