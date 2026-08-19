@@ -156,6 +156,8 @@ section.active{display:block;}
 .fnlegend button.all{background:var(--ink);}
 .fnlegend button.gen{background:#8a938e;}
 .fnlegend button.on{outline:3px solid var(--ink); outline-offset:2px;}
+.fnlegend button.more{background:#fff; border:1.5px dashed var(--line); color:var(--muted);}
+.fnlegend button[hidden]{display:none;}
 .fndot{display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:4px;}
 .swatches{display:flex; gap:8px; flex-wrap:wrap;}
 .swatches button{width:36px; height:36px; border-radius:50%; border:3px solid transparent; cursor:pointer;}
@@ -185,6 +187,58 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 
 /* Sheet synced vs added by hand */
 .rowcard.fn-manual{background:#f2eee2; border-color:#dcd5c2; border-style:dashed;}
+
+/* Where a card came from, readable down a long list at a glance */
+.rowcard.src-sheet{box-shadow:inset 5px 0 0 var(--brand), var(--shadow); padding-left:19px;}
+.rowcard.src-hand{box-shadow:inset 5px 0 0 var(--dry), var(--shadow); padding-left:19px; background:#faf6f0; border-color:#e6dccd;}
+.ordgroup{margin:0 0 18px;}
+.ordgroup-hd{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 8px; flex-wrap:wrap;}
+.ordgroup-hd .nm{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:15px;}
+.ordgroup-hd .nm span{color:var(--muted); font-weight:600; font-size:13px; margin-left:6px;}
+.rowcard .r .btn{margin-top:2px;}
+.rowcard .r.rrow{flex-direction:row; align-items:center; gap:9px;}
+.rowcard .r.rrow .btn{margin-top:0;}
+/* Prep sheet, shown on screen and the only thing that prints */
+#printRoot{position:fixed; inset:0; z-index:150; background:#fff; overflow-y:auto; display:none;}
+#printRoot.open{display:block;}
+.psheet{max-width:820px; margin:0 auto; padding:26px 22px 60px; color:#111;}
+.psheet h1{font-family:'Bricolage Grotesque',sans-serif; font-size:26px; margin:0 0 2px;}
+.psheet .psub{color:#555; font-size:14px; margin:0 0 16px;}
+.psheet h2{font-family:'Bricolage Grotesque',sans-serif; font-size:16px; margin:20px 0 7px; padding-bottom:4px; border-bottom:2px solid #111;}
+.psheet table{width:100%; border-collapse:collapse; font-size:13.5px;}
+.psheet td, .psheet th{text-align:left; padding:6px 8px; border-bottom:1px solid #ddd; vertical-align:top;}
+.psheet th{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:#555;}
+.psheet .tick{width:26px; color:#999;}
+.psheet .none{color:#777; font-style:italic; padding:6px 0; font-size:13.5px;}
+.psheet .pbar{display:flex; gap:8px; margin-bottom:18px;}
+@media print{
+  body > *{display:none !important;}
+  body > #printRoot{display:block !important; position:static;}
+  .psheet .pbar{display:none;}
+  .psheet{max-width:none; padding:0;}
+}
+/* Stocktake */
+.stbig{min-height:64px; font-size:17px;}
+.stlist{max-height:280px; overflow-y:auto; margin-top:10px;}
+.stitem{display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px;}
+.stitem img{width:44px; height:44px; object-fit:cover; border-radius:8px; flex:none;}
+.stitem .n{flex:1; min-width:0;}
+.stcount{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:19px;}
+.ordchips{display:flex; flex-wrap:wrap; gap:7px; margin-top:8px;}
+.ordchips:empty{display:none;}
+.ordchips .oc{
+  display:inline-flex; align-items:center; gap:8px; background:var(--brand-soft); color:var(--brand-dark);
+  border-radius:10px; padding:8px 10px; font-size:13.5px; font-weight:700;
+}
+.ordchips .oc button{border:none; background:none; color:var(--brand-dark); font-size:17px; cursor:pointer; padding:0 2px; line-height:1;}
+.orddiff{margin-top:9px;}
+.orddiff:empty{display:none;}
+.orddiff .sum{display:flex; flex-wrap:wrap; gap:7px;}
+.diffline{font-size:13px; padding:4px 0; border-bottom:1px solid var(--line);}
+.diffline:last-child{border-bottom:none;}
+#modalRoot .fnpick.picked{box-shadow:inset 0 0 0 4px var(--ink);}
+#modalRoot .fnpick .fp-t{position:absolute; top:8px; right:11px; font-size:15px; font-weight:800;}
+#modalRoot .fnpick{position:relative;}
 .pill.sheet{background:var(--brand-soft); color:var(--brand-dark);}
 .pill.manual{background:#e4ddcb; color:#6b6252;}
 .fnkey{display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:0 0 10px; font-size:13px; color:var(--muted);}
@@ -429,7 +483,11 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 
 <!-- ============ USE FIRST ============ -->
 <section id="sec-usefirst" class="active">
-  <button class="btn btn-primary" id="btnGoReceive" style="margin-bottom:12px;">+ Receive a delivery</button>
+  <div style="display:flex; gap:8px; margin-bottom:12px;">
+    <button class="btn btn-primary" id="btnGoReceive" style="flex:2;">+ Receive a delivery</button>
+    <button class="btn btn-secondary" id="btnStocktake" style="flex:1;">Stocktake</button>
+  </div>
+  <input type="file" id="stCam" accept="image/*" capture="environment" style="display:none;">
   <div style="display:flex; gap:8px; margin-bottom:12px;">
     <input id="ufSearch" placeholder="Search items, e.g. chicken" autocomplete="off" style="flex:1;">
     <button class="btn btn-secondary btn-scan" id="btnUfScan" title="Scan a barcode to find the item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5h2v14H2zM5 5h1v14H5zM7.5 5h2v14h-2zM11 5h1v14h-1zM13.5 5h1v14h-1zM16 5h2.5v14H16zM20 5h2v14h-2z"/></svg></button>
@@ -458,8 +516,11 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
       <p class="syncmsg" id="shopSyncMsg">Checking&hellip;</p>
     </div>
   </div>
-  <h3 class="uf-group">Waiting to arrive</h3>
-  <div id="ordOpen"><div class="loading">Loading&hellip;</div></div>
+  <h3 class="uf-group">Yet to be ordered</h3>
+  <p class="muted small" style="margin:-2px 0 10px;">Straight off the shopping list and not placed with anyone yet. Ring the supplier, then mark them ordered so the kitchen starts watching for them.</p>
+  <div id="ordToOrder"><div class="loading">Loading&hellip;</div></div>
+  <h3 class="uf-group">Ordered, waiting to arrive</h3>
+  <div id="ordOpen"></div>
   <h3 class="uf-group">Recent</h3>
   <div id="ordDone"></div>
 </section>
@@ -536,6 +597,12 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     <div class="field">
       <label for="rFunction">This delivery is for</label>
       <select id="rFunction"><option value="">General stock</option></select>
+    </div>
+    <div class="field">
+      <label>Against which orders?</label>
+      <button class="btn btn-secondary" id="btnPickOrders" style="width:100%;">Pick orders</button>
+      <div id="rOrderChips" class="ordchips"></div>
+      <div id="rOrderDiff" class="orddiff"></div>
     </div>
     <div class="field">
       <label>Docket</label>
@@ -686,7 +753,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   </div>
   <div class="card">
     <h2>About</h2>
-    <p class="small muted" id="verLine">WSLR Kitchen v2.4 (Functions build themselves from the confirmations sheet, orders from the planner's shopping list). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Orders build themselves the same way from the planner's shopping list, one per supplier per function, and stop refreshing as soon as the first delivery is logged against them. Anything you add in the app sits alongside in a paler dashed card so the two are easy to tell apart. The two links are the Apps Script web apps in kitchen-confirmations-feed.gs and kitchen-shopping-feed.gs; paste their URLs under Settings.<br><br>Allocating stock to a group only lists the ones on site now or arriving inside a fortnight; the rest sit behind the Later groups button.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql, then wslr-kitchen-v2.3-sheet-sync.sql, then wslr-kitchen-v2.4-shopping-sync.sql in the Supabase SQL editor.</p>
+    <p class="small muted" id="verLine">WSLR Kitchen v2.5 (yet-to-be-ordered list, receiving against several orders at once, stocktake mode and prep sheets). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Orders build themselves the same way from the planner's shopping list, one per supplier per function, and stop refreshing as soon as the first delivery is logged against them. Anything you add in the app sits alongside in a paler dashed card so the two are easy to tell apart. The two links are the Apps Script web apps in kitchen-confirmations-feed.gs and kitchen-shopping-feed.gs; paste their URLs under Settings.<br><br>Allocating stock to a group only lists the ones on site now or arriving inside a fortnight; the rest sit behind the Later groups button.<br><br>Orders off the shopping list land under <b>Yet to be ordered</b>, grouped by supplier so one call to Bidfood clears the lot. Mark them ordered and the kitchen starts watching for them on Arrivals. When a docket turns up you can tag it to several orders at once and the shorts, extras and overs show as you type. <b>Stocktake</b> on the Stock tab walks you round the shelves with the barcode scanner and the camera to build opening stock. Every function has a <b>Prep sheet</b> you can print.<br><br>Both sheets are re-checked every five minutes and whenever the iPad wakes or you come back to the tab.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql, then wslr-kitchen-v2.3-sheet-sync.sql, wslr-kitchen-v2.4-shopping-sync.sql and wslr-kitchen-v2.5-orders-stocktake.sql in the Supabase SQL editor.</p>
   </div>
 </section>
 
@@ -700,6 +767,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   <button class="btn btn-sm" id="bulkBin" style="background:var(--red); color:#fff;">Bin</button>
 </div>
 
+<div id="printRoot"></div>
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 <script>
@@ -730,6 +798,8 @@ const state = {
   shelf: [],          // shelf life default rows
   functions: [],      // upcoming functions for the receive picker
   ufFnFilter: null,
+  ufShowFar: false,
+  draftOrders: [],
   ufItems: [],
   selectMode: false,
   selected: new Set(),
@@ -1037,9 +1107,15 @@ function renderDraftItems(){
       '<div class="n" data-i="' + i + '" style="cursor:pointer;">' + esc(it.name) +
       (it.short ? ' <span class="pill bad">Not received</span>' : "") +
       (draftItemWarn(it) ? ' <span class="pill warn">Expires before event</span>' : "") +
+      (state.draftOrders.length ? (function(){
+        const d = diffOf(it);
+        const cls = d.kind === "ok" ? "ok" : d.kind === "extra" ? "plain" : "warn";
+        return ' <span class="pill ' + cls + '">' + esc(d.text) + "</span>";
+      })() : "") +
       '<div class="small muted" style="margin-top:2px;">' + esc(meta) + (meta && chips ? " \u00b7 " : "") + chips + "</div></div>" +
       (state.draftSelect ? "" : '<button class="x" data-i="' + i + '">&times;</button>') + "</div>";
   }).join("");
+  renderOrderDiff();
   $("itemList").querySelectorAll(".x").forEach(b =>
     b.addEventListener("click", () => { state.draftItems.splice(+b.dataset.i, 1); renderDraftItems(); })
   );
@@ -1161,6 +1237,7 @@ function editDraftItem(idx){
         if(!stored.length) stored = null;
       }
     }
+    const prev = state.draftItems[idx] || {};
     state.draftItems[idx] = {
       name,
       category: cat,
@@ -1169,7 +1246,14 @@ function editDraftItem(idx){
       unit: m.querySelector("#dmUnit").value.trim() || null,
       expiry: exp,
       short,
-      allocs: stored
+      allocs: stored,
+      // keep the link back to the order line so the difference still shows
+      orderItemId: prev.orderItemId || null,
+      orderId: prev.orderId || null,
+      ordQty: prev.ordQty == null ? null : prev.ordQty,
+      ordUnit: prev.ordUnit || null,
+      ordFor: prev.ordFor || null,
+      touched: true
     };
     closeModal(); renderDraftItems();
   });
@@ -1366,6 +1450,456 @@ function addItemFromForm(){
   if($("iCategory").value && state.itemStorage) autoExpiry();
   $("iName").focus();
 }
+// ============================================================
+// PREP SHEET  (one page per function, for the bench or the printer)
+// ============================================================
+function closePrint(){
+  const r = $("printRoot");
+  r.classList.remove("open");
+  r.innerHTML = "";
+  document.body.style.overflow = "";
+}
+async function prepSheet(fn){
+  let items = [], orders = [];
+  try{
+    items = await run(
+      sb.from("stock_items").select("*").eq("function_id", fn.id).order("expiry_date", {ascending:true, nullsFirst:false}).limit(400)
+    );
+  }catch(e){}
+  try{
+    orders = await run(
+      sb.from("orders").select("*, order_items(*)").eq("function_id", fn.id).in("status", ["to_order","open"]).limit(60)
+    );
+  }catch(e){}
+
+  const inStock = items.filter(i => i.status === "in_stock");
+  const byStore = {fridge:[], freezer:[], dry:[], none:[]};
+  inStock.forEach(i => (byStore[i.storage] || byStore.none).push(i));
+  const missing = items.filter(i => i.status === "not_received");
+
+  const heads = [
+    fn.heads_adult ? fn.heads_adult + " adults" : "",
+    fn.heads_teen ? fn.heads_teen + " teens" : "",
+    fn.heads_child ? fn.heads_child + " children" : "",
+    fn.heads_infant ? fn.heads_infant + " infants" : ""
+  ].filter(Boolean).join(", ");
+
+  const table = (rows, cols) =>
+    "<table><thead><tr><th class=\"tick\"></th>" + cols.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
+    rows.map(r => "<tr><td class=\"tick\">☐</td>" + r.map(c => "<td>" + esc(c == null ? "" : String(c)) + "</td>").join("") + "</tr>").join("") +
+    "</tbody></table>";
+
+  const storeBlock = (key, label) => {
+    const list = byStore[key];
+    if(!list || !list.length) return "";
+    return "<h2>" + label + " (" + list.length + ")</h2>" +
+      table(list.map(i => [
+        i.item_name,
+        i.quantity != null ? i.quantity + " " + (i.unit || "") : (i.unit || ""),
+        i.expiry_date ? "use by " + fmtDate(i.expiry_date) : "",
+        i.category || ""
+      ]), ["Item", "Qty", "Use by", "Category"]);
+  };
+
+  const outstanding = [];
+  orders.forEach(o => (o.order_items || []).forEach(oi => outstanding.push([
+    oi.item_name,
+    oi.quantity != null ? oi.quantity + " " + (oi.unit || "") : (oi.unit || ""),
+    o.supplier || "",
+    o.status === "to_order" ? "not ordered yet" : (o.expected_date ? "due " + fmtDate(o.expected_date) : "ordered")
+  ])));
+
+  const r = $("printRoot");
+  r.innerHTML =
+    '<div class="psheet">' +
+    '<div class="pbar">' +
+      '<button class="btn btn-primary" id="psPrint" style="width:auto;">Print</button>' +
+      '<button class="btn btn-ghost" id="psClose" style="width:auto;">Close</button>' +
+    "</div>" +
+    "<h1>" + esc(fn.name) + "</h1>" +
+    '<p class="psub">' + esc([
+      fnDateLabel(fn),
+      (fn.meal_types || []).join(", "),
+      fn.heads ? fn.heads + " heads" : "",
+      heads,
+      fn.group_ref ? "RMS " + fn.group_ref : ""
+    ].filter(Boolean).join("  ·  ")) + "</p>" +
+    (fn.notes ? "<h2>Notes</h2><p style=\"font-size:13.5px;\">" + esc(fn.notes) + "</p>" : "") +
+    (inStock.length
+      ? storeBlock("fridge", "Fridge") + storeBlock("freezer", "Freezer") + storeBlock("dry", "Dry store") + storeBlock("none", "No location set")
+      : "<h2>Food set aside</h2><p class=\"none\">Nothing allocated to this function yet.</p>") +
+    "<h2>Still to come (" + outstanding.length + ")</h2>" +
+    (outstanding.length ? table(outstanding, ["Item", "Qty", "Supplier", "Status"]) : "<p class=\"none\">Nothing outstanding.</p>") +
+    (missing.length
+      ? "<h2>Did not arrive (" + missing.length + ")</h2>" +
+        table(missing.map(i => [i.item_name, i.quantity != null ? i.quantity + " " + (i.unit || "") : "", i.status_notes || i.status_note || ""]),
+              ["Item", "Qty", "Note"])
+      : "") +
+    '<p class="psub" style="margin-top:26px;">Printed ' + esc(new Date().toLocaleString("en-AU", {weekday:"short", day:"numeric", month:"short", hour:"numeric", minute:"2-digit"})) + " · WSLR Kitchen</p>" +
+    "</div>";
+  r.classList.add("open");
+  document.body.style.overflow = "hidden";   // stop the page behind scrolling under it
+  r.querySelector("#psPrint").addEventListener("click", () => window.print());
+  r.querySelector("#psClose").addEventListener("click", closePrint);
+}
+
+// ============================================================
+// STOCKTAKE  (walk the shelves, scan, photograph, save as opening stock)
+// ============================================================
+let stTake = null;          // the open stocktake row
+let stItems = [];           // what has been added this session
+let stPhoto = null;         // {blob, url} for the item being entered
+
+async function stocktakeStart(){
+  let open = [];
+  try{
+    open = await run(sb.from("stocktakes").select("*").eq("status", "open").order("started_at", {ascending:false}).limit(1));
+  }catch(e){
+    toast("Stocktake needs the v2.5 tables. Run the SQL in Supabase first.", {type:"err"});
+    return;
+  }
+  if(open.length){
+    stTake = open[0];
+    try{
+      stItems = await run(sb.from("stock_items").select("*").eq("stocktake_id", stTake.id).order("id", {ascending:false}).limit(500));
+    }catch(e){ stItems = []; }
+    stocktakePane();
+    return;
+  }
+  const m = openModal(
+    "<h2>Start a stocktake</h2>" +
+    '<p class="small muted" style="margin-top:-2px;">Walk the shelves and add everything that is there. Scan a barcode where there is one, snap a photo where there is not. Everything you add lands in general stock as opening stock.</p>' +
+    '<div class="field"><label for="stName">What are you counting?</label><input id="stName" placeholder="e.g. Dry store, or Full kitchen" autocomplete="off"></div>' +
+    '<div class="field"><label for="stWho">Who is doing it</label><input id="stWho" list="receiverList" placeholder="Your name" autocomplete="off" value="' + esc(readStore("wslr_who") || "") + '"></div>' +
+    '<button class="btn btn-primary" id="stGo" style="width:100%;">Start</button>'
+  );
+  m.querySelector("#stGo").addEventListener("click", async () => {
+    const who = m.querySelector("#stWho").value.trim();
+    if(who) store("wslr_who", who);
+    try{
+      const row = await run(sb.from("stocktakes").insert({
+        name: m.querySelector("#stName").value.trim() || null,
+        done_by: who || null
+      }).select().single());
+      stTake = row; stItems = [];
+      stocktakePane();
+    }catch(e){}
+  });
+}
+
+function stocktakePane(){
+  const m = openModal(
+    '<h2>Stocktake<span class="stcount" style="float:right;">' + stItems.length + "</span></h2>" +
+    '<p class="small muted" style="margin-top:-2px;">' +
+      esc([stTake.name || "Stocktake", stTake.done_by || ""].filter(Boolean).join(" · ")) + "</p>" +
+    '<button class="btn btn-primary stbig" id="stScan" style="width:100%;">Scan a barcode</button>' +
+    '<button class="btn btn-secondary stbig" id="stHand" style="width:100%; margin-top:8px;">Add without a barcode</button>' +
+    '<div class="stlist" id="stList"></div>' +
+    '<button class="btn btn-ghost" id="stFinish" style="width:100%; margin-top:14px;">Finish this stocktake</button>' +
+    '<button class="btn btn-ghost" id="stLater" style="width:100%; margin-top:8px;">Pause, I will come back to it</button>'
+  );
+  const list = m.querySelector("#stList");
+  list.innerHTML = stItems.length
+    ? stItems.slice(0, 60).map(i =>
+        '<div class="stitem">' +
+        (i.photo_path ? '<img src="' + esc(pubUrl(i.photo_path)) + '">' : '<div style="width:44px;"></div>') +
+        '<div class="n"><b>' + esc(i.item_name) + "</b><br>" +
+        '<span class="small muted">' + esc([
+          i.quantity != null ? i.quantity + " " + (i.unit || "") : "",
+          storageLabel(i.storage),
+          i.expiry_date ? "use by " + fmtDate(i.expiry_date) : ""
+        ].filter(Boolean).join(" · ")) + "</span></div></div>").join("")
+    : '<div class="empty" style="padding:18px;">Nothing counted yet.</div>';
+
+  m.querySelector("#stScan").addEventListener("click", () => {
+    scanBarcode(async code => {
+      const hit = await lookupBarcode(code);
+      stocktakeItemForm({
+        barcode: code,
+        name: hit.known ? hit.item_name : (hit.suggestion || ""),
+        category: hit.known ? hit.category : null,
+        storage: hit.known ? hit.storage : null,
+        unit: hit.known ? hit.unit : null
+      });
+    });
+  });
+  m.querySelector("#stHand").addEventListener("click", () => stocktakeItemForm({}));
+  m.querySelector("#stLater").addEventListener("click", () => { closeModal(); toast("Paused. Tap Stocktake to pick it up again."); });
+  m.querySelector("#stFinish").addEventListener("click", async () => {
+    if(!confirm("Finish this stocktake? " + stItems.length + " item" + (stItems.length === 1 ? "" : "s") + " counted.")) return;
+    try{
+      await run(sb.from("stocktakes").update({status:"done", finished_at:new Date().toISOString()}).eq("id", stTake.id));
+      toast(stItems.length + " item" + (stItems.length === 1 ? "" : "s") + " counted in");
+    }catch(e){}
+    stTake = null; stItems = [];
+    closeModal(); refreshCurrentTab();
+  });
+}
+
+function stocktakeItemForm(pre){
+  stPhoto = null;
+  const cats = [...new Set(state.shelf.map(r => r.category))];
+  const catOpts = '<option value="">Choose&hellip;</option>' +
+    cats.map(c => '<option value="' + esc(c) + '"' + (pre.category === c ? " selected" : "") + ">" + esc(c) + "</option>").join("");
+  const m = openModal(
+    "<h2>" + (pre.barcode ? "Scanned item" : "Add an item") + "</h2>" +
+    (pre.barcode ? '<p class="small muted" style="margin-top:-2px;">Barcode ' + esc(pre.barcode) +
+      (pre.name ? " · recognised" : " · not seen before, give it a name and it will be remembered") + "</p>" : "") +
+    '<div class="field"><label for="siName">Item</label><input id="siName" list="nameList" value="' + esc(pre.name || "") + '" autocomplete="off"></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label for="siCat">Category</label><select id="siCat">' + catOpts + "</select></div>" +
+    '<div class="field"><label for="siStorage">Storage</label><select id="siStorage">' +
+      ["", "fridge", "freezer", "dry"].map(v =>
+        '<option value="' + v + '"' + (pre.storage === v ? " selected" : "") + ">" +
+        (v ? storageLabel(v) : "Choose…") + "</option>").join("") + "</select></div></div>" +
+    '<div class="grid2">' +
+    '<div class="field"><label>How much</label><div style="display:flex; gap:8px;">' +
+      '<input id="siQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;">' +
+      '<input id="siUnit" list="unitList" placeholder="Unit" value="' + esc(pre.unit || "") + '" style="flex:1;" autocomplete="off"></div></div>' +
+    '<div class="field"><label for="siExp">Use by</label><input type="date" id="siExp"></div></div>' +
+    '<div class="field"><label>Photo</label>' +
+      '<button class="btn btn-secondary" id="siPhoto" style="width:100%;">&#128247; Take a photo</button>' +
+      '<div id="siPhotoWrap" style="margin-top:8px;"></div></div>' +
+    '<button class="btn btn-primary" id="siSaveNext" style="width:100%;">Save and scan the next one</button>' +
+    '<button class="btn btn-secondary" id="siSaveStop" style="width:100%; margin-top:8px;">Save and go back to the list</button>'
+  );
+  const wrap = m.querySelector("#siPhotoWrap");
+  const cam = $("stCam");
+  const onPick = async e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if(!f) return;
+    const blob = await compressImage(f, 1400, 0.7);
+    if(stPhoto && stPhoto.url) URL.revokeObjectURL(stPhoto.url);
+    stPhoto = {blob, url: URL.createObjectURL(blob)};
+    wrap.innerHTML = '<img src="' + stPhoto.url + '" style="width:100%; max-height:190px; object-fit:cover; border-radius:11px;">';
+  };
+  cam.onchange = onPick;
+  m.querySelector("#siPhoto").addEventListener("click", () => cam.click());
+
+  const save = async again => {
+    const name = m.querySelector("#siName").value.trim();
+    if(!name){ toast("Give it a name", {type:"err"}); return; }
+    const cat = m.querySelector("#siCat").value || null;
+    const st = m.querySelector("#siStorage").value || null;
+    const qv = m.querySelector("#siQty").value;
+    const unit = m.querySelector("#siUnit").value.trim() || null;
+    const exp = m.querySelector("#siExp").value || null;
+    try{
+      const row = await run(sb.from("stock_items").insert({
+        item_name: name,
+        category: cat,
+        storage: st,
+        quantity: qv === "" ? null : +qv,
+        unit: unit,
+        expiry_date: exp,
+        status: "in_stock",
+        origin: "stocktake",
+        stocktake_id: stTake.id,
+        barcode: pre.barcode || null,
+        received_date: localISO()
+      }).select().single());
+
+      if(stPhoto){
+        const path = "stocktake/" + stTake.id + "/" + row.id + ".jpg";
+        const { error } = await sb.storage.from("dockets").upload(path, stPhoto.blob, {contentType:"image/jpeg"});
+        if(!error){
+          await run(sb.from("stock_items").update({photo_path: path}).eq("id", row.id));
+          row.photo_path = path;
+        }
+        URL.revokeObjectURL(stPhoto.url);
+        stPhoto = null;
+      }
+      if(pre.barcode) saveBarcode(pre.barcode, {name, category: cat, storage: st, unit});
+      stItems.unshift(row);
+      toast(name + " counted in");
+    }catch(e){ return; }
+
+    if(again){
+      scanBarcode(async code => {
+        const hit = await lookupBarcode(code);
+        stocktakeItemForm({
+          barcode: code,
+          name: hit.known ? hit.item_name : (hit.suggestion || ""),
+          category: hit.known ? hit.category : null,
+          storage: hit.known ? hit.storage : null,
+          unit: hit.known ? hit.unit : null
+        });
+      });
+    }else{
+      stocktakePane();
+    }
+  };
+  m.querySelector("#siSaveNext").addEventListener("click", () => save(true));
+  m.querySelector("#siSaveStop").addEventListener("click", () => save(false));
+}
+
+// ---------- receiving against orders ----------
+// A docket often covers more than one order: one Bidfood run can carry the food
+// for three different groups. Pick them all here and the expected lines get
+// pulled in, then the differences show up as you type the real quantities.
+async function pickOrders(){
+  let orders = [];
+  try{
+    orders = await run(
+      sb.from("orders").select("*, catering_functions(id, name, event_date, colour), order_items(*)")
+        .eq("status", "open").order("expected_date", {ascending:true, nullsFirst:false}).limit(150)
+    );
+  }catch(e){ return; }
+  if(!orders.length){ toast("No orders are waiting to arrive", {type:"err"}); return; }
+
+  const sup = ($("rSupplier").value || "").trim().toLowerCase();
+  if(sup) orders.sort((a, b) =>
+    ((b.supplier || "").toLowerCase().indexOf(sup) === 0 ? 1 : 0) - ((a.supplier || "").toLowerCase().indexOf(sup) === 0 ? 1 : 0));
+
+  const chosen = new Set(state.draftOrders.map(o => o.id));
+  const btn = o => {
+    const items = (o.order_items || []).length;
+    const sub = [
+      o.expected_date ? fmtDate(o.expected_date) : "no date",
+      items + " item" + (items === 1 ? "" : "s"),
+      o.catering_functions ? o.catering_functions.name : (o.sheet_block || "general stock")
+    ].filter(Boolean).join(" \u00b7 ");
+    return '<button class="btn fnpick' + (chosen.has(o.id) ? " picked" : "") + '" data-ord="' + o.id + '" style="background:' +
+      esc(o.catering_functions && o.catering_functions.colour ? o.catering_functions.colour : "#546e64") + ';">' +
+      '<span class="fp-t">' + (chosen.has(o.id) ? "\u2713" : "") + "</span>" +
+      '<span class="fp-n">' + esc(o.supplier || "Order") + "</span>" +
+      '<span class="fp-d">' + esc(sub) + "</span></button>";
+  };
+  const cut = localISO(new Date(Date.now() + FN_SOON_DAYS * 86400000));
+  const soon = orders.filter(o => !o.expected_date || o.expected_date <= cut);
+  const later = orders.filter(o => o.expected_date && o.expected_date > cut);
+
+  const m = openModal(
+    "<h2>Which orders is this docket for?</h2>" +
+    '<p class="small muted" style="margin-top:-2px;">Tap as many as the docket covers. Their items come across so you can tick them off.</p>' +
+    (soon.length ? '<div class="pickhead">Due now or in the next ' + FN_SOON_DAYS + ' days</div><div class="fngrid">' + soon.map(btn).join("") + "</div>" : "") +
+    (later.length ? '<button class="btn btn-ghost pickmore" id="fnMore">Later orders (' + later.length + ")</button>" +
+      '<div id="fnLaterWrap"' + (soon.length ? ' style="display:none;"' : "") + '><div class="pickhead">Further out</div>' +
+      '<div class="fngrid">' + later.map(btn).join("") + "</div></div>" : "") +
+    '<button class="btn btn-primary" id="ordPickDone" style="margin-top:16px;">Done</button>'
+  );
+  wireFnMore(m);
+  m.querySelectorAll("[data-ord]").forEach(b =>
+    b.addEventListener("click", () => {
+      const id = +b.dataset.ord;
+      if(chosen.has(id)) chosen.delete(id); else chosen.add(id);
+      b.classList.toggle("picked", chosen.has(id));
+      b.querySelector(".fp-t").textContent = chosen.has(id) ? "\u2713" : "";
+    })
+  );
+  m.querySelector("#ordPickDone").addEventListener("click", () => {
+    state.draftOrders = orders.filter(o => chosen.has(o.id));
+    closeModal();
+    applyOrdersToDraft();
+  });
+}
+// Pull the expected lines in, without disturbing anything already typed
+function applyOrdersToDraft(){
+  const seen = {};
+  state.draftItems.forEach(it => { if(it.orderItemId) seen[it.orderItemId] = true; });
+  state.draftOrders.forEach(o => {
+    (o.order_items || []).forEach(oi => {
+      if(seen[oi.id]) return;
+      // already typed by hand under a matching name? adopt it rather than double up
+      const twin = state.draftItems.find(it => !it.orderItemId && itemsLookAlike(it.name, oi.item_name));
+      if(twin){
+        twin.orderItemId = oi.id; twin.orderId = o.id;
+        twin.ordQty = oi.quantity; twin.ordUnit = oi.unit; twin.ordFor = oi.sheet_for;
+        return;
+      }
+      state.draftItems.push({
+        name: oi.item_name,
+        category: oi.category || null,
+        storage: oi.storage || null,
+        qty: oi.quantity,
+        unit: oi.unit || null,
+        expiry: null,
+        allocs: o.function_id ? [{fnId: o.function_id, qty: oi.quantity}] : [],
+        orderItemId: oi.id, orderId: o.id,
+        ordQty: oi.quantity, ordUnit: oi.unit, ordFor: oi.sheet_for
+      });
+    });
+  });
+  // an order that has been unpicked should let go of its lines again
+  const live = {};
+  state.draftOrders.forEach(o => { live[o.id] = true; });
+  state.draftItems = state.draftItems.filter(it => !it.orderId || live[it.orderId] || it.touched);
+  state.draftItems.forEach(it => { if(it.orderId && !live[it.orderId]){ it.orderId = null; it.orderItemId = null; it.ordQty = null; } });
+  renderOrderChips();
+  renderDraftItems();
+  autoFillFromOrders();
+}
+function autoFillFromOrders(){
+  if(!state.draftOrders.length) return;
+  const sup = state.draftOrders[0].supplier;
+  if(sup && !$("rSupplier").value.trim()) $("rSupplier").value = sup;
+  const fn = state.draftOrders.find(o => o.function_id);
+  if(fn && !$("rFunction").value){
+    $("rFunction").value = String(fn.function_id);
+    applySelPaint($("rFunction"));
+  }
+}
+function diffOf(it){
+  if(it.ordQty == null) return it.orderItemId ? {kind:"ok", text:"as ordered"} : {kind:"extra", text:"not on the order"};
+  if(it.short) return {kind:"short", text:"none of the " + it.ordQty + " " + (it.ordUnit || "") + " arrived"};
+  const got = it.qty == null ? null : +it.qty;
+  if(got == null) return {kind:"ok", text:"ordered " + it.ordQty + " " + (it.ordUnit || "")};
+  const d = Math.round((got - it.ordQty) * 100) / 100;
+  if(d === 0) return {kind:"ok", text:"as ordered (" + it.ordQty + " " + (it.ordUnit || "") + ")"};
+  if(d < 0) return {kind:"short", text:"short " + (-d) + " " + (it.ordUnit || "") + " of " + it.ordQty};
+  return {kind:"over", text:(d) + " " + (it.ordUnit || "") + " more than the " + it.ordQty + " ordered"};
+}
+function renderOrderChips(){
+  const box = $("rOrderChips");
+  if(!box) return;
+  box.innerHTML = state.draftOrders.map(o => {
+    const who = o.catering_functions ? o.catering_functions.name : (o.sheet_block || "general stock");
+    return '<span class="oc">' + esc(o.supplier || "Order") + " \u00b7 " + esc(who) +
+      '<button data-drop="' + o.id + '" title="Remove">&times;</button></span>';
+  }).join("");
+  box.querySelectorAll("[data-drop]").forEach(b =>
+    b.addEventListener("click", () => {
+      state.draftOrders = state.draftOrders.filter(o => o.id !== +b.dataset.drop);
+      applyOrdersToDraft();
+    })
+  );
+  renderOrderDiff();
+}
+function renderOrderDiff(){
+  const box = $("rOrderDiff");
+  if(!box) return;
+  if(!state.draftOrders.length){ box.innerHTML = ""; return; }
+  const tallies = {ok:0, short:0, over:0, extra:0, missing:0};
+  state.draftItems.forEach(it => {
+    if(!it.orderItemId && !state.draftOrders.length) return;
+    const d = diffOf(it);
+    tallies[d.kind] = (tallies[d.kind] || 0) + 1;
+  });
+  const onDocket = {};
+  state.draftItems.forEach(it => { if(it.orderItemId) onDocket[it.orderItemId] = true; });
+  const missing = [];
+  state.draftOrders.forEach(o => (o.order_items || []).forEach(oi => { if(!onDocket[oi.id]) missing.push(oi); }));
+  tallies.missing = missing.length;
+
+  const pill = (n, cls, label) => n ? '<span class="pill ' + cls + '">' + n + " " + label + "</span>" : "";
+  box.innerHTML =
+    '<div class="sum">' +
+      pill(tallies.ok, "ok", "as ordered") +
+      pill(tallies.short, "warn", tallies.short === 1 ? "short" : "short") +
+      pill(tallies.over, "warn", "over") +
+      pill(tallies.extra, "plain", tallies.extra === 1 ? "extra" : "extras") +
+      pill(tallies.missing, "bad", "not on the docket yet") +
+    "</div>" +
+    (missing.length
+      ? '<div style="margin-top:8px;">' + missing.slice(0, 10).map(oi =>
+          '<div class="diffline"><b>' + esc(oi.item_name) + "</b> \u00b7 " +
+          esc(oi.quantity != null ? oi.quantity + " " + (oi.unit || "") : (oi.unit || "")) +
+          ' <span class="muted">ordered but not added yet</span></div>').join("") +
+        (missing.length > 10 ? '<div class="small muted">and ' + (missing.length - 10) + " more</div>" : "") + "</div>"
+      : "");
+}
+
 async function saveDelivery(){
   if(state.busy) return;
   const supplier = $("rSupplier").value.trim();
@@ -1451,9 +1985,31 @@ async function saveDelivery(){
       }
     }
 
+    // tie the docket to every order it settled, and close off the ones that are
+    // fully accounted for. Anything still outstanding stays open to chase.
+    if(state.draftOrders.length){
+      try{
+        await run(sb.from("delivery_orders").insert(
+          state.draftOrders.map(o => ({delivery_id: del.id, order_id: o.id}))
+        ));
+      }catch(e){}
+      const onDocket = {};
+      state.draftItems.forEach(it => { if(it.orderItemId) onDocket[it.orderItemId] = true; });
+      const settled = state.draftOrders.filter(o =>
+        (o.order_items || []).length && (o.order_items || []).every(oi => onDocket[oi.id]));
+      if(settled.length){
+        try{
+          await run(sb.from("orders").update({status:"received", received_at:new Date().toISOString()})
+            .in("id", settled.map(o => o.id)));
+        }catch(e){}
+      }
+      const left = state.draftOrders.length - settled.length;
+      if(left) toast(left + " order" + (left === 1 ? " is" : "s are") + " still short, left open to chase", {type:"warn"});
+    }
+
     state.draftPhotos.forEach(p => { if(p.url) URL.revokeObjectURL(p.url); });
-    state.draftPhotos = []; state.draftItems = [];
-    renderPhotoStrip(); renderDraftItems();
+    state.draftPhotos = []; state.draftItems = []; state.draftOrders = [];
+    renderPhotoStrip(); renderDraftItems(); renderOrderChips();
     $("rSupplier").value = ""; $("rIssueNotes").value = "";
     $("rFunction").value = "";
     applySelPaint($("rFunction"));
@@ -1576,16 +2132,33 @@ async function renderUseFirst(){
         (fnMap[i.function_id] = fnMap[i.function_id] || {fn: i.catering_functions, n: 0}).n++;
       } else genCount++;
     });
+    // same idea as the allocate picker: the groups anywhere near today come
+    // first, everything further out or long gone sits behind one more button
+    const chip = (id, e) => '<button style="background:' + esc(e.fn.colour || "#546e64") + ';"' +
+      (state.ufFnFilter === +id ? ' class="on"' : "") + ' data-f="' + id + '">' + esc(e.fn.name) + " (" + e.n + ")</button>";
+    const from = localISO(new Date(Date.now() - FN_SOON_DAYS * 86400000));
+    const to   = localISO(new Date(Date.now() + FN_SOON_DAYS * 86400000));
+    const ids  = Object.keys(fnMap);
+    const near = ids.filter(id => { const d = fnMap[id].fn.event_date || ""; return d >= from && d <= to; });
+    const far  = ids.filter(id => near.indexOf(id) === -1);
+    const farActive = far.some(id => state.ufFnFilter === +id);
+
     let leg = '<button class="all' + (state.ufFnFilter == null ? " on" : "") + '" data-f="">All (' + items.length + ")</button>";
     leg += '<button class="gen' + (state.ufFnFilter === "gen" ? " on" : "") + '" data-f="gen">General (' + genCount + ")</button>";
-    Object.keys(fnMap).forEach(id => {
-      const e = fnMap[id];
-      leg += '<button style="background:' + esc(e.fn.colour || "#546e64") + ';"' +
-        (state.ufFnFilter === +id ? ' class="on"' : "") + ' data-f="' + id + '">' + esc(e.fn.name) + " (" + e.n + ")</button>";
-    });
+    near.forEach(id => { leg += chip(id, fnMap[id]); });
+    if(far.length){
+      leg += '<button class="more" data-more="1"' + (state.ufShowFar || farActive ? ' style="display:none;"' : "") + ">+ " + far.length + " earlier and later</button>";
+      far.forEach(id => { leg += chip(id, fnMap[id]).replace("<button ", '<button data-far="1"' + (state.ufShowFar || farActive ? "" : ' hidden') + " "); });
+    }
     $("ufLegend").innerHTML = leg;
     $("ufLegend").querySelectorAll("button").forEach(b =>
       b.addEventListener("click", () => {
+        if(b.dataset.more){
+          state.ufShowFar = true;
+          b.style.display = "none";
+          $("ufLegend").querySelectorAll("[data-far]").forEach(x => x.removeAttribute("hidden"));
+          return;
+        }
         const v = b.dataset.f;
         state.ufFnFilter = v === "" ? null : (v === "gen" ? "gen" : +v);
         refreshCurrentTab();
@@ -2101,12 +2674,66 @@ function feedUrl(){
   const k = feedKey();
   return base + (base.indexOf("?") > -1 ? "&" : "?") + "cb=" + Date.now() + (k ? "&key=" + encodeURIComponent(k) : "");
 }
-async function fetchSheetFeed(){
+// Apps Script can be slow to wake up and slower still on a spreadsheet with a
+// lot of tabs, so nothing here is allowed to sit silent forever. onTick gets the
+// seconds elapsed once a second, and the whole thing gives up at 90.
+const FEED_TIMEOUT_MS = 90000;
+
+async function feedFetch(url, onTick){
+  const ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  const t0 = Date.now();
+  let tick = null;
+  if(onTick){
+    onTick(0);
+    tick = setInterval(() => onTick(Math.round((Date.now() - t0) / 1000)), 1000);
+  }
+  const timer = setTimeout(() => { if(ctl) ctl.abort(); }, FEED_TIMEOUT_MS);
+  try{
+    return await fetch(url, {method:"GET", redirect:"follow", cache:"no-store", signal: ctl ? ctl.signal : undefined});
+  }finally{
+    clearTimeout(timer);
+    if(tick) clearInterval(tick);
+  }
+}
+function waitLabel(what, secs){
+  if(secs < 3) return "Checking the " + what + "…";
+  if(secs < 15) return "Checking the " + what + "… " + secs + "s";
+  return "Still waiting on the " + what + "… " + secs + "s. A big spreadsheet can be slow the first time after a deploy.";
+}
+function isAbort(e){
+  return !!e && (e.name === "AbortError" || String(e.message || e).toLowerCase().indexOf("abort") > -1);
+}
+// Does the script answer at all? ?ping=1 replies without opening the
+// spreadsheet, so this separates a broken deployment from a slow sheet read.
+async function pingFeed(base, key){
+  if(!base) return false;
+  const u = base + (base.indexOf("?") > -1 ? "&" : "?") + "ping=1" + (key ? "&key=" + encodeURIComponent(key) : "");
+  try{
+    const ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    const t = setTimeout(() => { if(ctl) ctl.abort(); }, 15000);
+    const r = await fetch(u, {cache:"no-store", signal: ctl ? ctl.signal : undefined});
+    clearTimeout(t);
+    const d = JSON.parse(await r.text());
+    return !!(d && d.ping === "ok");
+  }catch(e){ return false; }
+}
+async function timeoutMessage(what, base, key){
+  const alive = await pingFeed(base, key);
+  const gave = "Gave up on the " + what + " after " + Math.round(FEED_TIMEOUT_MS / 1000) + " seconds. ";
+  return alive
+    ? gave + "The script itself answers straight away, so it is reading the spreadsheet that is slow. Make sure you have redeployed a New version of the latest script."
+    : gave + "It did not answer a quick ping either. Check the deployment is Execute as Me and Who has access Anyone, and that you used Manage deployments then Version: New version rather than just saving the code.";
+}
+
+async function fetchSheetFeed(onTick){
   const url = feedUrl();
   if(!url) throw new Error("no-url");
   let res;
-  try{ res = await fetch(url, {method:"GET", redirect:"follow", cache:"no-store"}); }
-  catch(e){ throw new Error("Could not reach the sheet. Check the deployment is set to \"Anyone\" and the URL ends in /exec."); }
+  try{ res = await feedFetch(url, onTick); }
+  catch(e){
+    if(isAbort(e)) throw new Error(await timeoutMessage("confirmations sheet", feedUrlBase(), feedKey()));
+    throw new Error("Could not reach the sheet. Check the deployment is set to \"Anyone\" and the URL ends in /exec.");
+  }
   if(!res.ok) throw new Error("The sheet feed replied " + res.status + ".");
   const text = await res.text();
   let data;
@@ -2151,7 +2778,7 @@ async function syncSheetFunctions(){
   }
   setSyncMsg("", "Checking the sheet…");
   let data, feed;
-  try{ data = await fetchSheetFeed(); feed = data.rows; }
+  try{ data = await fetchSheetFeed(n => setSyncMsg("", waitLabel("confirmations sheet", n))); feed = data.rows; }
   catch(e){ setSyncMsg("bad", e.message === "no-url" ? "No sheet connected yet." : e.message); return {failed:true}; }
   if(!feed.length){
     setSyncMsg("bad", "The sheet has no groups with Catering set to Yes." + feedNote(data));
@@ -2243,7 +2870,7 @@ async function saveFeedSettings(){
   if(!url){ msg.textContent = "Cleared. Functions will only show what you add by hand."; return; }
   msg.textContent = "Testing…";
   try{
-    const data = await fetchSheetFeed();
+    const data = await fetchSheetFeed(secs => { msg.textContent = waitLabel("confirmations sheet", secs); });
     const n = data.rows.length;
     if(!n){
       msg.className = "syncmsg bad";
@@ -2443,7 +3070,9 @@ async function functionDetail(fn){
         (fn.group_link ? (fn.group_ref ? " &middot; " : "") + '<a href="' + esc(fn.group_link) + '" target="_blank" rel="noopener" style="color:var(--brand-dark);">confirmation form</a>' : "") +
         "</p>"
       : "") +
-    '<button class="btn btn-ghost btn-sm" id="btnFnEdit">Edit details</button>' +
+    '<div style="display:flex; gap:8px;">' +
+    '<button class="btn btn-ghost btn-sm" id="btnFnEdit" style="flex:1;">Edit details</button>' +
+    '<button class="btn btn-secondary btn-sm" id="btnFnPrint" style="flex:1;">Prep sheet</button></div>' +
     "<h3>Food check</h3>" +
     foodCheckHtml(fn, allItems) +
     "<h3>Deliveries tagged</h3>" +
@@ -2471,6 +3100,7 @@ async function functionDetail(fn){
     '<button class="btn btn-primary" id="btnWuSave">Save wrap up</button>'
   );
   m.querySelector("#btnFnEdit").addEventListener("click", () => { closeModal(); functionForm(fn); });
+  m.querySelector("#btnFnPrint").addEventListener("click", () => { closeModal(); prepSheet(fn); });
   m.querySelectorAll("[data-ret]").forEach(b =>
     b.addEventListener("click", async () => {
       try{
@@ -2847,7 +3477,10 @@ function bookingModal(b, linkedFn){
 // ORDERS AND ARRIVALS
 // ============================================================
 const ORDER_SELECT = "*, catering_functions(id, name, event_date, colour), order_items(*)";
-function ordCardHtml(o){
+// grouped = sitting under a supplier heading, so the supplier name and the
+// "not ordered yet" state are already said once above and do not need repeating
+// on every card
+function ordCardHtml(o, grouped){
   const items = o.order_items || [];
   let when = '<span class="pill plain">No date</span>';
   if(o.expected_date){
@@ -2857,7 +3490,8 @@ function ordCardHtml(o){
       : '<span class="pill plain">' + esc(fmtDate(o.expected_date)) + "</span>";
   }
   const st = o.status === "received" ? ' <span class="pill ok">Received</span>'
-    : o.status === "cancelled" ? ' <span class="pill plain">Cancelled</span>' : "";
+    : o.status === "cancelled" ? ' <span class="pill plain">Cancelled</span>'
+    : o.status === "to_order" ? ' <span class="pill warn">Not ordered yet</span>' : "";
   const fromSheet = o.source === "sheet";
   const tag = fromSheet
     ? (o.sheet_state === "dropped" ? ' <span class="pill warn">No longer on the list</span>'
@@ -2869,8 +3503,24 @@ function ordCardHtml(o){
     o.catering_functions ? "for " + o.catering_functions.name : (fromSheet && o.sheet_block ? o.sheet_block + " (not tagged)" : "General stock"),
     o.notes || ""
   ].filter(Boolean).join(" · ");
-  return '<div class="rowcard' + (fromSheet ? "" : " fn-manual") + '" data-id="' + o.id + '"><div class="l"><div class="t">' + esc(o.supplier || "Order") +
-    '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + when + st + tag + "</div></div>";
+  const place = o.status === "to_order"
+    ? '<button class="btn btn-primary btn-sm" style="width:auto;" data-place="' + o.id + '">Mark ordered</button>'
+    : "";
+
+  if(grouped){
+    const forWho = o.catering_functions ? o.catering_functions.name : (o.sheet_block || "General stock");
+    const gsub = [
+      items.length + " item" + (items.length === 1 ? "" : "s"),
+      o.catering_functions ? "" : "not tagged to a function",
+      o.notes || ""
+    ].filter(Boolean).join(" \u00b7 ");
+    return '<div class="rowcard ' + (fromSheet ? "src-sheet" : "src-hand") + '" data-id="' + o.id + '">' +
+      '<div class="l"><div class="t">' + esc(forWho) + '</div><div class="s">' + esc(gsub) + "</div></div>" +
+      '<div class="r rrow">' + when + place + "</div></div>";
+  }
+
+  return '<div class="rowcard ' + (fromSheet ? "src-sheet" : "src-hand") + '" data-id="' + o.id + '"><div class="l"><div class="t">' + esc(o.supplier || "Order") +
+    '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + when + st + tag + place + "</div></div>";
 }
 async function renderArrivals(){
   const box = $("arrList");
@@ -3163,12 +3813,15 @@ function shopUrl(){
   const k = shopKey();
   return base + (base.indexOf("?") > -1 ? "&" : "?") + "cb=" + Date.now() + (k ? "&key=" + encodeURIComponent(k) : "");
 }
-async function fetchShopFeed(){
+async function fetchShopFeed(onTick){
   const url = shopUrl();
   if(!url) throw new Error("no-url");
   let res;
-  try{ res = await fetch(url, {method:"GET", redirect:"follow", cache:"no-store"}); }
-  catch(e){ throw new Error("Could not reach the shopping list. Check the deployment is set to \"Anyone\" and the URL ends in /exec."); }
+  try{ res = await feedFetch(url, onTick); }
+  catch(e){
+    if(isAbort(e)) throw new Error(await timeoutMessage("shopping list", shopUrlBase(), shopKey()));
+    throw new Error("Could not reach the shopping list. Check the deployment is set to \"Anyone\" and the URL ends in /exec.");
+  }
   if(!res.ok) throw new Error("The shopping list feed replied " + res.status + ".");
   let data;
   try{ data = JSON.parse(await res.text()); }
@@ -3263,7 +3916,7 @@ async function syncShoppingOrders(){
   }
   setShopMsg("", "Checking the shopping list…");
   let data, wanted;
-  try{ data = await fetchShopFeed(); wanted = shopOrders(data.blocks); }
+  try{ data = await fetchShopFeed(n => setShopMsg("", waitLabel("shopping list", n))); wanted = shopOrders(data.blocks); }
   catch(e){ setShopMsg("bad", e.message === "no-url" ? "No shopping list connected yet." : e.message); return {failed:true}; }
 
   if(!wanted.length){
@@ -3298,7 +3951,7 @@ async function syncShoppingOrders(){
             expected_date: o.dates[0] || null,
             function_id: fn ? fn.id : null,
             notes: o.notes,
-            status: "open",
+            status: "to_order",
             created_by: "Shopping list",
             source: "sheet",
             sheet_ref: o.ref,
@@ -3312,8 +3965,10 @@ async function syncShoppingOrders(){
         continue;
       }
 
-      // received against, or closed off? then leave it exactly as it is
-      const locked = cur.status !== "open" || (cur.deliveries && cur.deliveries.length > 0);
+      // received against, or closed off? then leave it exactly as it is.
+      // "to_order" is still untouched, so it keeps refreshing like an open one.
+      const locked = cur.status === "received" || cur.status === "cancelled" ||
+                     (cur.deliveries && cur.deliveries.length > 0);
       const same = shopSig(cur.order_items) === shopSig(o.items);
 
       if(locked){
@@ -3374,7 +4029,7 @@ async function saveShopSettings(){
   if(!url){ msg.textContent = "Cleared. Orders will only be the ones you add by hand."; return; }
   msg.textContent = "Testing…";
   try{
-    const data = await fetchShopFeed();
+    const data = await fetchShopFeed(secs => { msg.textContent = waitLabel("shopping list", secs); });
     const orders = shopOrders(data.blocks);
     if(!orders.length){
       msg.className = "syncmsg bad";
@@ -3402,32 +4057,143 @@ async function renderOrders(force){
     lastShopSync = Date.now();
     try{ await syncShoppingOrders(); }catch(e){}
   }
+  const bt = $("ordToOrder");
   try{
     const rows = await run(
       sb.from("orders").select(ORDER_SELECT)
-        .order("created_at", {ascending:false}).limit(80)
+        .order("created_at", {ascending:false}).limit(150)
     );
-    const open = rows.filter(r => r.status === "open")
-      .sort((a, b) => (a.expected_date || "9999").localeCompare(b.expected_date || "9999"));
-    const done = rows.filter(r => r.status !== "open").slice(0, 15);
+    const byDate = (a, b) => (a.expected_date || "9999").localeCompare(b.expected_date || "9999");
+    const toOrder = rows.filter(r => r.status === "to_order").sort(byDate);
+    const open = rows.filter(r => r.status === "open").sort(byDate);
+    const done = rows.filter(r => r.status === "received" || r.status === "cancelled").slice(0, 15);
+
+    // grouped by supplier, because that is how you actually place them: one
+    // phone call to Bidfood covers every Bidfood line across every function
+    const bySupplier = {};
+    toOrder.forEach(o => {
+      const k = o.supplier || "Unassigned";
+      (bySupplier[k] = bySupplier[k] || []).push(o);
+    });
+    const sups = Object.keys(bySupplier).sort();
+    bt.innerHTML = sups.length
+      ? sups.map(sup => {
+          const list = bySupplier[sup];
+          const items = list.reduce((t, o) => t + (o.order_items || []).length, 0);
+          return '<div class="ordgroup"><div class="ordgroup-hd">' +
+            '<div class="nm">' + esc(sup) + '<span>' + list.length + " order" + (list.length === 1 ? "" : "s") +
+            " \u00b7 " + items + " item" + (items === 1 ? "" : "s") + "</span></div>" +
+            '<button class="btn btn-primary btn-sm" style="width:auto;" data-place-sup="' + esc(sup) + '">Mark ordered</button>' +
+            "</div>" + list.map(o => ordCardHtml(o, true)).join("") + "</div>";
+        }).join("")
+      : '<div class="empty">Nothing waiting to be placed.</div>';
+
     bo.innerHTML = open.length ? open.map(o => ordCardHtml(o)).join("")
-      : '<div class="empty">No orders waiting. Add one and the kitchen sees it on their Arrivals tab.</div>';
+      : '<div class="empty">Nothing on its way. Mark an order above as ordered and the kitchen sees it on their Arrivals tab.</div>';
     bd.innerHTML = done.length ? done.map(o => ordCardHtml(o)).join("") : '<div class="empty">Nothing yet.</div>';
-    document.querySelectorAll("#ordOpen .rowcard, #ordDone .rowcard").forEach(el =>
+
+    document.querySelectorAll("#ordToOrder .rowcard, #ordOpen .rowcard, #ordDone .rowcard").forEach(el =>
       el.addEventListener("click", () => {
         const o = rows.find(x => x.id === +el.dataset.id);
         if(!o) return;
-        if(o.status === "open") orderForm(o);
+        if(o.status === "open" || o.status === "to_order") orderForm(o);
         else orderViewModal(o);
       })
     );
+    document.querySelectorAll("[data-place]").forEach(bn =>
+      bn.addEventListener("click", async ev => {
+        ev.stopPropagation();
+        await placeOrders([+bn.dataset.place]);
+      })
+    );
+    document.querySelectorAll("[data-place-sup]").forEach(bn =>
+      bn.addEventListener("click", async ev => {
+        ev.stopPropagation();
+        const list = bySupplier[bn.dataset.placeSup] || [];
+        if(!list.length) return;
+        if(!confirm("Mark all " + list.length + " " + bn.dataset.placeSup + " order" + (list.length === 1 ? "" : "s") + " as ordered?")) return;
+        await placeOrders(list.map(o => o.id));
+      })
+    );
   }catch(e){
-    bo.innerHTML = '<div class="empty">Could not load orders.</div>';
-    bd.innerHTML = "";
+    bt.innerHTML = '<div class="empty">Could not load orders.</div>';
+    bo.innerHTML = ""; bd.innerHTML = "";
   }
+}
+// Don't buy the garlic bread twice. Anything already sitting in stock against
+// the same group with a name close enough to a line on this order gets called
+// out before it is ordered again.
+function normItem(s){
+  return String(s || "").toLowerCase().replace(/\(.*?\)/g, " ").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+function itemsLookAlike(a, b){
+  const x = normItem(a), y = normItem(b);
+  if(!x || !y) return false;
+  if(x === y || x.indexOf(y) === 0 || y.indexOf(x) === 0) return true;
+  const xw = x.split(" ").filter(w => w.length > 2), yw = y.split(" ").filter(w => w.length > 2);
+  if(!xw.length || !yw.length) return false;
+  const shared = xw.filter(w => yw.indexOf(w) > -1).length;
+  return shared >= 2 || (shared === 1 && xw[0] === yw[0]);
+}
+async function showAlreadyInStock(o, m){
+  const box = m.querySelector("#ordDupes");
+  if(!box || !o.function_id || !(o.order_items || []).length) return;
+  let stock = [];
+  try{
+    stock = await run(
+      sb.from("stock_items")
+        .select("id, item_name, quantity, unit, storage, expiry_date, created_at")
+        .eq("function_id", o.function_id).eq("status", "in_stock").limit(300)
+    );
+  }catch(e){ return; }
+  if(!stock.length) return;
+  const hits = [];
+  o.order_items.forEach(oi => {
+    stock.forEach(si => {
+      if(!itemsLookAlike(oi.item_name, si.item_name)) return;
+      hits.push({ordered: oi, have: si});
+    });
+  });
+  if(!hits.length) return;
+  box.innerHTML =
+    '<div style="background:var(--amber-bg); border-radius:11px; padding:11px 13px; margin:2px 0 12px;">' +
+    '<div class="small" style="color:var(--amber); font-weight:700; margin-bottom:5px;">Already in stock for ' +
+      esc(o.catering_functions ? o.catering_functions.name : "this group") + "</div>" +
+    hits.slice(0, 12).map(h =>
+      '<div class="small" style="padding:3px 0;"><b>' + esc(h.have.item_name) + "</b> \u00b7 " +
+      esc([h.have.quantity != null ? h.have.quantity + " " + (h.have.unit || "") : "", storageLabel(h.have.storage)].filter(Boolean).join(" \u00b7 ")) +
+      '<br><span class="muted">on this order as ' + esc(h.ordered.item_name) + "</span></div>").join("") +
+    (hits.length > 12 ? '<div class="small muted">and ' + (hits.length - 12) + " more</div>" : "") +
+    '<div class="small muted" style="margin-top:6px;">Worth a look before you order these again.</div></div>';
+}
+
+async function placeOrders(ids){
+  if(!ids || !ids.length) return;
+  try{
+    await run(sb.from("orders").update({
+      status: "open",
+      ordered_at: new Date().toISOString(),
+      ordered_by: readStore("wslr_who") || null
+    }).in("id", ids));
+    toast(ids.length === 1 ? "Marked as ordered" : ids.length + " orders marked as ordered");
+    renderOrders(); updateArrBadge();
+  }catch(e){}
+}
+async function unplaceOrder(id){
+  try{
+    await run(sb.from("orders").update({status:"to_order", ordered_at:null}).eq("id", id));
+    toast("Moved back to yet to be ordered");
+    closeModal(); renderOrders(); updateArrBadge();
+  }catch(e){}
 }
 function orderForm(o){
   const draft = o ? (o.order_items || []).map(it => ({name: it.item_name, category: it.category, storage: it.storage, qty: it.quantity, unit: it.unit})) : [];
+  const dupWrap = o ? '<div id="ordDupes"></div>' : "";
+  const statusBtn = o && o.status === "to_order"
+    ? '<button class="btn btn-primary" id="ofPlace" style="width:100%; margin-top:10px;">Mark as ordered</button>'
+    : o && o.status === "open"
+      ? '<button class="btn btn-ghost" id="ofUnplace" style="width:100%; margin-top:10px;">Move back to yet to be ordered</button>'
+      : "";
   const sheetNote = o && o.source === "sheet"
     ? '<p class="small muted" style="margin-top:-8px;">' + (o.sheet_locked
         ? "This came from the shopping list. A delivery has already been logged against it, so it no longer refreshes from the sheet and your changes here stick."
@@ -3437,7 +4203,7 @@ function orderForm(o){
   const cats = [...new Set(state.shelf.map(r => r.category))];
   const catOpts = '<option value="">Choose&hellip;</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
   const m = openModal(
-    "<h2>" + (o ? "Edit order" : "New order") + "</h2>" + sheetNote +
+    "<h2>" + (o ? "Edit order" : "New order") + "</h2>" + sheetNote + dupWrap +
     '<div class="grid2">' +
     '<div class="field"><label for="omSupplier">Supplier</label><input id="omSupplier" list="supplierList" value="' + esc(o ? o.supplier || "" : "") + '" autocomplete="off"></div>' +
     '<div class="field"><label for="omDate">Expected on</label><input type="date" id="omDate" value="' + esc(o ? o.expected_date || "" : "") + '"></div></div>' +
@@ -3454,10 +4220,16 @@ function orderForm(o){
     '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select></div></div>' +
     '<button class="btn btn-ghost" id="omAddItem" style="width:100%;">+ Add item</button>' +
     '<button class="btn btn-primary" id="omSave" style="margin-top:14px;">' + (o ? "Save order" : "Add order") + "</button>" +
+    statusBtn +
     (o ? '<div style="display:flex; gap:8px; margin-top:8px;">' +
       '<button class="btn btn-secondary" id="omReceive" style="flex:1;">Receive it now</button>' +
       '<button class="btn btn-danger" id="omCancel" style="flex:1;">Cancel order</button></div>' : "")
   );
+  const pb = m.querySelector("#ofPlace");
+  if(pb) pb.addEventListener("click", async () => { closeModal(); await placeOrders([o.id]); });
+  const ub = m.querySelector("#ofUnplace");
+  if(ub) ub.addEventListener("click", () => unplaceOrder(o.id));
+  if(o) showAlreadyInStock(o, m);
   paintSelect(m.querySelector("#omFn"), () => state.functions);
   const drawItems = () => {
     m.querySelector("#omList").innerHTML = draft.length ? draft.map((x, i) =>
@@ -3950,6 +4722,10 @@ function bindStatic(){
   });
   $("btnBackArr").addEventListener("click", () => showTab("arrivals"));
   $("btnNoOrder").addEventListener("click", () => { state.dvPane = "receive"; showTab("deliveries"); });
+  const bst = $("btnStocktake");
+  if(bst) bst.addEventListener("click", stocktakeStart);
+  const bpo = $("btnPickOrders");
+  if(bpo) bpo.addEventListener("click", pickOrders);
   $("btnAddOrder").addEventListener("click", () => orderForm(null));
   const bsh = $("btnShopSync");
   if(bsh) bsh.addEventListener("click", () => renderOrders(true));
@@ -4124,8 +4900,27 @@ function bindStatic(){
   window.addEventListener("online", () => online(true));
   window.addEventListener("offline", () => online(false));
 }
+// Nobody taps anything on the iPad for hours, so the feeds are re-checked on a
+// timer and whenever the screen wakes or the tab comes back to the front.
+let lastSoftRefresh = 0;
+function softRefresh(){
+  if(document.hidden) return;
+  if(Date.now() - lastSoftRefresh < 30000) return;
+  lastSoftRefresh = Date.now();
+  lastSheetSync = 0;
+  lastShopSync = 0;
+  refreshCurrentTab();
+  updateArrBadge();
+}
+function startLiveRefresh(){
+  setInterval(softRefresh, 5 * 60000);
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) softRefresh(); });
+  window.addEventListener("focus", softRefresh);
+  window.addEventListener("online", softRefresh);
+}
 function startApp(){
   bindStatic();
+  startLiveRefresh();
   $("rDate").value = localISO();
   loadShelf();
   loadFunctionPicker();
