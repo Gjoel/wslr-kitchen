@@ -129,8 +129,10 @@ section.active{display:block;}
 .draft-item.short{background:var(--red-bg);}
 
 /* Use first board */
-.uf-board{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; align-items:start;}
+.uf-board{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; align-items:start;}
+@media (max-width:1000px){.uf-board{grid-template-columns:repeat(2, minmax(0, 1fr));}}
 @media (max-width:700px){.uf-board{grid-template-columns:1fr;}}
+.uf-col .uf-meta{white-space:normal; overflow:visible; text-overflow:clip;}
 .uf-col{background:#efece6; border:1px solid var(--line); border-radius:14px; padding:8px; min-height:140px;}
 .uf-col.drag{outline:2.5px dashed var(--brand); outline-offset:-3px; background:var(--brand-soft);}
 .uf-col-h{display:flex; justify-content:space-between; align-items:baseline; font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:15px; padding:4px 6px 8px;}
@@ -354,6 +356,7 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
   display:flex; align-items:center; gap:14px; box-shadow:0 6px 20px rgba(0,0,0,.3);
 }
 .toast.err{background:var(--red);}
+.toast.warn{background:var(--amber);}
 .toast button{border:none; background:rgba(255,255,255,.18); color:#fff; font-weight:700; border-radius:8px; padding:7px 13px; cursor:pointer; font-size:14px;}
 
 /* Overlays: PIN and setup */
@@ -413,6 +416,46 @@ body.kitchen .rowcard{padding:15px 16px;}
   .ord-row{flex-wrap:wrap;}
   .ord-seg{width:100%; justify-content:flex-end;}
 }
+/* Storage and category on each tick-off line, so nothing lands unlabelled */
+.stchips{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; align-items:center;}
+.stchips button{
+  border:1.5px solid var(--line); background:#fff; color:var(--muted); border-radius:999px;
+  padding:5px 11px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; min-height:32px;
+}
+.stchips button.on.fridge{background:var(--fridge); border-color:var(--fridge); color:#fff;}
+.stchips button.on.freezer{background:var(--freezer); border-color:var(--freezer); color:#fff;}
+.stchips button.on.dry{background:var(--dry); border-color:var(--dry); color:#fff;}
+.stchips select{width:auto; flex:1; min-width:130px; padding:5px 8px; font-size:12.5px; border-radius:999px; min-height:32px;}
+body.kitchen .stchips button{min-height:40px; font-size:14px;}
+body.kitchen .stchips select{min-height:40px; font-size:14px; padding:5px 10px;}
+.splitprev{font-size:13px; color:var(--amber); font-weight:600; margin-top:4px;}
+.splitprev:empty{display:none;}
+.cogroups{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 4px;}
+.cogroups button{
+  border:none; border-radius:11px; padding:9px 13px; font-weight:700; font-size:14px; color:#fff; cursor:pointer;
+  font-family:inherit; opacity:.45; text-decoration:line-through;
+}
+.cogroups button.on{opacity:1; text-decoration:none; outline:3px solid var(--ink); outline-offset:2px;}
+/* Stocktake walk-through */
+.stv-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
+.stv-row:last-child{border-bottom:none;}
+.stv-row.done{opacity:.55;}
+.stv-row .nm{flex:1; min-width:0; font-weight:600;}
+.stv-row .nm .sub{font-size:13px; color:var(--muted); font-weight:500; margin-top:1px;}
+.stv-acts{display:flex; gap:5px; flex:none; flex-wrap:wrap; justify-content:flex-end;}
+.stv-acts button{min-height:44px; min-width:58px; border-radius:9px; border:1.5px solid var(--line); background:#fff; color:var(--muted); font-weight:700; font-size:13.5px; cursor:pointer; padding:4px 10px; font-family:inherit;}
+.stv-acts button.here{background:var(--green); border-color:var(--green); color:#fff;}
+.stv-acts button.gone{color:var(--red);}
+.stv-group{margin:14px 0 4px; font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+.stv-group:first-child{margin-top:4px;}
+.stv-inline{display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap;}
+.stv-inline input{width:110px; flex:none; text-align:center;}
+@media (max-width:560px){
+  .stv-row{flex-wrap:wrap;}
+  .stv-acts{width:100%;}
+}
+.pill.chk{background:var(--green-bg); color:var(--green);}
+.pill.stale{background:var(--amber-bg); color:var(--amber);}
 
 /* Food check rows */
 .xc-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px;}
@@ -500,7 +543,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 
 <!-- ============ ARRIVALS (kitchen tick-off) ============ -->
 <section id="sec-arrivals">
-  <p class="muted small" style="margin:0 0 12px;">Orders the office is expecting. Tap one when it lands to tick off what actually arrived.</p>
+  <p class="muted small" style="margin:0 0 12px;">Orders the office is expecting. Tap one when it lands to tick off what actually arrived. When one truck brings food for several groups they show as one card, you enter what came off the truck once, and the app splits it between the groups.</p>
   <div id="arrList"><div class="loading">Loading&hellip;</div></div>
   <button class="btn btn-secondary" id="btnNoOrder" style="width:100%; margin-top:12px;">+ Delivery arrived with no order</button>
 </section>
@@ -748,12 +791,12 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   </div>
   <div class="card">
     <h2>Kitchen and admin modes</h2>
-    <p class="small muted" style="margin-top:-6px;">Every device opens in <b>kitchen mode</b>: tick off arrivals, mark items used or binned, allocate to functions, and fix use by dates and storage. Everything else lives in <b>admin mode</b>, behind the Admin button in the header.<br><br>
+    <p class="small muted" style="margin-top:-6px;">Every device opens in <b>kitchen mode</b>: tick off arrivals, mark items used or binned, allocate to functions straight from the Allocate button on each stock row, run a stocktake walk-through that stamps every line with who checked it and when, and fix use by dates and storage. Everything else lives in <b>admin mode</b>, behind the Admin button in the header.<br><br>
     The admin PIN is set in the <code style="background:#efece4; padding:1px 5px; border-radius:5px;">ADMIN_PIN</code> constant at the top of the script in this file &mdash; open the file in a text editor to change it. A device that has unlocked admin stays in admin until you tap Exit admin.</p>
   </div>
   <div class="card">
     <h2>About</h2>
-    <p class="small muted" id="verLine">WSLR Kitchen v2.5 (yet-to-be-ordered list, receiving against several orders at once, stocktake mode and prep sheets). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Orders build themselves the same way from the planner's shopping list, one per supplier per function, and stop refreshing as soon as the first delivery is logged against them. Anything you add in the app sits alongside in a paler dashed card so the two are easy to tell apart. The two links are the Apps Script web apps in kitchen-confirmations-feed.gs and kitchen-shopping-feed.gs; paste their URLs under Settings.<br><br>Allocating stock to a group only lists the ones on site now or arriving inside a fortnight; the rest sit behind the Later groups button.<br><br>Orders off the shopping list land under <b>Yet to be ordered</b>, grouped by supplier so one call to Bidfood clears the lot. Mark them ordered and the kitchen starts watching for them on Arrivals. When a docket turns up you can tag it to several orders at once and the shorts, extras and overs show as you type. <b>Stocktake</b> on the Stock tab walks you round the shelves with the barcode scanner and the camera to build opening stock. Every function has a <b>Prep sheet</b> you can print.<br><br>Both sheets are re-checked every five minutes and whenever the iPad wakes or you come back to the tab.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql, then wslr-kitchen-v2.3-sheet-sync.sql, wslr-kitchen-v2.4-shopping-sync.sql and wslr-kitchen-v2.5-orders-stocktake.sql in the Supabase SQL editor.</p>
+    <p class="small muted" id="verLine">WSLR Kitchen v2.6 (one tick-off per truck with the quantities split across groups, stocktake walk-through with last-checked stamps, Allocate on every stock row, and the not-null save bug and stuck scanner fixed). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Orders build themselves the same way from the planner's shopping list, one per supplier per function, and stop refreshing as soon as the first delivery is logged against them. Anything you add in the app sits alongside in a paler dashed card so the two are easy to tell apart. The two links are the Apps Script web apps in kitchen-confirmations-feed.gs and kitchen-shopping-feed.gs; paste their URLs under Settings.<br><br>Allocating stock to a group only lists the ones on site now or arriving inside a fortnight; the rest sit behind the Later groups button.<br><br>Orders off the shopping list land under <b>Yet to be ordered</b>, grouped by supplier so one call to Bidfood clears the lot. Mark them ordered and the kitchen starts watching for them on Arrivals. When a docket turns up you can tag it to several orders at once and the shorts, extras and overs show as you type. <b>Stocktake</b> on the Stock tab has two halves: <b>Check what is here</b> walks the shelves line by line (Here, Adjust, Gone) and stamps each one with who checked it and when, which then shows on every stock row; <b>Add new items</b> uses the barcode scanner and the camera for anything that is on the shelf but not in the app. Every function has a <b>Prep sheet</b> you can print.<br><br>On Arrivals, several open orders from the same supplier show as one card. Tick off the docket once with the totals and the app splits each line across the groups, earliest group first, with any shortfall falling on the last group and any surplus going to general stock. Lines from the shopping list inherit their storage and category from the last time that item was received, and each line has storage chips so nothing lands unlabelled.<br><br>Both sheets are re-checked every five minutes and whenever the iPad wakes or you come back to the tab.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql, then wslr-kitchen-v2.3-sheet-sync.sql, wslr-kitchen-v2.4-shopping-sync.sql, wslr-kitchen-v2.5-orders-stocktake.sql and wslr-kitchen-v2.6-last-checked.sql in the Supabase SQL editor.</p>
   </div>
 </section>
 
@@ -833,6 +876,41 @@ function fmtDateTime(ts){
 function daysUntil(iso){
   return Math.round((new Date(iso + "T00:00") - new Date(localISO() + "T00:00")) / 86400000);
 }
+// "2h ago", "3d ago", then a date once it is a couple of weeks old
+function ago(ts){
+  if(!ts) return "";
+  const s = Math.round((Date.now() - new Date(ts).getTime()) / 1000);
+  if(s < 60) return "just now";
+  const mnt = Math.round(s / 60);
+  if(mnt < 60) return mnt + " min ago";
+  const h = Math.round(mnt / 60);
+  if(h < 24) return h + "h ago";
+  const d = Math.round(h / 24);
+  if(d < 14) return d + "d ago";
+  return fmtDate(localISO(new Date(ts)));
+}
+function lastCheckedText(i){
+  if(!i || !i.last_checked_at) return "";
+  return "checked " + ago(i.last_checked_at) + (i.last_checked_by ? " by " + i.last_checked_by : "");
+}
+function supKey(s){ return String(s || "").replace(/\s+/g, " ").trim().toLowerCase() || "unassigned"; }
+// Groups still on site count as current: filter on end_date when there is
+// one and fall back to event_date when there is not.
+function fnWindow(qb, daysBack){
+  const from = localISO(new Date(Date.now() - daysBack * 86400000));
+  return qb.or("end_date.gte." + from + ",and(end_date.is.null,event_date.gte." + from + ")");
+}
+// A save is several writes with no transaction between them. If one fails part
+// way through, take the delivery back out so nothing half-saved is left behind
+// for the next attempt to trip over.
+async function undoDelivery(delId, paths){
+  if(!delId) return;
+  try{ await sb.from("stock_items").delete().eq("delivery_id", delId); }catch(e){}
+  try{ await sb.from("delivery_orders").delete().eq("delivery_id", delId); }catch(e){}
+  try{ await sb.from("delivery_photos").delete().eq("delivery_id", delId); }catch(e){}
+  try{ if(paths && paths.length) await sb.storage.from("dockets").remove(paths); }catch(e){}
+  try{ await sb.from("deliveries").delete().eq("id", delId); }catch(e){}
+}
 function online(ok){
   const d = $("statusDot");
   d.className = ok ? "on" : "off";
@@ -887,18 +965,20 @@ function askAdminPin(){
 }
 async function updateArrBadge(){
   try{
-    const { data } = await sb.from("orders").select("id").eq("status", "open").limit(99);
+    const { data } = await sb.from("orders").select("id, supplier").eq("status", "open").limit(200);
     const b = $("arrBadge");
     if(!b || !data) return;
-    b.style.display = data.length ? "" : "none";
-    b.textContent = data.length;
+    // one card per supplier on Arrivals, so the badge counts trucks, not orders
+    const n = new Set(data.map(o => supKey(o.supplier))).size;
+    b.style.display = n ? "" : "none";
+    b.textContent = n;
   }catch(e){}
 }
 
 // ---------- toast ----------
 function toast(msg, opts = {}){
   const t = document.createElement("div");
-  t.className = "toast" + (opts.type === "err" ? " err" : "");
+  t.className = "toast" + (opts.type === "err" ? " err" : opts.type === "warn" ? " warn" : "");
   t.innerHTML = "<span>" + esc(msg) + "</span>";
   if(opts.undo){
     const b = document.createElement("button");
@@ -999,10 +1079,9 @@ async function loadShelf(){
 }
 async function loadFunctionPicker(){
   try{
-    const from = localISO(new Date(Date.now() - 3 * 86400000));
     state.functions = await run(
-      sb.from("catering_functions").select("id, name, event_date, end_date, heads, colour, source, sheet_state")
-        .gte("event_date", from).order("event_date", {ascending:true}).limit(60)
+      fnWindow(sb.from("catering_functions").select("id, name, event_date, end_date, heads, colour, source, sheet_state"), 3)
+        .order("event_date", {ascending:true}).limit(60)
     );
     $("rFunction").innerHTML = '<option value="">General stock</option>' +
       state.functions.map(f => fnOptionHtml(f, null)).join("");
@@ -1047,7 +1126,7 @@ function fnChipById(fnId){
   return '<span class="pill" style="background:' + esc(f && f.colour ? f.colour : "#546e64") + '; color:#fff;">' + esc(f ? f.name : "Function") + "</span>";
 }
 function fnOptionHtml(f, selectedId){
-  return '<option value="' + f.id + '"' + (selectedId === f.id ? " selected" : "") + ' style="background:' + esc(f.colour || "#546e64") + '; color:#fff;">' + esc(f.name) + " \u00b7 " + esc(fmtDate(f.event_date)) + (f && f.source === "sheet" ? "" : " \u00b7 added here") + "</option>";
+  return '<option value="' + f.id + '"' + (selectedId === f.id ? " selected" : "") + ' style="background:' + esc(f.colour || "#546e64") + '; color:#fff;">' + esc(f.name) + " · " + esc(fmtDate(f.event_date)) + (f && f.source === "sheet" ? "" : " · added here") + "</option>";
 }
 function applySelPaint(sel){
   const list = sel._fnlist ? sel._fnlist() : [];
@@ -1100,7 +1179,7 @@ function renderDraftItems(){
       else if(fid){ const f = state.functions.find(x => x.id === fid); col = f && f.colour ? f.colour : "#546e64"; }
     }
     const tint = it.short ? "" : (col ? hexTint(col, 0.13) : "#f0efe9");
-    const meta = [it.qty ? it.qty + " " + (it.unit || "") : "", it.storage, it.expiry ? "use by " + fmtDate(it.expiry) : ""].filter(Boolean).join(" \u00b7 ");
+    const meta = [it.qty ? it.qty + " " + (it.unit || "") : "", it.storage, it.expiry ? "use by " + fmtDate(it.expiry) : ""].filter(Boolean).join(" · ");
     return '<div class="draft-item' + (it.short ? " short" : "") + (isSel ? " selected" : "") + '" data-tint="' + tint + '"' +
       (it.short || isSel ? "" : ' style="background:' + tint + ';"') + ">" +
       (state.draftSelect ? '<span class="sel-dot" style="margin-left:0;"></span>' : "") +
@@ -1112,7 +1191,7 @@ function renderDraftItems(){
         const cls = d.kind === "ok" ? "ok" : d.kind === "extra" ? "plain" : "warn";
         return ' <span class="pill ' + cls + '">' + esc(d.text) + "</span>";
       })() : "") +
-      '<div class="small muted" style="margin-top:2px;">' + esc(meta) + (meta && chips ? " \u00b7 " : "") + chips + "</div></div>" +
+      '<div class="small muted" style="margin-top:2px;">' + esc(meta) + (meta && chips ? " · " : "") + chips + "</div></div>" +
       (state.draftSelect ? "" : '<button class="x" data-i="' + i + '">&times;</button>') + "</div>";
   }).join("");
   renderOrderDiff();
@@ -1308,13 +1387,25 @@ function scanFormats(){
     return [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.ITF, F.QR_CODE];
   }catch(e){ return undefined; }
 }
-function scanBarcode(onCode){
+// Belt and braces: whatever the library does, make sure the camera light goes off
+function stopVideoTracks(root){
+  try{
+    (root || document).querySelectorAll("video").forEach(v => {
+      const s = v.srcObject;
+      if(s && s.getTracks) s.getTracks().forEach(t => { try{ t.stop(); }catch(e){} });
+      v.srcObject = null;
+    });
+  }catch(e){}
+}
+// onCancel is optional and fires when the person backs out without scanning,
+// so a caller that left a form open can put the right screen back.
+function scanBarcode(onCode, onCancel){
   if(typeof Html5Qrcode === "undefined"){
     toast("The scanner could not load. Check the connection, then refresh the page.", {type:"err"});
     return;
   }
   const old = $("scanRoot");
-  if(old) old.remove();
+  if(old){ stopVideoTracks(old); old.remove(); }
   const ov = document.createElement("div");
   ov.id = "scanRoot";
   ov.innerHTML =
@@ -1326,14 +1417,33 @@ function scanBarcode(onCode){
     '<button class="btn btn-ghost" id="scanCancel" style="width:100%;">Cancel</button>' +
     "</div>";
   document.body.appendChild(ov);
-  let done = false;
+  let done = false, started = false, closed = false;
   let scanner = null;
-  const teardown = () => {
-    const rm = () => ov.remove();
-    if(scanner){ scanner.stop().then(() => { try{ scanner.clear(); }catch(e){} rm(); }).catch(rm); }
-    else rm();
+  const rm = () => {
+    if(closed) return;
+    closed = true;
+    stopVideoTracks(ov);
+    if(ov.parentNode) ov.remove();
   };
-  ov.querySelector("#scanCancel").addEventListener("click", () => { done = true; teardown(); });
+  // html5-qrcode's stop() throws synchronously (it does not reject) when the
+  // camera has not finished starting, and can take a while on a tablet, so the
+  // overlay is taken down regardless and never left stuck on screen.
+  const teardown = () => {
+    const fallback = setTimeout(rm, 1200);
+    let p = null;
+    try{ if(scanner && started) p = scanner.stop(); }catch(e){ p = null; }
+    if(p && typeof p.then === "function"){
+      p.then(() => { try{ scanner.clear(); }catch(e){} }).catch(() => {}).then(() => { clearTimeout(fallback); rm(); });
+    }else{
+      clearTimeout(fallback); rm();
+    }
+  };
+  ov.querySelector("#scanCancel").addEventListener("click", () => {
+    if(done) return;
+    done = true;
+    teardown();
+    if(onCancel) onCancel();
+  });
   try{
     scanner = new Html5Qrcode("scanReader", {formatsToSupport: scanFormats(), verbose: false, experimentalFeatures: {useBarCodeDetectorIfSupported: true}});
   }catch(e){
@@ -1359,9 +1469,20 @@ function scanBarcode(onCode){
     },
     () => {}
   ).then(() => {
-    if(!done) ov.querySelector("#scanMsg").textContent = "Looking for a barcode…";
+    started = true;
+    if(done){
+      // Cancel was tapped while the camera was still warming up: the overlay is
+      // already gone, so just switch the camera off now that it exists
+      try{ const p = scanner.stop(); if(p && p.catch) p.catch(() => {}); }catch(e){}
+      stopVideoTracks(ov);
+      return;
+    }
+    const msg = ov.querySelector("#scanMsg");
+    if(msg) msg.textContent = "Looking for a barcode…";
   }).catch(err => {
     console.error(err);
+    started = false;
+    if(done) return;
     const msg = ov.querySelector("#scanMsg");
     if(msg) msg.textContent = "Could not open the camera. Allow camera access for this site in the browser settings, then try again.";
   });
@@ -1544,11 +1665,20 @@ async function prepSheet(fn){
 }
 
 // ============================================================
-// STOCKTAKE  (walk the shelves, scan, photograph, save as opening stock)
+// STOCKTAKE  (check what is on the shelves line by line, add what is missing)
 // ============================================================
 let stTake = null;          // the open stocktake row
 let stItems = [];           // what has been added this session
 let stPhoto = null;         // {blob, url} for the item being entered
+let stVerify = [];          // in-stock lines for the walk-through
+let stTab = "check";        // which half of the stocktake modal is showing
+let stHideDone = false;
+
+function stWho(){ return (stTake && stTake.done_by) || readStore("wslr_who") || null; }
+function stStamp(){ return {last_checked_at: new Date().toISOString(), last_checked_by: stWho()}; }
+function stDoneThisTake(i){
+  return !!(i.last_checked_at && stTake && new Date(i.last_checked_at) >= new Date(stTake.started_at));
+}
 
 async function stocktakeStart(){
   let open = [];
@@ -1568,36 +1698,69 @@ async function stocktakeStart(){
   }
   const m = openModal(
     "<h2>Start a stocktake</h2>" +
-    '<p class="small muted" style="margin-top:-2px;">Walk the shelves and add everything that is there. Scan a barcode where there is one, snap a photo where there is not. Everything you add lands in general stock as opening stock.</p>' +
+    '<p class="small muted" style="margin-top:-2px;">Walk the shelves with the tablet. Every line already in the app gets a Here, Adjust or Gone, and is stamped with your name and the time so whoever reviews the stock can see when it was last looked at. Anything on the shelf that is not in the app yet, add with the scanner or the camera.</p>' +
     '<div class="field"><label for="stName">What are you counting?</label><input id="stName" placeholder="e.g. Dry store, or Full kitchen" autocomplete="off"></div>' +
     '<div class="field"><label for="stWho">Who is doing it</label><input id="stWho" list="receiverList" placeholder="Your name" autocomplete="off" value="' + esc(readStore("wslr_who") || "") + '"></div>' +
     '<button class="btn btn-primary" id="stGo" style="width:100%;">Start</button>'
   );
   m.querySelector("#stGo").addEventListener("click", async () => {
     const who = m.querySelector("#stWho").value.trim();
-    if(who) store("wslr_who", who);
+    if(!who){ toast("Put your name in so the checks can be stamped", {type:"err"}); return; }
+    store("wslr_who", who);
     try{
       const row = await run(sb.from("stocktakes").insert({
         name: m.querySelector("#stName").value.trim() || null,
-        done_by: who || null
+        done_by: who
       }).select().single());
-      stTake = row; stItems = [];
+      stTake = row; stItems = []; stTab = "check"; stHideDone = false;
       stocktakePane();
     }catch(e){}
   });
 }
 
+async function loadStVerify(){
+  try{
+    stVerify = await run(
+      sb.from("stock_items").select("*, catering_functions(name, colour, event_date)")
+        .eq("status", "in_stock").limit(600)
+    );
+  }catch(e){ stVerify = []; }
+  const order = {fridge: 0, freezer: 1, dry: 2};
+  stVerify.sort((a, b) => {
+    const sa = a.storage in order ? order[a.storage] : 3, sbb = b.storage in order ? order[b.storage] : 3;
+    if(sa !== sbb) return sa - sbb;
+    return String(a.item_name).localeCompare(String(b.item_name));
+  });
+}
+
 function stocktakePane(){
   const m = openModal(
-    '<h2>Stocktake<span class="stcount" style="float:right;">' + stItems.length + "</span></h2>" +
+    "<h2>Stocktake</h2>" +
     '<p class="small muted" style="margin-top:-2px;">' +
-      esc([stTake.name || "Stocktake", stTake.done_by || ""].filter(Boolean).join(" · ")) + "</p>" +
-    '<button class="btn btn-primary stbig" id="stScan" style="width:100%;">Scan a barcode</button>' +
-    '<button class="btn btn-secondary stbig" id="stHand" style="width:100%; margin-top:8px;">Add without a barcode</button>' +
-    '<div class="stlist" id="stList"></div>' +
+      esc([stTake.name || "Stocktake", stTake.done_by || "", "started " + fmtDateTime(stTake.started_at)].filter(Boolean).join(" · ")) + "</p>" +
+    '<div class="seg" id="stTabs" style="margin:8px 0 12px;">' +
+      '<button data-v="check">Check what is here</button>' +
+      '<button data-v="add">Add new items' + (stItems.length ? " (" + stItems.length + ")" : "") + "</button></div>" +
+    '<div id="stCheckPane"><div class="loading">Loading the shelves…</div></div>' +
+    '<div id="stAddPane" style="display:none;">' +
+      '<p class="small muted" style="margin:0 0 10px;">For things on the shelf that the app does not know about yet. They land in general stock as opening stock.</p>' +
+      '<button class="btn btn-primary stbig" id="stScan" style="width:100%;">Scan a barcode</button>' +
+      '<button class="btn btn-secondary stbig" id="stHand" style="width:100%; margin-top:8px;">Add without a barcode</button>' +
+      '<div class="stlist" id="stList"></div>' +
+    "</div>" +
     '<button class="btn btn-ghost" id="stFinish" style="width:100%; margin-top:14px;">Finish this stocktake</button>' +
     '<button class="btn btn-ghost" id="stLater" style="width:100%; margin-top:8px;">Pause, I will come back to it</button>'
   );
+  const showTabSt = v => {
+    stTab = v;
+    m.querySelectorAll("#stTabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+    m.querySelector("#stCheckPane").style.display = v === "check" ? "" : "none";
+    m.querySelector("#stAddPane").style.display = v === "add" ? "" : "none";
+  };
+  m.querySelectorAll("#stTabs button").forEach(b => b.addEventListener("click", () => showTabSt(b.dataset.v)));
+  showTabSt(stTab);
+
+  // ----- add pane (scan or photograph things that are not in the app) -----
   const list = m.querySelector("#stList");
   list.innerHTML = stItems.length
     ? stItems.slice(0, 60).map(i =>
@@ -1609,8 +1772,7 @@ function stocktakePane(){
           storageLabel(i.storage),
           i.expiry_date ? "use by " + fmtDate(i.expiry_date) : ""
         ].filter(Boolean).join(" · ")) + "</span></div></div>").join("")
-    : '<div class="empty" style="padding:18px;">Nothing counted yet.</div>';
-
+    : '<div class="empty" style="padding:18px;">Nothing added yet.</div>';
   m.querySelector("#stScan").addEventListener("click", () => {
     scanBarcode(async code => {
       const hit = await lookupBarcode(code);
@@ -1624,16 +1786,115 @@ function stocktakePane(){
     });
   });
   m.querySelector("#stHand").addEventListener("click", () => stocktakeItemForm({}));
-  m.querySelector("#stLater").addEventListener("click", () => { closeModal(); toast("Paused. Tap Stocktake to pick it up again."); });
+  m.querySelector("#stLater").addEventListener("click", () => { closeModal(); toast("Paused. Tap Stocktake to pick it up again."); refreshCurrentTab(); });
   m.querySelector("#stFinish").addEventListener("click", async () => {
-    if(!confirm("Finish this stocktake? " + stItems.length + " item" + (stItems.length === 1 ? "" : "s") + " counted.")) return;
+    const checked = stVerify.filter(stDoneThisTake).length;
+    if(!confirm("Finish this stocktake? " + checked + " line" + (checked === 1 ? "" : "s") + " checked, " + stItems.length + " added.")) return;
     try{
       await run(sb.from("stocktakes").update({status:"done", finished_at:new Date().toISOString()}).eq("id", stTake.id));
-      toast(stItems.length + " item" + (stItems.length === 1 ? "" : "s") + " counted in");
+      toast("Stocktake finished: " + checked + " checked, " + stItems.length + " added");
     }catch(e){}
-    stTake = null; stItems = [];
+    stTake = null; stItems = []; stVerify = [];
     closeModal(); refreshCurrentTab();
   });
+
+  // ----- check pane (the walk-through) -----
+  const pane = m.querySelector("#stCheckPane");
+  const drawCheck = () => {
+    const total = stVerify.length, done = stVerify.filter(stDoneThisTake).length;
+    if(!total){
+      pane.innerHTML = '<div class="empty">Nothing is in stock in the app yet. Use Add new items to build the list.</div>';
+      return;
+    }
+    let html =
+      '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;">' +
+      '<span class="small" style="font-weight:700;">' + done + " of " + total + " checked</span>" +
+      '<button class="btn btn-ghost btn-sm" id="stHide">' + (stHideDone ? "Show checked" : "Hide checked") + "</button></div>";
+    let lastSt = "__";
+    let shown = 0;
+    stVerify.forEach(i => {
+      const isDone = stDoneThisTake(i);
+      if(stHideDone && isDone) return;
+      shown++;
+      const st = i.storage || "none";
+      if(st !== lastSt){
+        lastSt = st;
+        const n = stVerify.filter(x => (x.storage || "none") === st).length;
+        html += '<div class="stv-group">' + storageLabel(i.storage) + " (" + n + ")</div>";
+      }
+      const sub = [
+        i.quantity != null ? i.quantity + " " + (i.unit || "") : "",
+        i.expiry_date ? "use by " + fmtDate(i.expiry_date) : "",
+        lastCheckedText(i) || "never checked"
+      ].filter(Boolean).join(" · ");
+      html += '<div class="stv-row' + (isDone ? " done" : "") + '" data-id="' + i.id + '">' +
+        '<div class="nm">' + esc(i.item_name) + " " + fnChip(i.catering_functions, i.function_id) +
+        (isDone ? ' <span class="pill chk">Checked</span>' : "") +
+        '<div class="sub">' + esc(sub) + "</div>" +
+        '<div class="stv-inline" id="stvx' + i.id + '" style="display:none;"></div></div>' +
+        '<div class="stv-acts">' +
+        '<button data-act="here" class="here">Here</button>' +
+        (i.quantity != null ? '<button data-act="adj">Adjust</button>' : "") +
+        '<button data-act="gone" class="gone">Gone</button></div></div>';
+    });
+    if(!shown) html += '<div class="empty" style="padding:18px;">Everything is checked.</div>';
+    pane.innerHTML = html;
+    m.querySelector("#stHide").addEventListener("click", () => { stHideDone = !stHideDone; drawCheck(); });
+    pane.querySelectorAll(".stv-row").forEach(row => {
+      const id = +row.dataset.id;
+      const i = stVerify.find(x => x.id === id);
+      if(!i) return;
+      const inline = row.querySelector("#stvx" + id);
+      const apply = async (patch, msg) => {
+        try{
+          await run(sb.from("stock_items").update(patch).eq("id", id));
+          Object.assign(i, patch);
+          if(patch.status && patch.status !== "in_stock") stVerify = stVerify.filter(x => x.id !== id);
+          if(msg) toast(msg);
+          drawCheck();
+        }catch(e){}
+      };
+      row.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => {
+        const act = b.dataset.act;
+        if(act === "here"){ apply(stStamp()); return; }
+        if(act === "adj"){
+          inline.style.display = "";
+          inline.innerHTML =
+            '<input type="number" inputmode="decimal" step="any" min="0" value="' + (i.quantity ?? "") + '">' +
+            '<span class="small muted">' + esc(i.unit || "") + " on the shelf</span>" +
+            '<button class="btn btn-secondary btn-sm" data-ok="1">Save</button>' +
+            '<button class="btn btn-ghost btn-sm" data-no="1">Cancel</button>';
+          const inp = inline.querySelector("input");
+          inp.focus();
+          inline.querySelector("[data-no]").addEventListener("click", () => { inline.style.display = "none"; inline.innerHTML = ""; });
+          inline.querySelector("[data-ok]").addEventListener("click", () => {
+            const q = inp.value === "" ? null : +inp.value;
+            if(q == null || !(q >= 0)){ toast("Enter what is on the shelf", {type:"err"}); return; }
+            if(q === 0){ toast("Nothing left? Use Gone instead, so it is recorded as used or binned.", {type:"err"}); return; }
+            apply(Object.assign({quantity: q}, stStamp()), "Set to " + q + " " + (i.unit || ""));
+          });
+          return;
+        }
+        if(act === "gone"){
+          inline.style.display = "";
+          inline.innerHTML =
+            '<span class="small muted" style="flex-basis:100%;">Not on the shelf. What happened to it?</span>' +
+            '<button class="btn btn-secondary btn-sm" data-g="used">It was used</button>' +
+            '<button class="btn btn-danger btn-sm" data-g="binned">It was binned</button>' +
+            '<button class="btn btn-ghost btn-sm" data-no="1">Cancel</button>';
+          inline.querySelector("[data-no]").addEventListener("click", () => { inline.style.display = "none"; inline.innerHTML = ""; });
+          inline.querySelectorAll("[data-g]").forEach(g => g.addEventListener("click", () =>
+            apply(Object.assign({
+              status: g.dataset.g,
+              status_note: "Not on the shelf at stocktake",
+              status_changed_at: new Date().toISOString()
+            }, stStamp()), i.item_name + (g.dataset.g === "used" ? " marked used" : " binned"))
+          ));
+        }
+      }));
+    });
+  };
+  loadStVerify().then(drawCheck);
 }
 
 function stocktakeItemForm(pre){
@@ -1715,6 +1976,9 @@ function stocktakeItemForm(pre){
       toast(name + " counted in");
     }catch(e){ return; }
 
+    // the item is saved now, so this form must not stay on screen: a second tap
+    // on Save would add it twice. Go back to the list if the scan is cancelled.
+    stTab = "add";
     if(again){
       scanBarcode(async code => {
         const hit = await lookupBarcode(code);
@@ -1725,7 +1989,8 @@ function stocktakeItemForm(pre){
           storage: hit.known ? hit.storage : null,
           unit: hit.known ? hit.unit : null
         });
-      });
+      }, () => stocktakePane());
+      closeModal();
     }else{
       stocktakePane();
     }
@@ -1759,10 +2024,10 @@ async function pickOrders(){
       o.expected_date ? fmtDate(o.expected_date) : "no date",
       items + " item" + (items === 1 ? "" : "s"),
       o.catering_functions ? o.catering_functions.name : (o.sheet_block || "general stock")
-    ].filter(Boolean).join(" \u00b7 ");
+    ].filter(Boolean).join(" · ");
     return '<button class="btn fnpick' + (chosen.has(o.id) ? " picked" : "") + '" data-ord="' + o.id + '" style="background:' +
       esc(o.catering_functions && o.catering_functions.colour ? o.catering_functions.colour : "#546e64") + ';">' +
-      '<span class="fp-t">' + (chosen.has(o.id) ? "\u2713" : "") + "</span>" +
+      '<span class="fp-t">' + (chosen.has(o.id) ? "✓" : "") + "</span>" +
       '<span class="fp-n">' + esc(o.supplier || "Order") + "</span>" +
       '<span class="fp-d">' + esc(sub) + "</span></button>";
   };
@@ -1785,7 +2050,7 @@ async function pickOrders(){
       const id = +b.dataset.ord;
       if(chosen.has(id)) chosen.delete(id); else chosen.add(id);
       b.classList.toggle("picked", chosen.has(id));
-      b.querySelector(".fp-t").textContent = chosen.has(id) ? "\u2713" : "";
+      b.querySelector(".fp-t").textContent = chosen.has(id) ? "✓" : "";
     })
   );
   m.querySelector("#ordPickDone").addEventListener("click", () => {
@@ -1855,7 +2120,7 @@ function renderOrderChips(){
   if(!box) return;
   box.innerHTML = state.draftOrders.map(o => {
     const who = o.catering_functions ? o.catering_functions.name : (o.sheet_block || "general stock");
-    return '<span class="oc">' + esc(o.supplier || "Order") + " \u00b7 " + esc(who) +
+    return '<span class="oc">' + esc(o.supplier || "Order") + " · " + esc(who) +
       '<button data-drop="' + o.id + '" title="Remove">&times;</button></span>';
   }).join("");
   box.querySelectorAll("[data-drop]").forEach(b =>
@@ -1886,14 +2151,14 @@ function renderOrderDiff(){
   box.innerHTML =
     '<div class="sum">' +
       pill(tallies.ok, "ok", "as ordered") +
-      pill(tallies.short, "warn", tallies.short === 1 ? "short" : "short") +
+      pill(tallies.short, "warn", "short") +
       pill(tallies.over, "warn", "over") +
       pill(tallies.extra, "plain", tallies.extra === 1 ? "extra" : "extras") +
       pill(tallies.missing, "bad", "not on the docket yet") +
     "</div>" +
     (missing.length
       ? '<div style="margin-top:8px;">' + missing.slice(0, 10).map(oi =>
-          '<div class="diffline"><b>' + esc(oi.item_name) + "</b> \u00b7 " +
+          '<div class="diffline"><b>' + esc(oi.item_name) + "</b> · " +
           esc(oi.quantity != null ? oi.quantity + " " + (oi.unit || "") : (oi.unit || "")) +
           ' <span class="muted">ordered but not added yet</span></div>').join("") +
         (missing.length > 10 ? '<div class="small muted">and ' + (missing.length - 10) + " more</div>" : "") + "</div>"
@@ -1911,20 +2176,24 @@ async function saveDelivery(){
   if(invv && state.invDup && !confirm("Invoice " + invv + " was already entered (" + (state.invDup.supplier || "delivery") + ", " + fmtDateTime(state.invDup.delivered_at) + "). Save anyway?")) return;
   state.busy = true;
   const btn = $("btnSaveDelivery");
-  btn.disabled = true; btn.textContent = "Saving\u2026";
+  btn.disabled = true; btn.textContent = "Saving…";
+  let del = null;
+  const uploaded = [];
   try{
     const fnId = $("rFunction").value ? +$("rFunction").value : null;
+    const who = $("rReceivedBy").value.trim() || null;
+    if(who) store("wslr_who", who);
     const dPayload = {
       supplier,
       invoice_number: $("rInvoice").value.trim() || null,
-      received_by: $("rReceivedBy").value.trim() || null,
+      received_by: who,
       function_id: fnId,
       received_in_full: state.fullState === "yes",
       issue_notes: state.fullState === "issue" ? ($("rIssueNotes").value.trim() || null) : null
     };
     const dv = $("rDate").value;
     if(dv && dv !== localISO()) dPayload.delivered_at = new Date(dv + "T12:00").toISOString();
-    const del = await run(sb.from("deliveries").insert(dPayload).select().single());
+    del = await run(sb.from("deliveries").insert(dPayload).select().single());
 
     let photoFail = 0;
     const photoRows = [];
@@ -1932,25 +2201,32 @@ async function saveDelivery(){
       const p = state.draftPhotos[i];
       const path = del.id + "/" + Date.now() + "_" + i + (p.isPdf ? ".pdf" : ".jpg");
       const { error } = await sb.storage.from("dockets").upload(path, p.blob, {contentType: p.isPdf ? "application/pdf" : "image/jpeg"});
-      if(error){ photoFail++; console.error(error); } else photoRows.push({delivery_id: del.id, path});
+      if(error){ photoFail++; console.error(error); } else { photoRows.push({delivery_id: del.id, path}); uploaded.push(path); }
     }
     if(photoRows.length) await run(sb.from("delivery_photos").insert(photoRows));
 
     if(state.draftItems.length){
       const rows = [];
       const flagged = [];
+      const now = new Date().toISOString();
       state.draftItems.forEach(it => {
+        // every row spells out its status: on a bulk insert supabase-js sends
+        // null for any column that some rows set and others leave out, which
+        // is exactly what tripped the not-null constraint on status
         const base = {
           delivery_id: del.id,
           item_name: it.name,
           category: it.category,
           storage: it.storage,
           unit: it.unit,
-          expiry_date: it.expiry
+          expiry_date: it.expiry,
+          status: "in_stock",
+          short_or_wrong: false,
+          status_changed_at: null
         };
         if(it.short){
           flagged.push(it.name);
-          rows.push({...base, quantity: it.qty, status: "not_received", short_or_wrong: true, function_id: fnId});
+          rows.push({...base, quantity: it.qty, status: "not_received", short_or_wrong: true, status_changed_at: now, function_id: fnId});
           return;
         }
         if(!it.allocs || !it.allocs.length){
@@ -1963,7 +2239,7 @@ async function saveDelivery(){
           if(it.qty != null && !(q > 0)) return;
           if(a.fnId === "NR"){
             flagged.push(it.name + (q ? " (" + q + " " + (it.unit || "") + ")" : ""));
-            rows.push({...base, quantity: q, status: "not_received", short_or_wrong: true, function_id: fnId});
+            rows.push({...base, quantity: q, status: "not_received", short_or_wrong: true, status_changed_at: now, function_id: fnId});
           }else{
             rows.push({...base, quantity: q, function_id: a.fnId || null});
           }
@@ -1974,7 +2250,7 @@ async function saveDelivery(){
           if(rem > 0) rows.push({...base, quantity: rem, function_id: null});
         }
       });
-      if(rows.length) await run(sb.from("stock_items").insert(rows));
+      if(rows.length) await run(sb.from("stock_items").insert(rows, {defaultToNull: false}));
       if(flagged.length){
         const note = "Not received: " + flagged.join(", ");
         const existing = state.fullState === "issue" ? $("rIssueNotes").value.trim() : "";
@@ -2022,6 +2298,10 @@ async function saveDelivery(){
     $("rIssueWrap").style.display = "none";
     toast(photoFail ? "Delivery saved but " + photoFail + " photo(s) failed to upload" : "Delivery saved");
   }catch(e){
+    // nothing half-saved: the delivery row comes back out and the form keeps
+    // everything typed so the save can simply be tried again
+    if(del){ await undoDelivery(del.id, uploaded); }
+    toast("Nothing was saved. Fix the problem above and tap Save again.", {type:"err"});
   }finally{
     state.busy = false;
     btn.disabled = false; btn.textContent = "Save delivery";
@@ -2041,7 +2321,7 @@ async function readDocket(){
   if(btn.disabled) return;
   btn.disabled = true;
   const orig = btn.innerHTML;
-  btn.textContent = "Reading docket\u2026";
+  btn.textContent = "Reading docket…";
   try{
     const files = [];
     for(const p of state.draftPhotos.slice(0, 6)){
@@ -2178,7 +2458,9 @@ async function renderUseFirst(){
       return;
     }
 
-    box.innerHTML = boardHtml(list, searching, false);
+    // Allocate sits on every row now, in kitchen mode too, rather than only on
+    // the admin Unallocated tab
+    box.innerHTML = boardHtml(list, searching, true);
     wireBoard(box, items);
     updateBulkBar();
   }catch(e){
@@ -2234,10 +2516,10 @@ async function renderDvUnalloc(){
         g.n + (g.n === 1 ? " line" : " lines"),
         qtyTxt,
         [...g.sups].join(", ")
-      ].filter(Boolean).join(" \u00b7 ");
+      ].filter(Boolean).join(" · ");
       return '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(g.name) + "</div>" +
         '<div class="s">' + esc(meta) + "</div></div>" +
-        (g.n > 1 ? '<span class="pill warn">' + g.n + "\u00d7</span>" : "") + "</div>";
+        (g.n > 1 ? '<span class="pill warn">' + g.n + "×</span>" : "") + "</div>";
     }).join("");
   }catch(e){
     box.innerHTML = '<div class="empty">Could not load.</div>';
@@ -2263,7 +2545,7 @@ function ufRowHtml(i, searching, showAlloc){
     const d = daysUntil(i.expiry_date);
     cls = d <= 0 ? "rail-bad" : d <= 3 ? "rail-warn" : "rail-ok";
   }
-  let d1 = "\u2013", d2 = "";
+  let d1 = "–", d2 = "";
   const rec = i.deliveries && i.deliveries.delivered_at ? new Date(i.deliveries.delivered_at) : null;
   if(rec){ d1 = String(rec.getDate()); d2 = rec.toLocaleDateString("en-AU", {month:"short"}); }
   const inStock = i.status === "in_stock";
@@ -2284,8 +2566,9 @@ function ufRowHtml(i, searching, showAlloc){
   const meta = [
     i.quantity ? i.quantity + " " + (i.unit || "") : "",
     useBy,
-    searching && i.deliveries ? "delivered " + fmtDateTime(i.deliveries.delivered_at) + (i.deliveries.supplier ? " from " + i.deliveries.supplier : "") : ""
-  ].filter(Boolean).join(" \u00b7 ");
+    searching && i.deliveries ? "delivered " + fmtDateTime(i.deliveries.delivered_at) + (i.deliveries.supplier ? " from " + i.deliveries.supplier : "") : "",
+    inStock ? lastCheckedText(i) : ""
+  ].filter(Boolean).join(" · ");
   const draggable = inStock && !state.selectMode ? ' draggable="true"' : "";
   return '<div class="uf-row' + (isSel ? " selected" : "") + '" data-id="' + i.id + '" data-tint="' + tint + '"' + draggable +
     (isSel ? "" : ' style="background:' + tint + ';"') + ">" +
@@ -2521,17 +2804,16 @@ function markModal(i, status){
 async function itemModal(i){
   let allocFns = [];
   try{
-    const from = localISO(new Date(Date.now() - 10 * 86400000));
     allocFns = await run(
-      sb.from("catering_functions").select("id, name, event_date, colour")
-        .gte("event_date", from).order("event_date", {ascending:true}).limit(60)
+      fnWindow(sb.from("catering_functions").select("id, name, event_date, end_date, colour, source"), 10)
+        .order("event_date", {ascending:true}).limit(60)
     );
   }catch(e){}
   const inStock = !i.status || i.status === "in_stock";
   const m = openModal(
     "<h2>" + esc(i.item_name) + "</h2>" +
     '<p class="small muted" style="margin-top:2px;">' +
-    esc([i.category, i.deliveries ? "From " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : ""].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+    esc([i.category, i.deliveries ? "From " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : "", lastCheckedText(i)].filter(Boolean).join(" · ")) + "</p>" +
     (i.catering_functions
       ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">Currently tagged to <b>' +
         esc(i.catering_functions.name) + "</b>.</p>"
@@ -2550,7 +2832,7 @@ async function itemModal(i){
     (inStock ? "<h3>Allocate to a function</h3>" +
     '<p class="small muted">Move all or part of this item onto a function so it gets costed there. A part allocation splits the line.</p>' +
     '<div class="grid2">' +
-    '<div class="field"><label for="imAllocFn">Function</label><select id="imAllocFn"><option value="">Choose\u2026</option>' +
+    '<div class="field"><label for="imAllocFn">Function</label><select id="imAllocFn"><option value="">Choose…</option>' +
     '<option value="NR" style="background:var(--red); color:#fff;">NOT RECEIVED</option>' +
     allocFns.map(f => fnOptionHtml(f, null)).join("") +
     "</select></div>" +
@@ -2752,7 +3034,7 @@ function feedNote(data){
   if(d.skippedNotCatering) why.push(d.skippedNotCatering + " have Catering not set to Yes");
   if(d.skippedNoArrivalDate) why.push(d.skippedNoArrivalDate + " have no arrival date it could read");
   if(d.skippedNoName) why.push(d.skippedNoName + " have no group name");
-  return " It read the tab \u201c" + (d.tab || "?") + "\u201d and checked " +
+  return " It read the tab “" + (d.tab || "?") + "” and checked " +
     (d.rowsScanned || 0) + " row" + (d.rowsScanned === 1 ? "" : "s") + ". " +
     (d.cateringColumn ? "Catering is column " + d.cateringColumn + ". " : "That tab has no Catering column, so it is probably the wrong one. ") +
     (why.length ? why.join(", ") + "." : "");
@@ -2907,9 +3189,11 @@ async function renderFunctions(force){
         .select("*, deliveries(id, supplier, delivered_at), function_wrapups(*)")
         .order("event_date", {ascending:false}).limit(200)
     );
+    // a group is current until it leaves, not just on its arrival day
     const today = localISO();
-    const up = rows.filter(r => r.event_date >= today).sort((a, b) => a.event_date.localeCompare(b.event_date));
-    const past = rows.filter(r => r.event_date < today).slice(0, 20);
+    const lastDay = r => r.end_date || r.event_date;
+    const up = rows.filter(r => lastDay(r) >= today).sort((a, b) => a.event_date.localeCompare(b.event_date));
+    const past = rows.filter(r => lastDay(r) < today).slice(0, 20);
     $("fnUpcoming").innerHTML = up.length ? up.map(r => fnCardHtml(r, false)).join("")
       : '<div class="empty">No upcoming functions. Add one so deliveries can be tagged to it.</div>';
     $("fnPast").innerHTML = past.length ? past.map(r => fnCardHtml(r, true)).join("")
@@ -2930,9 +3214,11 @@ async function renderFunctions(force){
 }
 function fnCardHtml(r, isPast){
   const wrapped = r.function_wrapups && r.function_wrapups.length;
+  const today = localISO();
+  const onSite = !isPast && r.event_date <= today && (r.end_date || r.event_date) >= today;
   const badge = isPast
     ? (wrapped ? '<span class="pill ok">Wrapped up</span>' : '<span class="pill warn">Wrap up pending</span>')
-    : '<span class="pill plain">' + esc(fnDateLabel(r)) + "</span>";
+    : (onSite ? '<span class="pill ok">On site now</span> ' : "") + '<span class="pill plain">' + esc(fnDateLabel(r)) + "</span>";
   const tag = isSheetFn(r)
     ? (r.sheet_state === "dropped"
         ? '<span class="pill warn">No longer on the sheet</span>'
@@ -2943,7 +3229,7 @@ function fnCardHtml(r, isPast){
     (r.meal_types || []).join(", "),
     r.heads ? r.heads + " heads" : "",
     (r.deliveries ? r.deliveries.length : 0) + " deliveries"
-  ].filter(Boolean).join(" \u00b7 ");
+  ].filter(Boolean).join(" · ");
   return '<div class="rowcard' + (isSheetFn(r) ? "" : " fn-manual") + '" data-id="' + r.id + '"><div class="l"><div class="t">' +
     '<span class="fndot" style="background:' + esc(r.colour || "#546e64") + ';"></span>' + esc(r.name) +
     '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + badge + tag + "</div></div>";
@@ -2963,7 +3249,7 @@ function headsBreakdown(fn){
     fn.heads_child ? fn.heads_child + " children" : "",
     fn.heads_teen ? fn.heads_teen + " teens" : "",
     fn.heads_adult ? fn.heads_adult + " adults" : ""
-  ].filter(Boolean).join(" \u00b7 ");
+  ].filter(Boolean).join(" · ");
 }
 function functionForm(fn){
   const sel = new Set(fn && fn.meal_types ? fn.meal_types : []);
@@ -3014,7 +3300,7 @@ function functionForm(fn){
   };
   const showHeads = () => {
     const h = calcHeads();
-    m.querySelector("#fmHeadsShow").textContent = h == null ? "\u2013" : h;
+    m.querySelector("#fmHeadsShow").textContent = h == null ? "–" : h;
   };
   ["fmInf","fmChd","fmTeen","fmAdt"].forEach(id => m.querySelector("#" + id).addEventListener("input", showHeads));
   showHeads();
@@ -3058,7 +3344,7 @@ async function functionDetail(fn){
       fnDateLabel(fn),
       (fn.meal_types || []).join(", "),
       fn.heads ? fn.heads + " heads" : ""
-    ].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+    ].filter(Boolean).join(" · ")) + "</p>" +
     '<p class="small" style="margin-top:-4px;">' + (isSheetFn(fn)
       ? '<span class="pill sheet">From the confirmations sheet</span>' +
         (fn.sheet_state === "dropped" ? ' <span class="pill warn">No longer listed there</span>' : "")
@@ -3078,7 +3364,7 @@ async function functionDetail(fn){
     "<h3>Deliveries tagged</h3>" +
     (dels.length
       ? dels.map(d => '<div class="small" style="padding:6px 0; border-bottom:1px solid var(--line);">' +
-          esc((d.supplier || "Delivery") + " \u00b7 " + fmtDateTime(d.delivered_at)) + "</div>").join("")
+          esc((d.supplier || "Delivery") + " · " + fmtDateTime(d.delivered_at)) + "</div>").join("")
       : '<p class="small muted">None yet. Tag deliveries to this function when receiving them: Deliveries tab, then + Receive.</p>') +
     "<h3>Leftovers still in stock</h3>" +
     (tagged.length
@@ -3086,7 +3372,7 @@ async function functionDetail(fn){
         tagged.map(i =>
           '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(i.item_name) +
           (i.expiry_date && i.expiry_date < fn.event_date ? ' <span class="pill warn">Expires before event</span>' : "") + "</div>" +
-          '<div class="s">' + esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : "", storageLabel(i.storage)].filter(Boolean).join(" \u00b7 ")) + "</div></div>" +
+          '<div class="s">' + esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : "", storageLabel(i.storage)].filter(Boolean).join(" · ")) + "</div></div>" +
           '<button class="btn btn-secondary btn-sm" data-ret="' + i.id + '">Return</button></div>'
         ).join("") +
         '<button class="btn btn-secondary" id="btnRetAll" style="width:100%; margin-top:6px;">Return all to general stock</button>'
@@ -3193,7 +3479,8 @@ function kitchenItemModal(i){
     "<h2>" + esc(i.item_name) + "</h2>" +
     '<p class="small muted" style="margin-top:2px;">' +
     esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : "",
-         i.deliveries ? "from " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : ""].filter(Boolean).join(" · ")) + "</p>" +
+         i.deliveries ? "from " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : "",
+         lastCheckedText(i)].filter(Boolean).join(" · ")) + "</p>" +
     '<div style="margin:0 0 14px;">' + fnChip(i.catering_functions, i.function_id) +
     (i.expiry_date ? ' <span class="pill ' + (daysUntil(i.expiry_date) <= 0 ? "bad" : daysUntil(i.expiry_date) <= 3 ? "warn" : "ok") + '">use by ' + esc(fmtDate(i.expiry_date)) + "</span>" : "") + "</div>" +
     '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
@@ -3413,8 +3700,7 @@ function bookingModal(b, linkedFn){
     let fns = [];
     try{
       fns = await run(
-        sb.from("catering_functions").select("id, name, event_date, end_date, colour, source, group_ref, group_link")
-          .gte("event_date", localISO(new Date(Date.now() - 10 * 86400000)))
+        fnWindow(sb.from("catering_functions").select("id, name, event_date, end_date, colour, source, group_ref, group_link"), 10)
           .order("event_date", {ascending:true}).limit(150)
       );
     }catch(e){ return; }
@@ -3513,7 +3799,7 @@ function ordCardHtml(o, grouped){
       items.length + " item" + (items.length === 1 ? "" : "s"),
       o.catering_functions ? "" : "not tagged to a function",
       o.notes || ""
-    ].filter(Boolean).join(" \u00b7 ");
+    ].filter(Boolean).join(" · ");
     return '<div class="rowcard ' + (fromSheet ? "src-sheet" : "src-hand") + '" data-id="' + o.id + '">' +
       '<div class="l"><div class="t">' + esc(forWho) + '</div><div class="s">' + esc(gsub) + "</div></div>" +
       '<div class="r rrow">' + when + place + "</div></div>";
@@ -3521,6 +3807,39 @@ function ordCardHtml(o, grouped){
 
   return '<div class="rowcard ' + (fromSheet ? "src-sheet" : "src-hand") + '" data-id="' + o.id + '"><div class="l"><div class="t">' + esc(o.supplier || "Order") +
     '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + when + st + tag + place + "</div></div>";
+}
+// One truck, one card. Bidfood bringing food for three groups is three orders
+// in the database but one docket at the back door, so Arrivals groups the open
+// orders by supplier and the tick-off handles the whole lot in one go.
+function groupOrdersBySupplier(rows){
+  const map = {};
+  rows.forEach(o => {
+    const k = supKey(o.supplier);
+    (map[k] = map[k] || {key: k, supplier: o.supplier || "Order", orders: []}).orders.push(o);
+  });
+  const first = g => g.orders.map(o => o.expected_date || "9999").sort()[0];
+  return Object.values(map).sort((a, b) => first(a).localeCompare(first(b)));
+}
+function arrCardHtml(g){
+  if(g.orders.length === 1) return ordCardHtml(g.orders[0]).replace('<div class="rowcard ', '<div data-key="' + esc(g.key) + '" class="rowcard ');
+  const items = g.orders.reduce((t, o) => t + (o.order_items || []).length, 0);
+  const dates = g.orders.map(o => o.expected_date).filter(Boolean).sort();
+  let when = '<span class="pill plain">No date</span>';
+  if(dates.length){
+    const d = daysUntil(dates[0]);
+    when = d === 0 ? '<span class="pill warn">Today</span>'
+      : d < 0 ? '<span class="pill bad">' + (-d) + "d overdue</span>"
+      : '<span class="pill plain">' + esc(fmtDate(dates[0])) + "</span>";
+  }
+  const who = g.orders.map(o => o.catering_functions ? o.catering_functions.name : (o.sheet_block || "General stock"));
+  const chips = g.orders.map(o =>
+    '<span class="pill" style="background:' + esc(o.catering_functions && o.catering_functions.colour ? o.catering_functions.colour : "#8a938e") + '; color:#fff; margin:3px 4px 0 0;">' +
+    esc(o.catering_functions ? o.catering_functions.name : (o.sheet_block || "General")) + " · " + (o.order_items || []).length + "</span>").join("");
+  const fromSheet = g.orders.every(o => o.source === "sheet");
+  return '<div data-key="' + esc(g.key) + '" class="rowcard ' + (fromSheet ? "src-sheet" : "src-hand") + '"><div class="l"><div class="t">' + esc(g.supplier) +
+    '</div><div class="s">' + esc(g.orders.length + " orders · " + items + " item" + (items === 1 ? "" : "s") + " · for " + who.join(", ")) + "</div>" +
+    '<div class="s" style="white-space:normal;">' + chips + "</div></div>" +
+    '<div class="r">' + when + '<span class="pill sheet">One truck, ' + g.orders.length + " groups</span></div></div>";
 }
 async function renderArrivals(){
   const box = $("arrList");
@@ -3536,55 +3855,129 @@ async function renderArrivals(){
         .order("expected_date", {ascending:true, nullsFirst:false}).limit(60)
     );
     state.orders = rows;
+    const groups = groupOrdersBySupplier(rows);
     const b = $("arrBadge");
-    if(b){ b.style.display = rows.length ? "" : "none"; b.textContent = rows.length; }
+    if(b){ b.style.display = groups.length ? "" : "none"; b.textContent = groups.length; }
     if(!rows.length){
       box.innerHTML = '<div class="empty">Nothing waiting to arrive.<br>When the office enters an order it shows up here to tick off.</div>';
       return;
     }
-    box.innerHTML = rows.map(o => ordCardHtml(o)).join("");
+    box.innerHTML = groups.map(arrCardHtml).join("");
     box.querySelectorAll(".rowcard").forEach(el =>
       el.addEventListener("click", () => {
-        const o = rows.find(x => x.id === +el.dataset.id);
-        if(o) confirmOrderModal(o);
+        const g = groups.find(x => x.key === el.dataset.key);
+        if(g) confirmOrderModal(g.orders);
       })
     );
   }catch(e){
     box.innerHTML = '<div class="empty">Could not load. Check the connection.</div>';
   }
 }
-function confirmOrderModal(o){
-  const items = (o.order_items || []).slice();
-  const marks = {};
-  items.forEach(it => marks[it.id] = {mode: "ok", qty: it.quantity});
+// What did this item look like the last time it came through the door? Sheet
+// order lines carry no category or storage, so the tick-off borrows them from
+// the most recent stock line (or barcode) with a matching name.
+let itemProfiles = null;
+async function loadItemProfiles(){
+  const out = [];
+  try{
+    const rows = await run(
+      sb.from("stock_items").select("item_name, category, storage, unit, created_at")
+        .or("storage.not.is.null,category.not.is.null")
+        .order("created_at", {ascending:false}).limit(400)
+    );
+    rows.forEach(r => out.push({name: r.item_name, category: r.category, storage: r.storage, unit: r.unit}));
+  }catch(e){}
+  try{
+    const rows = await run(sb.from("barcodes").select("item_name, category, storage, unit").limit(500));
+    rows.forEach(r => out.push({name: r.item_name, category: r.category, storage: r.storage, unit: r.unit}));
+  }catch(e){}
+  itemProfiles = out;
+  return out;
+}
+function profileFor(name){
+  if(!itemProfiles || !itemProfiles.length) return null;
+  const n = normItem(name);
+  if(!n) return null;
+  let hit = itemProfiles.find(p => normItem(p.name) === n);
+  if(!hit) hit = itemProfiles.find(p => itemsLookAlike(p.name, name));
+  return hit || null;
+}
+// Share what arrived across the groups that ordered it: the earliest group is
+// fed first, any shortfall lands on the last one, and anything over the top of
+// the order goes to general stock. A single group keeps the lot, over or not.
+function splitAcrossParts(p, got){
+  if(p.parts.length === 1){
+    const pt = p.parts[0];
+    return {parts: [{pt, got, short: Math.max(0, Math.round(((pt.qty || 0) - got) * 1000) / 1000)}], surplus: 0};
+  }
+  let rem = got;
+  const parts = p.parts.map(pt => {
+    const give = Math.min(rem, pt.qty || 0);
+    rem = Math.round((rem - give) * 1000) / 1000;
+    return {pt, got: Math.round(give * 1000) / 1000, short: Math.round(((pt.qty || 0) - give) * 1000) / 1000};
+  });
+  return {parts, surplus: rem};
+}
+// Tick off one docket against one or more open orders. Lines that look alike
+// across the orders are pooled, so "Garden salad mix 3 kg" for two groups shows
+// once as 6 kg and whatever actually arrived is split between them.
+async function confirmOrderModal(input){
+  const orders = (Array.isArray(input) ? input : [input]).slice();
+  const multi = orders.length > 1;
+  const supplier = orders[0].supplier || "Delivery";
+  const included = new Set(orders.map(o => o.id));
+  const fnOf = o => o.catering_functions || null;
+  const fnName = o => fnOf(o) ? fnOf(o).name : (o.sheet_block || "General stock");
+  const fnIdOf = o => o.function_id || null;
+  const inc = () => orders.filter(o => included.has(o.id));
+  // earliest group first when a short line has to be shared out
+  const partSort = (a, b) => {
+    const da = fnOf(a.o) ? fnOf(a.o).event_date : "9999", db = fnOf(b.o) ? fnOf(b.o).event_date : "9999";
+    if(da !== db) return da.localeCompare(db);
+    return (a.o.expected_date || "9999").localeCompare(b.o.expected_date || "9999");
+  };
+  const marks = {};      // pool key -> {mode, qty, category, storage, unit}
   const extras = [];
   const photos = [];
+  let pools = [];
   const cats = [...new Set(state.shelf.map(r => r.category))];
-  const catOpts = '<option value="">Choose&hellip;</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
+  const catOpts = sel => '<option value="">Category…</option>' +
+    cats.map(c => '<option value="' + esc(c) + '"' + (sel === c ? " selected" : "") + ">" + esc(c) + "</option>").join("");
+  const notes = orders.filter(o => o.notes).map(o => (multi ? fnName(o) + ": " : "") + o.notes);
+  const changed = orders.some(o => o.sheet_changed);
+  const dates = orders.map(o => o.expected_date).filter(Boolean).sort();
+
   const m = openModal(
-    "<h2>" + esc(o.supplier || "Delivery") + " arrived</h2>" +
+    "<h2>" + esc(supplier) + " arrived</h2>" +
     '<p class="small muted" style="margin-top:2px;">' + esc([
-      o.expected_date ? "expected " + fmtDate(o.expected_date) : "",
-      o.catering_functions ? "for " + o.catering_functions.name : "General stock"
+      dates.length ? "expected " + fmtDate(dates[0]) : "",
+      multi ? "one truck for " + orders.length + " groups" : "for " + fnName(orders[0])
     ].filter(Boolean).join(" · ")) + "</p>" +
-    (o.notes ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">' + esc(o.notes) + "</p>" : "") +
-    (o.sheet_changed ? '<p class="small" style="background:var(--amber-bg); color:var(--amber); padding:9px 12px; border-radius:9px; font-weight:600;">The shopping list has changed since this order was pulled in. Worth a look at the sheet before you tick it off.</p>' : "") +
-    "<h3>Tick off the order</h3>" +
-    '<div id="coRows"></div>' +
+    (multi
+      ? '<p class="small muted" style="margin:0 0 4px;">Everything below is pooled across these groups. Untick a group if its food did not come on this run.</p>' +
+        '<div class="cogroups" id="coGroups">' + orders.map(o =>
+          '<button data-oid="' + o.id + '" class="on" style="background:' + esc(fnOf(o) && fnOf(o).colour ? fnOf(o).colour : "#8a938e") + ';">' +
+          esc(fnName(o)) + " · " + (o.order_items || []).length + "</button>").join("") + "</div>"
+      : "") +
+    notes.map(n => '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">' + esc(n) + "</p>").join("") +
+    (changed ? '<p class="small" style="background:var(--amber-bg); color:var(--amber); padding:9px 12px; border-radius:9px; font-weight:600;">The shopping list has changed since ' + (multi ? "one of these orders was" : "this order was") + ' pulled in. Worth a look at the sheet before you tick it off.</p>' : "") +
+    "<h3>Tick off the docket</h3>" +
+    '<div id="coRows"><div class="loading">Loading…</div></div>' +
     "<h3>Anything extra?</h3>" +
     '<div id="coExtras"></div>' +
     '<button class="btn btn-ghost btn-sm" id="coAddExtra" style="width:100%;">+ Something arrived that is not on the order</button>' +
     '<div id="coExtraForm" style="display:none; background:#efece6; border-radius:12px; padding:12px; margin-top:8px;">' +
     '<div class="grid2">' +
     '<div class="field"><label>Item</label><div style="display:flex; gap:8px;"><input id="cxName" list="nameList" autocomplete="off" style="flex:1;"><button class="btn btn-secondary btn-scan" id="cxScan" title="Scan the barcode"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5h2v14H2zM5 5h1v14H5zM7.5 5h2v14h-2zM11 5h1v14h-1zM13.5 5h1v14h-1zM16 5h2.5v14H16zM20 5h2v14h-2z"/></svg></button></div></div>' +
-    '<div class="field"><label>Category</label><select id="cxCat">' + catOpts + "</select></div></div>" +
+    '<div class="field"><label>Category</label><select id="cxCat">' + catOpts(null) + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="cxQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="cxUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
     '<div class="field"><label>Storage</label><select id="cxStorage"><option value="">Choose&hellip;</option><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select></div></div>' +
+    '<div class="field" id="cxForWrap" style="display:none;"><label>For which group?</label><select id="cxFor"></select></div>' +
     '<button class="btn btn-secondary btn-sm" id="cxAdd" style="width:100%;">Add it</button>' +
     "</div>" +
     "<h3>Details</h3>" +
-    '<div class="field"><label for="coBy">Received by</label><input id="coBy" list="receiverList" placeholder="Your name" autocomplete="off"></div>' +
+    '<div class="field"><label for="coBy">Received by</label><input id="coBy" list="receiverList" placeholder="Your name" autocomplete="off" value="' + esc(readStore("wslr_who") || "") + '"></div>' +
     '<div class="field"><label>Docket</label>' +
     '<div style="display:flex; gap:8px;">' +
     '<button class="btn btn-secondary" id="coTakePhoto" style="flex:1;">&#128247; Take photo</button>' +
@@ -3595,76 +3988,168 @@ function confirmOrderModal(o){
     '<div id="coStrip" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div></div>' +
     '<button class="btn btn-primary" id="coSave">Save arrival</button>'
   );
-  const expTxt = it => (it.quantity != null ? it.quantity + " " + (it.unit || "") + " expected" : "qty not set") +
-    [it.category, it.storage ? storageLabel(it.storage) : ""].filter(Boolean).map(x => " · " + x).join("");
-  const drawRows = () => {
-    m.querySelector("#coRows").innerHTML = items.length ? items.map(it => {
-      const mk = marks[it.id];
-      return '<div class="ord-row" data-oi="' + it.id + '"><div class="nm">' + esc(it.item_name) +
-        '<div class="sub">' + esc(expTxt(it)) + "</div>" +
-        '<div class="ord-qty" style="display:' + (mk.mode === "part" ? "flex" : "none") + ';">' +
-        '<input type="number" inputmode="decimal" step="any" min="0" class="oq" value="' + (mk.qty ?? "") + '" placeholder="Qty">' +
-        '<span class="small muted">' + esc(it.unit || "") + " actually arrived</span></div></div>" +
-        '<div class="ord-seg">' +
-        '<button data-m="ok" class="' + (mk.mode === "ok" ? "on-ok" : "") + '">All here</button>' +
-        '<button data-m="part" class="' + (mk.mode === "part" ? "on-part" : "") + '">Adjust</button>' +
-        '<button data-m="none" class="' + (mk.mode === "none" ? "on-none" : "") + '">Missing</button>' +
-        "</div></div>";
-    }).join("") : '<p class="small muted">No items were listed on this order. Add what arrived below.</p>';
-    m.querySelectorAll(".ord-row").forEach(row => {
-      const id = +row.dataset.oi;
-      row.querySelectorAll("[data-m]").forEach(b =>
-        b.addEventListener("click", () => { marks[id].mode = b.dataset.m; drawRows(); })
-      );
-      const oq = row.querySelector(".oq");
-      if(oq) oq.addEventListener("input", () => { marks[id].qty = oq.value === "" ? null : +oq.value; });
+
+  // ----- pooling -----
+  const buildPools = () => {
+    pools = [];
+    inc().forEach(o => {
+      (o.order_items || []).forEach(oi => {
+        const u = String(oi.unit || "").trim().toLowerCase();
+        const qtyless = oi.quantity == null;
+        let p = pools.find(x => x.unit === u && x.qtyless === qtyless && itemsLookAlike(x.name, oi.item_name));
+        if(!p){
+          p = {name: oi.item_name, unitRaw: oi.unit || "", unit: u, qtyless, expected: 0, parts: [],
+               category: oi.category || null, storage: oi.storage || null};
+          pools.push(p);
+        }
+        p.parts.push({o, oi, qty: qtyless ? null : +oi.quantity});
+        if(!qtyless) p.expected = Math.round((p.expected + +oi.quantity) * 1000) / 1000;
+        if(!p.category && oi.category) p.category = oi.category;
+        if(!p.storage && oi.storage) p.storage = oi.storage;
+      });
+    });
+    pools.forEach(p => {
+      p.parts.sort(partSort);
+      // the key must survive a group being unticked and re-ticked, so it is
+      // built from the name and unit rather than the row position
+      p.key = normItem(p.name) + "|" + p.unit + (p.qtyless ? "|q" : "");
+      if(!marks[p.key]){
+        const prof = profileFor(p.name);
+        marks[p.key] = {
+          mode: "ok",
+          qty: p.qtyless ? null : p.expected,
+          category: p.category || (prof ? prof.category : null),
+          storage: p.storage || (prof ? prof.storage : null),
+          unit: p.unitRaw || (prof ? prof.unit : null)
+        };
+      }
     });
   };
+  const expTxt = p => {
+    const partsTxt = p.parts.map(pt => (pt.qty != null ? pt.qty + " " + p.unitRaw + " " : "") + fnName(pt.o)).join(" + ");
+    return (p.qtyless ? "qty not set" : p.expected + " " + p.unitRaw + " expected") + (p.parts.length > 1 ? " (" + partsTxt + ")" : "");
+  };
+  const splitTxt = (p, got) => {
+    if(p.parts.length < 2 || got == null || !(got >= 0)) return "";
+    const sp = splitAcrossParts(p, got);
+    return "→ " + sp.parts.map(x => x.got + " " + p.unitRaw + " " + fnName(x.pt.o)).join(", ") +
+      (sp.surplus > 0 ? ", " + sp.surplus + " " + p.unitRaw + " to general stock" : "");
+  };
+  const drawRows = () => {
+    const box = m.querySelector("#coRows");
+    if(!pools.length){
+      box.innerHTML = '<p class="small muted">No items were listed on ' + (multi ? "these orders" : "this order") + ". Add what arrived below.</p>";
+      return;
+    }
+    box.innerHTML = pools.map(p => {
+      const mk = marks[p.key];
+      const showQty = mk.mode === "part" && !p.qtyless;
+      return '<div class="ord-row" data-k="' + esc(p.key) + '"><div class="nm">' + esc(p.name) +
+        '<div class="sub">' + esc(expTxt(p)) + "</div>" +
+        '<div class="stchips">' +
+          ["fridge","freezer","dry"].map(s => '<button data-st="' + s + '" class="' + (mk.storage === s ? "on " + s : "") + '">' + storageLabel(s) + "</button>").join("") +
+          '<select class="stcat">' + catOpts(mk.category) + "</select></div>" +
+        '<div class="ord-qty" style="display:' + (showQty ? "flex" : "none") + ';">' +
+          '<input type="number" inputmode="decimal" step="any" min="0" class="oq" value="' + (mk.qty ?? "") + '" placeholder="Qty">' +
+          '<span class="small muted">' + esc(p.unitRaw) + " actually arrived" + (p.parts.length > 1 ? " in total" : "") + "</span></div>" +
+        '<div class="splitprev">' + (showQty ? esc(splitTxt(p, mk.qty)) : "") + "</div></div>" +
+        '<div class="ord-seg">' +
+        '<button data-m="ok" class="' + (mk.mode === "ok" ? "on-ok" : "") + '">All here</button>' +
+        (p.qtyless ? "" : '<button data-m="part" class="' + (mk.mode === "part" ? "on-part" : "") + '">Adjust</button>') +
+        '<button data-m="none" class="' + (mk.mode === "none" ? "on-none" : "") + '">Missing</button>' +
+        "</div></div>";
+    }).join("");
+    box.querySelectorAll(".ord-row").forEach(row => {
+      const k = row.dataset.k;
+      const p = pools.find(x => x.key === k);
+      const mk = marks[k];
+      if(!p || !mk) return;
+      row.querySelectorAll("[data-m]").forEach(b =>
+        b.addEventListener("click", () => { mk.mode = b.dataset.m; drawRows(); })
+      );
+      const oq = row.querySelector(".oq");
+      if(oq) oq.addEventListener("input", () => {
+        mk.qty = oq.value === "" ? null : +oq.value;
+        row.querySelector(".splitprev").textContent = splitTxt(p, mk.qty);
+      });
+      row.querySelectorAll("[data-st]").forEach(b =>
+        b.addEventListener("click", () => {
+          mk.storage = mk.storage === b.dataset.st ? null : b.dataset.st;
+          row.querySelectorAll("[data-st]").forEach(x => { x.className = mk.storage === x.dataset.st ? "on " + x.dataset.st : ""; });
+        })
+      );
+      row.querySelector(".stcat").addEventListener("change", e => { mk.category = e.target.value || null; });
+    });
+  };
+  const drawFor = () => {
+    const wrap = m.querySelector("#cxForWrap"), sel = m.querySelector("#cxFor");
+    const fnIds = [...new Set(inc().map(fnIdOf))];
+    if(fnIds.length < 2){ wrap.style.display = "none"; return; }
+    wrap.style.display = "";
+    sel.innerHTML = '<option value="">General stock</option>' +
+      inc().filter(o => o.function_id).map(o => '<option value="' + o.function_id + '">' + esc(fnName(o)) + "</option>").join("");
+  };
+  const gb = m.querySelector("#coGroups");
+  if(gb) gb.querySelectorAll("[data-oid]").forEach(b =>
+    b.addEventListener("click", () => {
+      const id = +b.dataset.oid;
+      if(included.has(id)){
+        if(included.size === 1){ toast("Keep at least one group on the docket", {type:"err"}); return; }
+        included.delete(id);
+      } else included.add(id);
+      b.classList.toggle("on", included.has(id));
+      buildPools(); drawRows(); drawFor();
+    })
+  );
+
+  // ----- extras -----
   const drawExtras = () => {
     m.querySelector("#coExtras").innerHTML = extras.map((x, i) =>
       '<div class="draft-item"><div class="n">' + esc(x.name) +
-      '<div class="small muted">' + esc([x.qty ? x.qty + " " + (x.unit || "") : "", x.category, x.storage ? storageLabel(x.storage) : ""].filter(Boolean).join(" · ")) + "</div></div>" +
+      '<div class="small muted">' + esc([x.qty ? x.qty + " " + (x.unit || "") : "", x.category, x.storage ? storageLabel(x.storage) : "", x.fnName || ""].filter(Boolean).join(" · ")) + "</div></div>" +
       '<button class="x" data-i="' + i + '">&times;</button></div>'
     ).join("");
     m.querySelectorAll("#coExtras .x").forEach(b =>
       b.addEventListener("click", () => { extras.splice(+b.dataset.i, 1); drawExtras(); })
     );
   };
-  const drawStrip = () => {
-    m.querySelector("#coStrip").innerHTML = photos.map((p, i) =>
-      '<div style="position:relative;">' +
-      (p.isPdf
-        ? '<div style="width:84px; height:84px; border-radius:10px; border:1px solid var(--line); background:#efece4; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--muted);">PDF</div>'
-        : '<img src="' + p.url + '" style="width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid var(--line);">') +
-      '<button class="coRm" data-i="' + i + '" style="position:absolute; top:-7px; right:-7px; width:26px; height:26px; border-radius:50%; background:var(--red); color:#fff; border:2px solid #fff; font-weight:700; cursor:pointer; line-height:1;">&times;</button></div>'
-    ).join("");
-    m.querySelectorAll(".coRm").forEach(b =>
-      b.addEventListener("click", () => {
-        const p = photos[+b.dataset.i];
-        if(p && p.url) URL.revokeObjectURL(p.url);
-        photos.splice(+b.dataset.i, 1);
-        drawStrip();
-      })
-    );
-  };
   m.querySelector("#coAddExtra").addEventListener("click", () => {
     const f = m.querySelector("#coExtraForm");
     f.style.display = f.style.display === "none" ? "" : "none";
+    if(f.style.display !== "none") drawFor();
   });
   let cxScanPending = null;
+  m.querySelector("#cxName").addEventListener("change", () => {
+    // typed a name the app has seen before? borrow its storage and category
+    const prof = profileFor(m.querySelector("#cxName").value);
+    if(!prof) return;
+    if(prof.category && !m.querySelector("#cxCat").value) m.querySelector("#cxCat").value = prof.category;
+    if(prof.storage && !m.querySelector("#cxStorage").value) m.querySelector("#cxStorage").value = prof.storage;
+    if(prof.unit && !m.querySelector("#cxUnit").value) m.querySelector("#cxUnit").value = prof.unit;
+  });
   m.querySelector("#cxAdd").addEventListener("click", () => {
     const name = m.querySelector("#cxName").value.trim();
     if(!name){ toast("Give the item a name", {type:"err"}); return; }
+    const fnIds = [...new Set(inc().map(fnIdOf))];
+    let fnId = fnIds.length === 1 ? fnIds[0] : null;
+    if(fnIds.length > 1){
+      const v = m.querySelector("#cxFor").value;
+      fnId = v ? +v : null;
+    }
+    const fo = fnId ? inc().find(o => o.function_id === fnId) : null;
     const ex = {
       name,
       category: m.querySelector("#cxCat").value || null,
       storage: m.querySelector("#cxStorage").value || null,
       qty: m.querySelector("#cxQty").value ? +m.querySelector("#cxQty").value : null,
-      unit: m.querySelector("#cxUnit").value.trim() || null
+      unit: m.querySelector("#cxUnit").value.trim() || null,
+      fnId,
+      fnName: fo ? fnName(fo) : (fnIds.length > 1 ? "General stock" : "")
     };
     extras.push(ex);
     if(cxScanPending){ saveBarcode(cxScanPending, ex); cxScanPending = null; }
     ["cxName","cxQty","cxUnit"].forEach(id => m.querySelector("#" + id).value = "");
+    m.querySelector("#cxCat").value = ""; m.querySelector("#cxStorage").value = "";
     drawExtras();
   });
   m.querySelector("#cxScan").addEventListener("click", () => scanBarcode(async code => {
@@ -3682,6 +4167,25 @@ function confirmOrderModal(o){
       toast("New barcode. " + (hit.suggestion ? "Fix the name if needed" : "Type the item name") + ", then Add it — it will be remembered.");
     }
   }));
+
+  // ----- docket photos -----
+  const drawStrip = () => {
+    m.querySelector("#coStrip").innerHTML = photos.map((p, i) =>
+      '<div style="position:relative;">' +
+      (p.isPdf
+        ? '<div style="width:84px; height:84px; border-radius:10px; border:1px solid var(--line); background:#efece4; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--muted);">PDF</div>'
+        : '<img src="' + p.url + '" style="width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid var(--line);">') +
+      '<button class="coRm" data-i="' + i + '" style="position:absolute; top:-7px; right:-7px; width:26px; height:26px; border-radius:50%; background:var(--red); color:#fff; border:2px solid #fff; font-weight:700; cursor:pointer; line-height:1;">&times;</button></div>'
+    ).join("");
+    m.querySelectorAll(".coRm").forEach(b =>
+      b.addEventListener("click", () => {
+        const p = photos[+b.dataset.i];
+        if(p && p.url) URL.revokeObjectURL(p.url);
+        photos.splice(+b.dataset.i, 1);
+        drawStrip();
+      })
+    );
+  };
   const addCoFile = async f => {
     if(!f) return;
     if(f.type === "application/pdf"){
@@ -3706,81 +4210,108 @@ function confirmOrderModal(o){
     drawStrip();
     e.target.value = "";
   });
+
+  // ----- save -----
   m.querySelector("#coSave").addEventListener("click", async () => {
     if(state.busy) return;
-    for(const it of items){
-      const mk = marks[it.id];
-      if(mk.mode === "part" && !(mk.qty > 0)){ toast("Enter what actually arrived for " + it.item_name, {type:"err"}); return; }
+    for(const p of pools){
+      const mk = marks[p.key];
+      if(mk.mode === "part" && !(mk.qty > 0)){ toast("Enter what actually arrived for " + p.name + ", or mark it Missing", {type:"err"}); return; }
     }
     if(photos.length === 0 && !confirm("Save without a docket photo?")) return;
     state.busy = true;
     const btn = m.querySelector("#coSave");
     btn.disabled = true; btn.textContent = "Saving…";
+    let del = null;
+    const uploaded = [];
     try{
-      const shorts = [];
-      items.forEach(it => {
-        const mk = marks[it.id];
-        if(mk.mode === "none") shorts.push(it.item_name + (it.quantity != null ? " (" + it.quantity + " " + (it.unit || "") + ")" : "") + " missing");
-        else if(mk.mode === "part" && it.quantity != null && mk.qty < it.quantity) shorts.push(it.item_name + " short: " + mk.qty + " of " + it.quantity + " " + (it.unit || ""));
-      });
-      const del = await run(sb.from("deliveries").insert({
-        supplier: o.supplier,
-        order_id: o.id,
-        function_id: o.function_id,
-        received_by: m.querySelector("#coBy").value.trim() || null,
-        received_in_full: shorts.length === 0,
-        issue_notes: shorts.length ? shorts.join(". ") : null
-      }).select().single());
-      let photoFail = 0;
-      const photoRows = [];
-      for(let i = 0; i < photos.length; i++){
-        const p = photos[i];
-        const path = del.id + "/" + Date.now() + "_" + i + (p.isPdf ? ".pdf" : ".jpg");
-        const { error } = await sb.storage.from("dockets").upload(path, p.blob, {contentType: p.isPdf ? "application/pdf" : "image/jpeg"});
-        if(error){ photoFail++; console.error(error); } else photoRows.push({delivery_id: del.id, path});
-      }
-      if(photoRows.length) await run(sb.from("delivery_photos").insert(photoRows));
+      const who = m.querySelector("#coBy").value.trim() || null;
+      if(who) store("wslr_who", who);
+      const now = new Date().toISOString();
       const autoExp = (cat, st) => {
         if(!cat || !st) return null;
         const r = state.shelf.find(x => x.category === cat && x.storage === st);
         return r ? localISO(new Date(Date.now() + r.days * 86400000)) : null;
       };
-      const rows = [];
-      items.forEach(it => {
-        const mk = marks[it.id];
-        const base = {
-          delivery_id: del.id,
-          item_name: it.item_name,
-          category: it.category,
-          storage: it.storage,
-          unit: it.unit,
-          expiry_date: autoExp(it.category, it.storage),
-          function_id: o.function_id
-        };
+      const rows = [], shorts = [];
+      const mkRow = (p, mk, extra) => Object.assign({
+        item_name: p.name,
+        category: mk.category || null,
+        storage: mk.storage || null,
+        unit: mk.unit || null,
+        expiry_date: autoExp(mk.category, mk.storage),
+        // every row spells its status out: a bulk insert sends null for any
+        // column that only some rows carry, and status is not nullable
+        status: "in_stock",
+        short_or_wrong: false,
+        status_changed_at: null
+      }, extra);
+      const nr = {status: "not_received", short_or_wrong: true, status_changed_at: now};
+      pools.forEach(p => {
+        const mk = marks[p.key];
         if(mk.mode === "none"){
-          rows.push({...base, quantity: it.quantity, status: "not_received", short_or_wrong: true, status_changed_at: new Date().toISOString()});
+          p.parts.forEach(pt => rows.push(mkRow(p, mk, Object.assign({quantity: pt.qty, function_id: fnIdOf(pt.o)}, nr))));
+          shorts.push(p.name + (p.qtyless ? "" : " (" + p.expected + " " + p.unitRaw + ")") + " missing");
           return;
         }
-        const got = mk.mode === "part" ? mk.qty : it.quantity;
-        rows.push({...base, quantity: got});
-        if(mk.mode === "part" && it.quantity != null && mk.qty < it.quantity){
-          rows.push({...base, quantity: Math.round((it.quantity - mk.qty) * 100) / 100, status: "not_received", short_or_wrong: true, status_changed_at: new Date().toISOString()});
+        if(mk.mode === "ok" || p.qtyless){
+          p.parts.forEach(pt => rows.push(mkRow(p, mk, {quantity: pt.qty, function_id: fnIdOf(pt.o)})));
+          return;
+        }
+        const sp = splitAcrossParts(p, mk.qty);
+        sp.parts.forEach(x => {
+          if(x.got > 0) rows.push(mkRow(p, mk, {quantity: x.got, function_id: fnIdOf(x.pt.o)}));
+          if(x.short > 0) rows.push(mkRow(p, mk, Object.assign({quantity: x.short, function_id: fnIdOf(x.pt.o)}, nr)));
+        });
+        if(sp.surplus > 0) rows.push(mkRow(p, mk, {quantity: sp.surplus, function_id: null}));
+        const shortParts = sp.parts.filter(x => x.short > 0);
+        if(shortParts.length){
+          shorts.push(p.name + " short: " + mk.qty + " of " + p.expected + " " + p.unitRaw +
+            (p.parts.length > 1 ? " (" + shortParts.map(x => x.short + " " + p.unitRaw + " short for " + fnName(x.pt.o)).join(", ") + ")" : ""));
         }
       });
       extras.forEach(x => {
         rows.push({
-          delivery_id: del.id,
           item_name: x.name,
           category: x.category,
           storage: x.storage,
           quantity: x.qty,
           unit: x.unit,
           expiry_date: autoExp(x.category, x.storage),
-          function_id: o.function_id
+          function_id: x.fnId || null,
+          status: "in_stock",
+          short_or_wrong: false,
+          status_changed_at: null
         });
       });
-      if(rows.length) await run(sb.from("stock_items").insert(rows));
-      await run(sb.from("orders").update({status: "received", received_at: new Date().toISOString()}).eq("id", o.id));
+
+      const incl = inc();
+      const fnIds = [...new Set(incl.map(fnIdOf))];
+      del = await run(sb.from("deliveries").insert({
+        supplier: orders[0].supplier,
+        order_id: incl[0].id,
+        function_id: fnIds.length === 1 ? fnIds[0] : null,
+        received_by: who,
+        received_in_full: shorts.length === 0,
+        issue_notes: shorts.length ? shorts.join(". ") : null
+      }).select().single());
+
+      let photoFail = 0;
+      const photoRows = [];
+      for(let i = 0; i < photos.length; i++){
+        const p = photos[i];
+        const path = del.id + "/" + Date.now() + "_" + i + (p.isPdf ? ".pdf" : ".jpg");
+        const { error } = await sb.storage.from("dockets").upload(path, p.blob, {contentType: p.isPdf ? "application/pdf" : "image/jpeg"});
+        if(error){ photoFail++; console.error(error); } else { photoRows.push({delivery_id: del.id, path}); uploaded.push(path); }
+      }
+      if(photoRows.length) await run(sb.from("delivery_photos").insert(photoRows));
+      rows.forEach(r => { r.delivery_id = del.id; });
+      if(rows.length) await run(sb.from("stock_items").insert(rows, {defaultToNull: false}));
+      if(incl.length > 1){
+        await run(sb.from("delivery_orders").insert(incl.map(o => ({delivery_id: del.id, order_id: o.id}))));
+      }
+      await run(sb.from("orders").update({status: "received", received_at: now}).in("id", incl.map(o => o.id)));
+
       photos.forEach(p => { if(p.url) URL.revokeObjectURL(p.url); });
       closeModal();
       toast(photoFail ? "Arrival saved but " + photoFail + " photo(s) failed to upload"
@@ -3788,12 +4319,20 @@ function confirmOrderModal(o){
       refreshCurrentTab();
       updateArrBadge();
     }catch(e){
+      // nothing half-saved: the delivery row comes back out and the form keeps
+      // every tick so the save can simply be tried again
+      if(del){ await undoDelivery(del.id, uploaded); }
+      toast("Nothing was saved. Fix the problem above and tap Save again.", {type:"err"});
     }finally{
       state.busy = false;
       btn.disabled = false; btn.textContent = "Save arrival";
     }
   });
-  drawRows(); drawExtras();
+
+  drawExtras();
+  await loadItemProfiles();
+  if(!m.isConnected) return;   // closed while the profiles were loading
+  buildPools(); drawRows(); drawFor();
 }
 // ---------- shopping list -> orders ----------
 // The planner's "Shopping lists" tab lays one block out per function with
@@ -3927,7 +4466,10 @@ async function syncShoppingOrders(){
   try{
     const existing = await run(
       sb.from("orders")
-        .select("id, supplier, expected_date, function_id, notes, status, source, sheet_ref, sheet_block, sheet_state, sheet_locked, sheet_changed, deliveries(id), order_items(id, item_name, quantity, unit, sheet_for)")
+        // deliveries reach an order two ways (order_id, and the delivery_orders
+        // junction), so PostgREST needs told which path or it refuses the whole
+        // query with "more than one relationship was found"
+        .select("id, supplier, expected_date, function_id, notes, status, source, sheet_ref, sheet_block, sheet_state, sheet_locked, sheet_changed, deliveries!deliveries_order_id_fkey(id), delivery_orders(delivery_id), order_items(id, item_name, quantity, unit, sheet_for)")
         .eq("source", "sheet")
     );
     const fns = await run(
@@ -3945,21 +4487,26 @@ async function syncShoppingOrders(){
       const cur = byRef[o.ref];
 
       if(!cur){
-        const ins = await run(
-          sb.from("orders").insert({
-            supplier: o.supplier,
-            expected_date: o.dates[0] || null,
-            function_id: fn ? fn.id : null,
-            notes: o.notes,
-            status: "to_order",
-            created_by: "Shopping list",
-            source: "sheet",
-            sheet_ref: o.ref,
-            sheet_block: o.block,
-            sheet_state: "active"
-          }).select("id")
-        );
-        const id = ins && ins[0] ? ins[0].id : null;
+        const { data: insData, error: insErr } = await sb.from("orders").insert({
+          supplier: o.supplier,
+          expected_date: o.dates[0] || null,
+          function_id: fn ? fn.id : null,
+          notes: o.notes,
+          status: "to_order",
+          created_by: "Shopping list",
+          source: "sheet",
+          sheet_ref: o.ref,
+          sheet_block: o.block,
+          sheet_state: "active"
+        }).select("id");
+        if(insErr){
+          // 23505: the iPad and the office synced at the same moment and the
+          // other device got there first. Its copy is picked up next pass.
+          if(String(insErr.code) === "23505") continue;
+          online(false); console.error(insErr); toast(insErr.message || "Request failed", {type:"err"});
+          throw insErr;
+        }
+        const id = insData && insData[0] ? insData[0].id : null;
         if(id) await run(sb.from("order_items").insert(shopItemRows(o, id)));
         added++;
         continue;
@@ -3967,8 +4514,11 @@ async function syncShoppingOrders(){
 
       // received against, or closed off? then leave it exactly as it is.
       // "to_order" is still untouched, so it keeps refreshing like an open one.
+      // A delivery can be tied to an order directly (arrivals tick-off) or via
+      // delivery_orders (one docket covering several orders); both count.
       const locked = cur.status === "received" || cur.status === "cancelled" ||
-                     (cur.deliveries && cur.deliveries.length > 0);
+                     (cur.deliveries && cur.deliveries.length > 0) ||
+                     (cur.delivery_orders && cur.delivery_orders.length > 0);
       const same = shopSig(cur.order_items) === shopSig(o.items);
 
       if(locked){
@@ -4082,7 +4632,7 @@ async function renderOrders(force){
           const items = list.reduce((t, o) => t + (o.order_items || []).length, 0);
           return '<div class="ordgroup"><div class="ordgroup-hd">' +
             '<div class="nm">' + esc(sup) + '<span>' + list.length + " order" + (list.length === 1 ? "" : "s") +
-            " \u00b7 " + items + " item" + (items === 1 ? "" : "s") + "</span></div>" +
+            " · " + items + " item" + (items === 1 ? "" : "s") + "</span></div>" +
             '<button class="btn btn-primary btn-sm" style="width:auto;" data-place-sup="' + esc(sup) + '">Mark ordered</button>' +
             "</div>" + list.map(o => ordCardHtml(o, true)).join("") + "</div>";
         }).join("")
@@ -4160,8 +4710,8 @@ async function showAlreadyInStock(o, m){
     '<div class="small" style="color:var(--amber); font-weight:700; margin-bottom:5px;">Already in stock for ' +
       esc(o.catering_functions ? o.catering_functions.name : "this group") + "</div>" +
     hits.slice(0, 12).map(h =>
-      '<div class="small" style="padding:3px 0;"><b>' + esc(h.have.item_name) + "</b> \u00b7 " +
-      esc([h.have.quantity != null ? h.have.quantity + " " + (h.have.unit || "") : "", storageLabel(h.have.storage)].filter(Boolean).join(" \u00b7 ")) +
+      '<div class="small" style="padding:3px 0;"><b>' + esc(h.have.item_name) + "</b> · " +
+      esc([h.have.quantity != null ? h.have.quantity + " " + (h.have.unit || "") : "", storageLabel(h.have.storage)].filter(Boolean).join(" · ")) +
       '<br><span class="muted">on this order as ' + esc(h.ordered.item_name) + "</span></div>").join("") +
     (hits.length > 12 ? '<div class="small muted">and ' + (hits.length - 12) + " more</div>" : "") +
     '<div class="small muted" style="margin-top:6px;">Worth a look before you order these again.</div></div>';
@@ -4340,7 +4890,7 @@ async function renderDeliveries(){
   try{
     const rows = await run(
       sb.from("deliveries")
-        .select("*, catering_functions(name), orders(id, expected_date), delivery_photos(id, path), stock_items(id, item_name, category, quantity, unit, storage, status)")
+        .select("*, catering_functions(name), orders!deliveries_order_id_fkey(id, expected_date), delivery_photos(id, path), stock_items(id, item_name, category, quantity, unit, storage, status)")
         .order("delivered_at", {ascending:false}).limit(40)
     );
     if(!rows.length){
@@ -4354,7 +4904,7 @@ async function renderDeliveries(){
         d.catering_functions ? "for " + d.catering_functions.name : "General stock",
         (d.delivery_photos || []).length + " photo" + ((d.delivery_photos || []).length === 1 ? "" : "s"),
         (d.stock_items || []).length ? (d.stock_items || []).length + " items" : ""
-      ].filter(Boolean).join(" \u00b7 ");
+      ].filter(Boolean).join(" · ");
       const badge = d.received_in_full ? '<span class="pill ok">Full</span>' : '<span class="pill bad">Issue</span>';
       return '<div class="rowcard" data-id="' + d.id + '"><div class="l"><div class="t">' + esc(d.supplier || "Delivery") +
         '</div><div class="s">' + esc(sub) + '</div></div><div class="r">' + badge + "</div></div>";
@@ -4373,8 +4923,7 @@ async function deliveryModal(d){
   let fns = [];
   try{
     fns = await run(
-      sb.from("catering_functions").select("id, name, event_date, colour")
-        .gte("event_date", localISO(new Date(Date.now() - 10 * 86400000)))
+      fnWindow(sb.from("catering_functions").select("id, name, event_date, end_date, colour, source"), 10)
         .order("event_date", {ascending:true}).limit(30)
     );
   }catch(e){}
@@ -4404,7 +4953,7 @@ async function deliveryModal(d){
           i.quantity ? i.quantity + " " + (i.unit || "") : "",
           storageLabel(i.storage),
           i.status === "not_received" ? "not received" : (i.status !== "in_stock" ? i.status : "")
-        ].filter(Boolean).join(" \u00b7 ")) + "</span></div>"
+        ].filter(Boolean).join(" · ")) + "</span></div>"
       ).join("")
     : "";
   const m = openModal(
@@ -4414,7 +4963,7 @@ async function deliveryModal(d){
          d.invoice_number ? "inv " + d.invoice_number : "",
          d.catering_functions ? "for " + d.catering_functions.name : "General stock",
          d.received_by ? "received by " + d.received_by : "",
-         d.orders ? "ticked off against an order" + (d.orders.expected_date ? " expected " + fmtDate(d.orders.expected_date) : "") : ""].filter(Boolean).join(" \u00b7 ")) + "</p>" +
+         d.orders ? "ticked off against an order" + (d.orders.expected_date ? " expected " + fmtDate(d.orders.expected_date) : "") : ""].filter(Boolean).join(" · ")) + "</p>" +
     (d.received_in_full
       ? '<span class="pill ok">Received in full</span>'
       : '<span class="pill bad">Issue flagged</span>' +
@@ -4562,7 +5111,7 @@ async function renderHints(){
     }
     box.innerHTML = rows.map(r =>
       '<div class="rowcard" data-id="' + r.id + '"><div class="l"><div class="t">' + esc(r.supplier) + "</div>" +
-      '<div class="s">' + esc(r.hints.length > 90 ? r.hints.slice(0, 90) + "\u2026" : r.hints) + "</div></div></div>"
+      '<div class="s">' + esc(r.hints.length > 90 ? r.hints.slice(0, 90) + "…" : r.hints) + "</div></div></div>"
     ).join("");
     box.querySelectorAll(".rowcard").forEach(el =>
       el.addEventListener("click", () => {
@@ -4644,8 +5193,8 @@ async function historyModal(){
         r.category,
         r.deliveries ? r.deliveries.supplier : "",
         r.catering_functions ? "for " + r.catering_functions.name : "",
-        r.status_note ? "\u201c" + r.status_note + "\u201d" : ""
-      ].filter(Boolean).join(" \u00b7 ");
+        r.status_note ? "“" + r.status_note + "”" : ""
+      ].filter(Boolean).join(" · ");
       const pill = r.status === "binned" ? '<span class="pill bad">Binned</span>'
         : r.status === "not_received" ? '<span class="pill bad">Not received</span>'
         : '<span class="pill ok">Used</span>';
@@ -4658,7 +5207,7 @@ async function historyModal(){
     m.querySelectorAll("[data-res]").forEach(b =>
       b.addEventListener("click", async () => {
         try{
-          await run(sb.from("stock_items").update({status:"in_stock", status_changed_at:null, short_or_wrong:false}).eq("id", +b.dataset.res));
+          await run(sb.from("stock_items").update({status:"in_stock", status_changed_at:null, status_note:null, short_or_wrong:false}).eq("id", +b.dataset.res));
           rows = rows.filter(x => x.id !== +b.dataset.res);
           toast("Restored to stock");
           draw(); refreshCurrentTab();
@@ -4922,6 +5471,7 @@ function startApp(){
   bindStatic();
   startLiveRefresh();
   $("rDate").value = localISO();
+  $("rReceivedBy").value = readStore("wslr_who") || "";
   loadShelf();
   loadFunctionPicker();
   loadDatalists();
