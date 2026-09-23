@@ -564,6 +564,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 <section id="sec-usefirst" class="active">
   <div style="display:flex; gap:8px; margin-bottom:12px;">
     <button class="btn btn-primary" id="btnGoReceive" style="flex:2;">+ Receive a delivery</button>
+    <button class="btn btn-secondary" id="btnQuickAdd" style="flex:1;">+ Add item</button>
     <button class="btn btn-secondary" id="btnStocktake" style="flex:1;">Stocktake</button>
   </div>
   <input type="file" id="stCam" accept="image/*" capture="environment" style="display:none;">
@@ -2588,6 +2589,85 @@ async function renderDvUnalloc(){
   }catch(e){
     box.innerHTML = '<div class="empty">Could not load.</div>';
   }
+}
+// ---------- quick add ----------
+// Straight onto the stock list with nothing but a name. Everything else, the
+// supplier included, is optional and can be filled in later from the item.
+async function quickAddItem(){
+  try{ if(!state.shelf || !state.shelf.length) await loadShelf(); }catch(e){}
+  const cats = [...new Set((state.shelf || []).map(r => r.category))];
+  const m = openModal(
+    "<h2>Add an item</h2>" +
+    '<p class="small muted" style="margin-top:-2px;">Only the name is needed. Fill in anything else you know.</p>' +
+    '<div class="field"><label for="qaName">Item</label><input id="qaName" list="nameList" placeholder="e.g. Milk" autocomplete="off"></div>' +
+    '<div class="field"><label>Storage <span style="text-transform:none; font-weight:500;">(optional)</span></label><div class="stchips" id="qaStorage">' +
+      STORAGES.map(k => '<button type="button" data-st="' + k + '">' + storageLabel(k) + "</button>").join("") +
+    "</div></div>" +
+    '<div class="grid2">' +
+    '<div class="field"><label>How much <span style="text-transform:none; font-weight:500;">(optional)</span></label><div style="display:flex; gap:8px;">' +
+      '<input id="qaQty" type="number" inputmode="decimal" step="any" min="0" placeholder="Qty" style="flex:1;">' +
+      '<input id="qaUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
+    '<div class="field"><label for="qaExp">Use by or best before <span style="text-transform:none; font-weight:500;">(optional)</span></label>' +
+      expTypeSelect("qaExpType", "use_by") + '<input type="date" id="qaExp"></div></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label for="qaCat">Category <span style="text-transform:none; font-weight:500;">(optional)</span></label><select id="qaCat"><option value="">None</option>' +
+      cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("") + "</select></div>" +
+    '<div class="field"><label for="qaSup">Bought from <span style="text-transform:none; font-weight:500;">(optional)</span></label><input id="qaSup" list="supplierList" placeholder="e.g. Coles" autocomplete="off"></div></div>' +
+    '<button class="btn btn-primary" id="qaSave" style="width:100%;">Add to stock</button>'
+  );
+  let storage = null;
+  m.querySelectorAll("#qaStorage [data-st]").forEach(b =>
+    b.addEventListener("click", () => {
+      storage = storage === b.dataset.st ? null : b.dataset.st;
+      m.querySelectorAll("#qaStorage [data-st]").forEach(x => { x.className = storage === x.dataset.st ? "on " + x.dataset.st : ""; });
+    })
+  );
+  m.querySelector("#qaName").focus();
+  m.querySelector("#qaSave").addEventListener("click", async () => {
+    const name = m.querySelector("#qaName").value.trim();
+    if(!name){ toast("Give the item a name first", {type:"err"}); return; }
+    const cat = m.querySelector("#qaCat").value || null;
+    const qv = m.querySelector("#qaQty").value;
+    const sup = m.querySelector("#qaSup").value.trim();
+    let exp = m.querySelector("#qaExp").value || null;
+    if(!exp && cat && storage){
+      const row = (state.shelf || []).find(r => r.category === cat && r.storage === storage);
+      if(row) exp = localISO(new Date(Date.now() + row.days * 86400000));
+    }
+    const btn = m.querySelector("#qaSave");
+    btn.disabled = true;
+    try{
+      // a supplier gets its own small delivery record so the bought from icon
+      // shows on the row; with no supplier the item just goes straight in
+      let deliveryId = null;
+      if(sup){
+        const del = await run(sb.from("deliveries").insert({
+          supplier: sup,
+          received_by: readStore("wslr_who") || null,
+          received_in_full: true
+        }).select().single());
+        deliveryId = del.id;
+      }
+      await run(sb.from("stock_items").insert({
+        delivery_id: deliveryId,
+        item_name: name,
+        category: cat,
+        storage: storage,
+        quantity: qv === "" ? null : +qv,
+        unit: m.querySelector("#qaUnit").value.trim() || null,
+        expiry_date: exp,
+        ...expTypeNew(m.querySelector("#qaExpType").value),
+        status: "in_stock",
+        origin: "manual",
+        received_date: localISO()
+      }));
+      closeModal();
+      toast(name + " added");
+      refreshCurrentTab();
+    }catch(e){
+      btn.disabled = false;
+    }
+  });
 }
 function boardHtml(list, searching, showAlloc){
   // flat list, soonest use by or best before first, whatever shelf it is on
@@ -5426,6 +5506,7 @@ function bindStatic(){
   $("btnNoOrder").addEventListener("click", () => { state.dvPane = "receive"; showTab("deliveries"); });
   const bst = $("btnStocktake");
   if(bst) bst.addEventListener("click", stocktakeStart);
+  $("btnQuickAdd").addEventListener("click", quickAddItem);
   const bpo = $("btnPickOrders");
   if(bpo) bpo.addEventListener("click", pickOrders);
   $("btnAddOrder").addEventListener("click", () => orderForm(null));
