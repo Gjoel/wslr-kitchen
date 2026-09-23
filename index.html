@@ -26,12 +26,13 @@
   --amber:#a86a00;  --amber-bg:#fdf3dd;
   --orange:#d9660b; --orange-bg:#fdebdc;
   --green:#1c7a4a;  --green-bg:#e7f4ec;
-  --fridge:#17629e; --fridge-bg:#e7f0f8;
-  --freezer:#6a3fc0;--freezer-bg:#efe9fb;
-  --dry:#8a5a2b;    --dry-bg:#f6efe5;
-  --kfridge:#0f7a78; --kfridge-bg:#e3f4f3;
-  --bar:#8c3f7a;    --bar-bg:#f6e8f2;
-  --rest:#4f7a1f;   --rest-bg:#edf5e3;
+  /* one clearly different colour per storage area */
+  --fridge:#0369a1;  --fridge-bg:#d6ebf8;   /* Cool room: blue */
+  --freezer:#7e22ce; --freezer-bg:#ecdcfb;  /* Walk in freezer: purple */
+  --dry:#92400e;     --dry-bg:#f3e1cf;      /* Walk in pantry: brown */
+  --kfridge:#0f766e; --kfridge-bg:#cdeeea;  /* Large kitchen fridge: teal */
+  --bar:#db2777;     --bar-bg:#fbd9e8;      /* Glass bar fridges: pink */
+  --rest:#334155;    --rest-bg:#dde2e9;     /* Restaurant fridge/freezer: charcoal */
   --radius:14px;
   --shadow:0 1px 2px rgba(29,42,38,.06), 0 4px 14px rgba(29,42,38,.05);
 }
@@ -105,10 +106,17 @@ nav{
 .uf-col[data-storage="kitchen_fridge"]{--sc:var(--kfridge); --sb:var(--kfridge-bg);}
 .uf-col[data-storage="bar_fridge"]{--sc:var(--bar); --sb:var(--bar-bg);}
 .uf-col[data-storage="restaurant"]{--sc:var(--rest); --sb:var(--rest-bg);}
-.uf-col[data-storage]{background:var(--sb, #efece6); border-color:var(--sc, var(--line)); border-top:5px solid var(--sc, var(--line));}
-.uf-col[data-storage] .uf-col-h{color:var(--sc, var(--ink));}
-.uf-col[data-storage] .uf-col-h .cnt{background:var(--sc); color:#fff; border-radius:999px; padding:1px 8px; font-size:12px;}
+.uf-col[data-storage]{background:var(--sb, #efece6); border:2px solid var(--sc, var(--line)); overflow:hidden;}
+.uf-col[data-storage] .uf-col-h{background:var(--sc); color:#fff; margin:-8px -8px 8px; padding:11px 12px; align-items:center;}
+.uf-col[data-storage] .uf-col-h .ic{color:#fff;}
+.uf-col[data-storage] .uf-col-h .cnt{background:rgba(255,255,255,.25); color:#fff; border-radius:999px; padding:1px 9px; font-size:12.5px;}
 .pill.st{font-size:11px; padding:2px 8px;}
+.pill.st.fridge{background:var(--fridge); color:#fff;}
+.pill.st.freezer{background:var(--freezer); color:#fff;}
+.pill.st.dry{background:var(--dry); color:#fff;}
+.pill.st.kitchen_fridge{background:var(--kfridge); color:#fff;}
+.pill.st.bar_fridge{background:var(--bar); color:#fff;}
+.pill.st.restaurant{background:var(--rest); color:#fff;}
 #segStorage button[data-v="fridge"].on{background:var(--fridge); border-color:var(--fridge);}
 #segStorage button[data-v="freezer"].on{background:var(--freezer); border-color:var(--freezer);}
 #segStorage button[data-v="dry"].on{background:var(--dry); border-color:var(--dry);}
