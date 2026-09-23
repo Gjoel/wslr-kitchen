@@ -9,21 +9,22 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
   :root {
-    --ground: #F5F6F3;
+    --ground: #FFF8DB;
     --surface: #FFFFFF;
-    --ink: #1B2438;
-    --muted: #5A6377;
-    --line: #DDE1DA;
-    --accent: #1F6F6A;
+    --ink: #3A1631;
+    --muted: #7D5B70;
+    --line: #F1DDB4;
+    --accent: #D6336C;
     --accent-ink: #FFFFFF;
-    --accent-soft: #DCEDEA;
-    --stamp: #C2462E;
-    --gold: #D99A1E;
+    --accent-soft: #FDE2EC;
+    --stamp: #C2257A;
+    --gold: #F2B400;
+    --highlight: #FFE066;
     --good: #2F7D3E;
     --good-soft: #E1F0E2;
     --bad: #B23A2A;
     --bad-soft: #F7E1DC;
-    --shadow: 0 1px 2px rgba(27,36,56,.06), 0 8px 24px rgba(27,36,56,.07);
+    --shadow: 0 1px 2px rgba(58,22,49,.06), 0 8px 24px rgba(214,51,108,.08);
     --display: "Young Serif", Georgia, "Times New Roman", serif;
     --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -31,16 +32,17 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --ground: #11161F;
-      --surface: #1A212D;
-      --ink: #E8ECF2;
-      --muted: #9AA3B5;
-      --line: #2C3545;
-      --accent: #4FB3AA;
-      --accent-ink: #0E1A1A;
-      --accent-soft: #1D3432;
-      --stamp: #E0735C;
-      --gold: #E8B24A;
+      --ground: #1F1420;
+      --surface: #2B1C2C;
+      --ink: #FFF3D6;
+      --muted: #C9A9BC;
+      --line: #46304A;
+      --accent: #FF6FA5;
+      --accent-ink: #2A0716;
+      --accent-soft: #4A1F36;
+      --stamp: #FF8EC0;
+      --gold: #FFD23F;
+      --highlight: #6B5313;
       --good: #6CC27B;
       --good-soft: #1E3324;
       --bad: #EE7A68;
@@ -50,16 +52,17 @@
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --ground: #11161F;
-    --surface: #1A212D;
-    --ink: #E8ECF2;
-    --muted: #9AA3B5;
-    --line: #2C3545;
-    --accent: #4FB3AA;
-    --accent-ink: #0E1A1A;
-    --accent-soft: #1D3432;
-    --stamp: #E0735C;
-    --gold: #E8B24A;
+    --ground: #1F1420;
+    --surface: #2B1C2C;
+    --ink: #FFF3D6;
+    --muted: #C9A9BC;
+    --line: #46304A;
+    --accent: #FF6FA5;
+    --accent-ink: #2A0716;
+    --accent-soft: #4A1F36;
+    --stamp: #FF8EC0;
+    --gold: #FFD23F;
+    --highlight: #6B5313;
     --good: #6CC27B;
     --good-soft: #1E3324;
     --bad: #EE7A68;
@@ -80,6 +83,7 @@
 
   header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
   .brand h1 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 6vw, 38px); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
+  .brand h1 span { background: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 92%, transparent 92%); padding: 0 .08em; }
   .brand p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
   .stats { display: flex; gap: 16px; font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .stats b { color: var(--ink); font-weight: 500; font-size: 18px; display: block; line-height: 1.1; }
@@ -103,7 +107,7 @@
     font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
     border: 1.5px solid var(--line); border-radius: 8px; padding: 7px 10px;
   }
-  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2.5px solid var(--gold); outline-offset: 2px; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: clamp(18px, 4vw, 32px); display: grid; gap: 20px; }
   .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -185,6 +189,37 @@
   .reset { justify-self: start; font: inherit; font-size: 13px; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; }
   .confirm { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px; }
 
+  /* Alphabet */
+  .subtabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .subtab { font: inherit; font-size: 13px; font-weight: 600; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+  .subtab[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .letters { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; }
+  .letter {
+    position: relative; font-family: var(--display); font-size: 26px; line-height: 1; aspect-ratio: 1; max-width: 100%;
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .letter.special { color: var(--stamp); }
+  .letter[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .letter .dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .letter .dot.learning { background: var(--gold); }
+  .letter .dot.known { background: var(--accent); }
+  .detail { display: grid; grid-template-columns: auto 1fr; gap: 8px 24px; align-items: start; border-top: 1px solid var(--line); padding-top: 20px; }
+  .detail .big { font-family: var(--display); font-size: clamp(64px, 16vw, 96px); line-height: 1; grid-row: span 2; }
+  .detail .name { font-family: var(--display); font-size: 26px; line-height: 1.2; }
+  .detail .name small { font-family: var(--body); font-size: 14px; color: var(--muted); margin-left: 6px; }
+  .detail dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 15px; grid-column: 1 / -1; }
+  .detail dt { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+  .detail dd { margin: 0; }
+  .detail dd b { font-weight: 600; }
+  .detail .say { display: flex; flex-wrap: wrap; gap: 8px; align-self: center; }
+  .digraphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .digraph { border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; display: grid; gap: 4px; }
+  .digraph b { font-family: var(--display); font-weight: 400; font-size: 22px; }
+  .digraph span { color: var(--muted); }
+  .opt.letteropt { font-family: var(--display); font-size: 28px; justify-content: flex-start; align-items: center; }
+  .opt.letteropt .k { font-family: var(--mono); }
+
   .empty { text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; padding: 20px 0; }
   .empty h3 { font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--ink); margin: 0; }
   .note { font-size: 13px; color: var(--muted); }
@@ -205,7 +240,7 @@
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Passport Phrasebook</h1>
+      <h1>Passport <span>Phrasebook</span></h1>
       <p>Everyday words for your next trip, learned a few minutes at a time.</p>
     </div>
     <div class="stats" aria-label="Your progress">
@@ -222,6 +257,7 @@
       <button class="tab" role="tab" data-mode="cards" aria-selected="true">Flashcards</button>
       <button class="tab" role="tab" data-mode="quiz" aria-selected="false">Quiz</button>
       <button class="tab" role="tab" data-mode="type" aria-selected="false">Spell it</button>
+      <button class="tab" role="tab" data-mode="alphabet" aria-selected="false" id="alphaTab">Alphabet</button>
       <button class="tab" role="tab" data-mode="progress" aria-selected="false">Progress</button>
     </div>
     <select id="topic" aria-label="Topic"></select>
@@ -229,7 +265,7 @@
 
   <main class="panel" id="panel" aria-live="polite"></main>
 
-  <p class="note">Tip: press Space to flip a card, 1 2 3 to rate it, and 1 to 4 to pick a quiz answer. Progress is saved in this browser.</p>
+  <p class="note">Tip: press Space to flip a card, 1 2 3 to rate it, 1 to 4 to pick a quiz answer, and ← → to move through the alphabet. Progress is saved in this browser.</p>
 </div>
 
 <script>
@@ -308,6 +344,43 @@
     ]
   };
   var LANG_INDEX = { es: 1, fr: 2, it: 3, id: 4 };
+
+  // ---------- Spanish alphabet: [letter, name, how it sounds, example word, meaning, second example, meaning] ----------
+  var ALPHABET = [
+    ["A", "a", "<b>ah</b>, like the a in “father”. Always the same sound.", "agua", "water"],
+    ["B", "be", "Like English b at the start of a word; softer, lips barely touching, between vowels.", "barco", "boat"],
+    ["C", "ce", "<b>k</b> before a, o, u. Before e or i it's <b>th</b> in Spain or <b>s</b> in Latin America.", "casa", "house", "cena", "dinner"],
+    ["D", "de", "Tongue touches the teeth. Between vowels it softens to the <b>th</b> in “this”.", "dedo", "finger"],
+    ["E", "e", "<b>eh</b>, like the e in “bet”. Short and clean.", "elefante", "elephant"],
+    ["F", "efe", "Just like English f.", "fruta", "fruit"],
+    ["G", "ge", "Hard g (as in “go”) before a, o, u. Before e or i it's a raspy <b>h</b> from the throat.", "gato", "cat", "gente", "people"],
+    ["H", "hache", "Always <b>silent</b>. Hola sounds like “ola”.", "hola", "hello"],
+    ["I", "i", "<b>ee</b>, like the ee in “see”.", "isla", "island"],
+    ["J", "jota", "A raspy <b>h</b> from the back of the throat, like the ch in Scottish “loch”.", "jugo", "juice"],
+    ["K", "ka", "Like English k. Only found in borrowed words.", "kilo", "kilo"],
+    ["L", "ele", "Like English l, with the tongue just behind the top teeth.", "luna", "moon"],
+    ["M", "eme", "Just like English m.", "mesa", "table"],
+    ["N", "ene", "Just like English n.", "noche", "night"],
+    ["Ñ", "eñe", "<b>ny</b>, like the ny in “canyon”. A letter of its own, not an N with decoration.", "niño", "child"],
+    ["O", "o", "<b>oh</b>, short and pure, with no “w” glide at the end.", "ojo", "eye"],
+    ["P", "pe", "Like English p but without the puff of air.", "perro", "dog"],
+    ["Q", "cu", "<b>k</b>. Always written <b>qu</b> and the u is silent.", "queso", "cheese"],
+    ["R", "erre", "A quick tap of the tongue, like the tt in American “butter”. <b>Rolled</b> at the start of a word.", "pero", "but", "rojo", "red"],
+    ["S", "ese", "<b>s</b>, like in “sun”. Never a z sound.", "sol", "sun"],
+    ["T", "te", "Softer than English t: tongue touches the teeth, no puff of air.", "taza", "cup"],
+    ["U", "u", "<b>oo</b>, like the oo in “food”. Silent in que, qui, gue, gui.", "uva", "grape"],
+    ["V", "uve", "Sounds the <b>same as b</b> in Spanish.", "vaca", "cow"],
+    ["W", "uve doble", "Like English w. Only found in borrowed words.", "wifi", "wifi"],
+    ["X", "equis", "Usually <b>ks</b>. In some names like México it's a raspy h.", "taxi", "taxi"],
+    ["Y", "ye", "Like the y in “yes”. On its own, y means “and” and sounds like <b>ee</b>.", "yo", "I"],
+    ["Z", "zeta", "<b>th</b> as in “think” in Spain, <b>s</b> in Latin America.", "zapato", "shoe"]
+  ];
+  var DIGRAPHS = [
+    ["ch", "Like ch in “church”.", "chocolate"],
+    ["ll", "Like y in “yes” in most places.", "llave (key)"],
+    ["rr", "A strong rolled r, only between vowels.", "perro (dog)"]
+  ];
+  var ALPHA_KNOWN = 3; // correct answers in a row to count a letter as known
 
   // ---------- Spaced repetition (Leitner boxes) ----------
   // Box 0 = new. Each correct answer moves the word up one box; a miss drops it back to box 1.
@@ -434,7 +507,8 @@
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
       b.setAttribute("aria-selected", String(b.dataset.mode === state.mode));
     });
-    $("topic").hidden = state.mode === "progress";
+    $("alphaTab").hidden = state.lang !== "es";
+    $("topic").hidden = state.mode === "progress" || state.mode === "alphabet";
   }
   function renderStats() {
     var words = allWords(state.lang, "All topics");
@@ -625,12 +699,121 @@
         : '<button class="reset" type="button" id="askreset">Reset ' + L.name + ' progress</button>');
   }
 
+  // ---------- Alphabet (Spanish) ----------
+  if (!state.alpha) state.alpha = {};
+  var alphaView = "learn", alphaSel = 0, aq = null;
+
+  function alphaRec(letter) { return state.alpha[letter] || { streak: 0, seen: 0 }; }
+  function alphaLevel(letter) {
+    var r = alphaRec(letter);
+    return r.streak >= ALPHA_KNOWN ? "known" : r.seen > 0 ? "learning" : "";
+  }
+  function speakEs(text) {
+    var keep = state.lang; state.lang = "es"; speak(text); state.lang = keep;
+  }
+
+  function renderAlphabet() {
+    var known = ALPHABET.filter(function (a) { return alphaLevel(a[0]) === "known"; }).length;
+    var head =
+      '<div class="eyebrow"><span>The Spanish alphabet · 27 letters</span><span>' + known + ' / 27 known</span></div>' +
+      '<div class="subtabs">' +
+        '<button class="subtab" type="button" data-aview="learn" aria-pressed="' + (alphaView === "learn") + '">Letter chart</button>' +
+        '<button class="subtab" type="button" data-aview="quiz" aria-pressed="' + (alphaView === "quiz") + '">Letter quiz</button>' +
+      '</div>';
+    panel.innerHTML = head + (alphaView === "learn" ? alphaLearnHtml() : alphaQuizHtml());
+    if (alphaView === "quiz" && aq && aq.answered) { var n = $("anext"); if (n) n.focus(); }
+  }
+
+  function alphaLearnHtml() {
+    var a = ALPHABET[alphaSel];
+    var tiles = ALPHABET.map(function (l, i) {
+      var lvl = alphaLevel(l[0]);
+      return '<button class="letter' + (l[0] === "Ñ" ? " special" : "") + '" type="button" data-letter="' + i + '" aria-pressed="' + (i === alphaSel) + '" aria-label="' + l[0] + ', ' + l[1] + '">' +
+        l[0] + '<span class="dot ' + lvl + '"></span></button>';
+    }).join("");
+    var examples = '<b>' + esc(a[3]) + '</b> (' + esc(a[4]) + ')' + (a[5] ? ', <b>' + esc(a[5]) + '</b> (' + esc(a[6]) + ')' : "");
+    var sayBtns = canSpeak
+      ? '<div class="say"><button class="speak" type="button" data-sayes="' + esc(a[1]) + '">' + ICON_SPEAK + 'Say “' + esc(a[1]) + '”</button>' +
+        '<button class="speak" type="button" data-sayes="' + esc(a[3]) + '">' + ICON_SPEAK + esc(a[3]) + '</button>' +
+        (a[5] ? '<button class="speak" type="button" data-sayes="' + esc(a[5]) + '">' + ICON_SPEAK + esc(a[5]) + '</button>' : "") + '</div>'
+      : "";
+    return '<div class="letters">' + tiles + '</div>' +
+      '<div class="detail">' +
+        '<div class="big">' + a[0] + a[0].toLowerCase() + '</div>' +
+        '<div class="name">' + esc(a[1]) + '<small>letter name</small></div>' +
+        sayBtns +
+        '<dl><dt>Sound</dt><dd>' + a[2] + '</dd><dt>Example</dt><dd>' + examples + '</dd></dl>' +
+      '</div>' +
+      '<div class="eyebrow"><span>Letter pairs with their own sound</span></div>' +
+      '<div class="digraphs">' + DIGRAPHS.map(function (d) {
+        return '<div class="digraph"><b>' + d[0] + '</b>' + esc(d[1]) + '<span>' + esc(d[2]) + '</span></div>';
+      }).join("") + '</div>' +
+      '<p class="note">Tap a letter to learn it. Use ← and → to move along the alphabet. Dots show your quiz progress: yellow for learning, pink for known.</p>';
+  }
+
+  function newAlphaQuestion() {
+    // Favour letters that aren't known yet.
+    var weak = ALPHABET.filter(function (a) { return alphaLevel(a[0]) !== "known"; });
+    var pool = weak.length && Math.random() < 0.8 ? weak : ALPHABET;
+    var target = shuffle(pool.slice())[0];
+    var others = shuffle(ALPHABET.filter(function (a) { return a !== target; })).slice(0, 3);
+    var kind = canSpeak ? ["hear", "name", "word"][Math.floor(Math.random() * 3)] : (Math.random() < 0.5 ? "name" : "word");
+    aq = { t: target, kind: kind, opts: shuffle([target].concat(others)), answered: false, picked: null,
+           score: aq ? aq.score : 0, total: aq ? aq.total : 0 };
+    if (kind === "hear") speakEs(target[1]);
+  }
+
+  function alphaQuizHtml() {
+    if (!aq) newAlphaQuestion();
+    var q = aq, prompt, label;
+    if (q.kind === "hear") {
+      prompt = '<div class="word">Which letter is this?</div><button class="speak" type="button" data-sayes="' + esc(q.t[1]) + '">' + ICON_SPEAK + 'Play again</button>';
+      label = function (o) { return o[0]; };
+    } else if (q.kind === "name") {
+      prompt = '<div class="word" style="font-size:clamp(56px,14vw,80px)">' + q.t[0] + '</div><div class="note">What is this letter called?</div>';
+      label = function (o) { return o[1]; };
+    } else {
+      var blank = q.t[3].replace(new RegExp(q.t[0], "i"), "_");
+      prompt = '<div class="word">' + esc(blank) + '</div><div class="note">Which letter completes the word for “' + esc(q.t[4]) + '”?</div>';
+      label = function (o) { return o[0]; };
+    }
+    var letterOpts = q.kind !== "name";
+    return '<div class="eyebrow"><span>' + (q.kind === "hear" ? "Listen" : q.kind === "name" ? "Letter names" : "Fill the gap") + '</span><span>Score ' + q.score + ' / ' + q.total + '</span></div>' +
+      '<div class="prompt">' + prompt + '</div>' +
+      '<div class="options">' + q.opts.map(function (o, i) {
+        var cls = "";
+        if (q.answered) { if (o === q.t) cls = " right"; else if (o === q.picked) cls = " wrong"; }
+        return '<button class="opt' + (letterOpts ? " letteropt" : "") + cls + '" type="button" data-aopt="' + i + '"' + (q.answered ? " disabled" : "") + '><span class="k">' + (i + 1) + '</span><span>' + esc(label(o)) + '</span></button>';
+      }).join("") + '</div>' +
+      '<div class="feedback ' + (q.answered ? (q.picked === q.t ? "good" : "bad") : "") + '">' +
+        (q.answered ? (q.picked === q.t ? "Correct! " : "Not quite. ") + q.t[0] + ' is called “' + esc(q.t[1]) + '”, as in ' + esc(q.t[3]) + '.' : "") +
+      '</div>' +
+      (q.answered ? '<button class="btn primary" type="button" id="anext">Next letter</button>' : "");
+  }
+
+  function alphaAnswer(i) {
+    if (!aq || aq.answered) return;
+    var o = aq.opts[i]; if (!o) return;
+    aq.answered = true; aq.picked = o; aq.total++;
+    var ok = o === aq.t;
+    if (ok) aq.score++;
+    var r = alphaRec(aq.t[0]);
+    r.seen++; r.streak = ok ? r.streak + 1 : 0;
+    state.alpha[aq.t[0]] = r;
+    var d = todayKey();
+    if (state.days[state.days.length - 1] !== d) state.days.push(d);
+    save(); renderStats();
+    speakEs(aq.t[3]);
+    renderAlphabet();
+  }
+
   // ---------- Router ----------
   function render() {
     renderTabs(); renderStats();
     if (state.mode === "cards") renderCards();
     else if (state.mode === "quiz") renderQuiz();
     else if (state.mode === "type") renderType();
+    else if (state.mode === "alphabet") renderAlphabet();
     else renderProgress();
   }
   function resetSessions() { card = null; quiz = null; typ = null; confirmReset = false; buildCardQueue(); }
@@ -638,7 +821,9 @@
   // ---------- Events ----------
   $("langs").addEventListener("click", function (e) {
     var b = e.target.closest("[data-lang]"); if (!b) return;
-    state.lang = b.dataset.lang; save(); renderLangs(); resetSessions(); render();
+    state.lang = b.dataset.lang;
+    if (state.mode === "alphabet" && state.lang !== "es") state.mode = "cards";
+    save(); renderLangs(); resetSessions(); render();
   });
   $("tabs").addEventListener("click", function (e) {
     var b = e.target.closest("[data-mode]"); if (!b) return;
@@ -673,6 +858,12 @@
     if (t.closest("#nexttype")) { newTyping(); renderType(); return; }
     if (t.closest("#askreset")) { confirmReset = true; renderProgress(); return; }
     if (t.closest("#cancelreset")) { confirmReset = false; renderProgress(); return; }
+    var sayEs = t.closest("[data-sayes]"); if (sayEs) { speakEs(sayEs.dataset.sayes); return; }
+    var av = t.closest("[data-aview]"); if (av) { alphaView = av.dataset.aview; renderAlphabet(); return; }
+    var lt = t.closest("[data-letter]");
+    if (lt) { alphaSel = Number(lt.dataset.letter); speakEs(ALPHABET[alphaSel][1]); renderAlphabet(); var f = panel.querySelector('[data-letter="' + alphaSel + '"]'); if (f) f.focus(); return; }
+    var ao = t.closest("[data-aopt]"); if (ao) { alphaAnswer(Number(ao.dataset.aopt)); return; }
+    if (t.closest("#anext")) { newAlphaQuestion(); renderAlphabet(); return; }
     if (t.closest("#doreset")) {
       Object.keys(state.words).forEach(function (k) { if (k.indexOf(state.lang + "|") === 0) delete state.words[k]; });
       save(); resetSessions(); render(); return;
@@ -688,6 +879,13 @@
     if (state.mode === "cards") {
       if ((e.key === " " || e.key === "Enter") && card && !flipped) { e.preventDefault(); flip(); }
       else if (flipped && /^[123]$/.test(e.key)) rate(Number(e.key) - 1);
+    } else if (state.mode === "alphabet") {
+      if (alphaView === "learn" && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        alphaSel = (alphaSel + (e.key === "ArrowRight" ? 1 : ALPHABET.length - 1)) % ALPHABET.length;
+        speakEs(ALPHABET[alphaSel][1]); renderAlphabet();
+        var f = panel.querySelector('[data-letter="' + alphaSel + '"]'); if (f) f.focus();
+      } else if (alphaView === "quiz" && aq && !aq.answered && /^[1-4]$/.test(e.key)) alphaAnswer(Number(e.key) - 1);
     } else if (state.mode === "quiz" && quiz) {
       if (!quiz.answered && /^[1-4]$/.test(e.key)) answer(Number(e.key) - 1);
     }
