@@ -24,10 +24,14 @@
   --brand-soft:#e3eef6;
   --red:#bf3b2b;    --red-bg:#fbeae7;
   --amber:#a86a00;  --amber-bg:#fdf3dd;
+  --orange:#d9660b; --orange-bg:#fdebdc;
   --green:#1c7a4a;  --green-bg:#e7f4ec;
   --fridge:#17629e; --fridge-bg:#e7f0f8;
   --freezer:#4d51a8;--freezer-bg:#ebecf8;
   --dry:#8a5a2b;    --dry-bg:#f6efe5;
+  --kfridge:#0f7a78; --kfridge-bg:#e3f4f3;
+  --bar:#8c3f7a;    --bar-bg:#f6e8f2;
+  --rest:#5b6b2e;   --rest-bg:#eff2e2;
   --radius:14px;
   --shadow:0 1px 2px rgba(29,42,38,.06), 0 4px 14px rgba(29,42,38,.05);
 }
@@ -111,6 +115,8 @@ section.active{display:block;}
 }
 .seg button.on{background:var(--brand); border-color:var(--brand); color:#fff;}
 .seg button.on.warn{background:var(--red); border-color:var(--red);}
+#segStorage{flex-wrap:wrap;}
+#segStorage button{flex:1 1 30%; min-width:120px; font-size:14px;}
 
 /* Chip toggles and heads grid */
 .chips{display:flex; flex-wrap:wrap; gap:6px;}
@@ -276,6 +282,9 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 .pill.fridge{background:var(--fridge-bg); color:var(--fridge);}
 .pill.freezer{background:var(--freezer-bg); color:var(--freezer);}
 .pill.dry{background:var(--dry-bg); color:var(--dry);}
+.pill.kitchen_fridge{background:var(--kfridge-bg); color:var(--kfridge);}
+.pill.bar_fridge{background:var(--bar-bg); color:var(--bar);}
+.pill.restaurant{background:var(--rest-bg); color:var(--rest);}
 .pill.ok{background:var(--green-bg); color:var(--green);}
 .pill.warn{background:var(--amber-bg); color:var(--amber);}
 .pill.bad{background:var(--red-bg); color:var(--red);}
@@ -295,9 +304,32 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 }
 .uf-rail .d1{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:21px; line-height:1;}
 .uf-rail .d2{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; opacity:.9; margin-top:3px; text-align:center;}
+.uf-rail .d0{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; line-height:1.1; text-align:center; margin-bottom:4px; opacity:.95;}
 .rail-bad{background:var(--red);}
-.rail-warn{background:var(--amber);}
+.rail-past{background:var(--orange);}
+.rail-warn{background:#f2c230; color:var(--ink);}
 .rail-ok{background:var(--green);}
+/* Expired (past use by) rows go red, past best before rows go orange */
+.uf-row.exp-bad{border:2px solid var(--red); background:var(--red-bg) !important;}
+.uf-row.exp-bad .uf-name{color:var(--red);}
+.uf-row.exp-past{border:2px solid var(--orange); background:var(--orange-bg) !important;}
+.uf-row.exp-past .uf-name{color:var(--orange);}
+.pill.past{background:var(--orange-bg); color:var(--orange);}
+/* Where it was bought from */
+.sup-ic{display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%;
+  color:#fff; font-size:10px; font-weight:800; letter-spacing:.02em; vertical-align:-6px; margin-right:6px; flex:none;}
+.sup-ic svg{display:block;}
+.sup-ic.lc{background:#3f8f2f;}
+.sup-ic.bf{background:#c8102e;}
+.sup-ic.sm{background:#1d2a26;}
+.sup-ic.other{background:#98a29c;}
+.uf-sort{display:flex; align-items:center; gap:8px; margin:0 0 10px; flex-wrap:wrap;}
+.uf-sort .lbl{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+.uf-sort .seg{flex:1; min-width:240px;}
+.uf-sort .seg button{min-height:38px; font-size:14px;}
+.uf-flat .uf-meta{white-space:normal;}
+.uf-flat .uf-acts{flex-direction:row; padding:6px 10px 6px 0;}
+@media (max-width:560px){.uf-flat .uf-acts{flex-direction:column;}}
 .uf-main{flex:1; padding:10px 0; min-width:0; cursor:pointer;}
 .uf-name{font-weight:700; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .uf-meta{font-size:13px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -425,6 +457,9 @@ body.kitchen .rowcard{padding:15px 16px;}
 .stchips button.on.fridge{background:var(--fridge); border-color:var(--fridge); color:#fff;}
 .stchips button.on.freezer{background:var(--freezer); border-color:var(--freezer); color:#fff;}
 .stchips button.on.dry{background:var(--dry); border-color:var(--dry); color:#fff;}
+.stchips button.on.kitchen_fridge{background:var(--kfridge); border-color:var(--kfridge); color:#fff;}
+.stchips button.on.bar_fridge{background:var(--bar); border-color:var(--bar); color:#fff;}
+.stchips button.on.restaurant{background:var(--rest); border-color:var(--rest); color:#fff;}
 .stchips select{width:auto; flex:1; min-width:130px; padding:5px 8px; font-size:12.5px; border-radius:999px; min-height:32px;}
 body.kitchen .stchips button{min-height:40px; font-size:14px;}
 body.kitchen .stchips select{min-height:40px; font-size:14px; padding:5px 10px;}
@@ -471,7 +506,8 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 #scanReader{width:100%; border-radius:14px; overflow:hidden; background:#000; min-height:220px;}
 #scanReader video{border-radius:14px;}
 #scanRoot .scan-msg{color:#c9d2ce; font-size:13px; text-align:center; margin:10px 0 12px; min-height:18px;}
-#scanRoot .btn-ghost{color:#fff; border-color:rgba(255,255,255,.4);}
+#scanRoot .btn-ghost{color:#fff; border-color:rgba(255,255,255,.4); background:transparent;}
+#scanRoot #scanExit{background:var(--red); border-color:var(--red); color:#fff;}
 .btn-scan{flex:none; width:54px; display:flex; align-items:center; justify-content:center; padding:0;}
 .btn-scan svg{display:block;}
 </style>
@@ -528,6 +564,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 <section id="sec-usefirst" class="active">
   <div style="display:flex; gap:8px; margin-bottom:12px;">
     <button class="btn btn-primary" id="btnGoReceive" style="flex:2;">+ Receive a delivery</button>
+    <button class="btn btn-secondary" id="btnQuickAdd" style="flex:1;">+ Add item</button>
     <button class="btn btn-secondary" id="btnStocktake" style="flex:1;">Stocktake</button>
   </div>
   <input type="file" id="stCam" accept="image/*" capture="environment" style="display:none;">
@@ -535,6 +572,13 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     <input id="ufSearch" placeholder="Search items, e.g. chicken" autocomplete="off" style="flex:1;">
     <button class="btn btn-secondary btn-scan" id="btnUfScan" title="Scan a barcode to find the item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5h2v14H2zM5 5h1v14H5zM7.5 5h2v14h-2zM11 5h1v14h-1zM13.5 5h1v14h-1zM16 5h2.5v14H16zM20 5h2v14h-2z"/></svg></button>
     <button class="btn btn-ghost" id="btnUfSelect" style="flex:none;">Select</button>
+  </div>
+  <div class="uf-sort">
+    <span class="lbl">Sort</span>
+    <div class="seg" id="ufSortSeg">
+      <button data-v="storage">By storage area</button>
+      <button data-v="date">By use by date</button>
+    </div>
   </div>
   <div class="fnlegend" id="ufLegend"></div>
   <div id="ufList"><div class="loading">Loading&hellip;</div></div>
@@ -699,9 +743,12 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     <div class="field">
       <label>Storage</label>
       <div class="seg" id="segStorage">
-        <button data-v="fridge">Fridge</button>
-        <button data-v="freezer">Freezer</button>
-        <button data-v="dry">Dry store</button>
+        <button data-v="fridge">Cool room</button>
+        <button data-v="freezer">Walk in freezer</button>
+        <button data-v="dry">Walk in pantry</button>
+        <button data-v="kitchen_fridge">Large kitchen fridge</button>
+        <button data-v="bar_fridge">Glass bar fridges</button>
+        <button data-v="restaurant">Restaurant fridge/freezer</button>
       </div>
     </div>
     <div class="grid2">
@@ -719,7 +766,8 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
         </div>
       </div>
       <div class="field">
-        <label for="iExpiry">Use by <span style="text-transform:none; font-weight:500;">(auto from category)</span></label>
+        <label for="iExpiry">Use by or best before <span style="text-transform:none; font-weight:500;">(auto from category)</span></label>
+        <select id="iExpType" style="margin-bottom:6px;"><option value="use_by">Use by</option><option value="best_before">Best before</option></select>
         <input id="iExpiry" type="date">
       </div>
     </div>
@@ -756,7 +804,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
       <div class="field"><label for="nsCategory">Category</label><input id="nsCategory" placeholder="e.g. Desserts"></div>
       <div class="field"><label for="nsStorage">Storage and days</label>
         <div style="display:flex; gap:8px;">
-          <select id="nsStorage" style="flex:1;"><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select>
+          <select id="nsStorage" style="flex:1;"><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Large kitchen fridge</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select>
           <input id="nsDays" type="number" inputmode="numeric" min="1" placeholder="Days" style="flex:1;">
         </div>
       </div>
@@ -796,7 +844,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   </div>
   <div class="card">
     <h2>About</h2>
-    <p class="small muted" id="verLine">WSLR Kitchen v2.6 (one tick-off per truck with the quantities split across groups, stocktake walk-through with last-checked stamps, Allocate on every stock row, and the not-null save bug and stuck scanner fixed). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Orders build themselves the same way from the planner's shopping list, one per supplier per function, and stop refreshing as soon as the first delivery is logged against them. Anything you add in the app sits alongside in a paler dashed card so the two are easy to tell apart. The two links are the Apps Script web apps in kitchen-confirmations-feed.gs and kitchen-shopping-feed.gs; paste their URLs under Settings.<br><br>Allocating stock to a group only lists the ones on site now or arriving inside a fortnight; the rest sit behind the Later groups button.<br><br>Orders off the shopping list land under <b>Yet to be ordered</b>, grouped by supplier so one call to Bidfood clears the lot. Mark them ordered and the kitchen starts watching for them on Arrivals. When a docket turns up you can tag it to several orders at once and the shorts, extras and overs show as you type. <b>Stocktake</b> on the Stock tab has two halves: <b>Check what is here</b> walks the shelves line by line (Here, Adjust, Gone) and stamps each one with who checked it and when, which then shows on every stock row; <b>Add new items</b> uses the barcode scanner and the camera for anything that is on the shelf but not in the app. Every function has a <b>Prep sheet</b> you can print.<br><br>On Arrivals, several open orders from the same supplier show as one card. Tick off the docket once with the totals and the app splits each line across the groups, earliest group first, with any shortfall falling on the last group and any surplus going to general stock. Lines from the shopping list inherit their storage and category from the last time that item was received, and each line has storage chips so nothing lands unlabelled.<br><br>Both sheets are re-checked every five minutes and whenever the iPad wakes or you come back to the tab.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql, then wslr-kitchen-v2.3-sheet-sync.sql, wslr-kitchen-v2.4-shopping-sync.sql, wslr-kitchen-v2.5-orders-stocktake.sql and wslr-kitchen-v2.6-last-checked.sql in the Supabase SQL editor.</p>
+    <p class="small muted" id="verLine">WSLR Kitchen v2.6 (one tick-off per truck with the quantities split across groups, stocktake walk-through with last-checked stamps, Allocate on every stock row, and the not-null save bug and stuck scanner fixed). One file, two modes: a simple kitchen mode for the iPad (arrivals tick-off, used, bin, allocate) and a full admin mode behind a PIN (orders, deliveries, functions with a food check against heads, settings). Every group on the confirmations sheet with Catering set to Yes appears under Functions on its own, refreshed each time the page loads. Orders build themselves the same way from the planner's shopping list, one per supplier per function, and stop refreshing as soon as the first delivery is logged against them. Anything you add in the app sits alongside in a paler dashed card so the two are easy to tell apart. The two links are the Apps Script web apps in kitchen-confirmations-feed.gs and kitchen-shopping-feed.gs; paste their URLs under Settings.<br><br>Allocating stock to a group only lists the ones on site now or arriving inside a fortnight; the rest sit behind the Later groups button.<br><br>Orders off the shopping list land under <b>Yet to be ordered</b>, grouped by supplier so one call to Bidfood clears the lot. Mark them ordered and the kitchen starts watching for them on Arrivals. When a docket turns up you can tag it to several orders at once and the shorts, extras and overs show as you type. <b>Stocktake</b> on the Stock tab has two halves: <b>Check what is here</b> walks the shelves line by line (Here, Adjust, Gone) and stamps each one with who checked it and when, which then shows on every stock row; <b>Add new items</b> uses the barcode scanner and the camera for anything that is on the shelf but not in the app. Every function has a <b>Prep sheet</b> you can print.<br><br>On Arrivals, several open orders from the same supplier show as one card. Tick off the docket once with the totals and the app splits each line across the groups, earliest group first, with any shortfall falling on the last group and any surplus going to general stock. Lines from the shopping list inherit their storage and category from the last time that item was received, and each line has storage chips so nothing lands unlabelled.<br><br>Both sheets are re-checked every five minutes and whenever the iPad wakes or you come back to the tab.<br><br>If you see a "relation does not exist" or "column does not exist" error, run wslr-kitchen-v2-schema.sql, then wslr-kitchen-v2.3-sheet-sync.sql, wslr-kitchen-v2.4-shopping-sync.sql, wslr-kitchen-v2.5-orders-stocktake.sql, wslr-kitchen-v2.6-last-checked.sql and wslr-kitchen-v2.7-storage-bestbefore.sql in the Supabase SQL editor.</p>
   </div>
 </section>
 
@@ -841,6 +889,7 @@ const state = {
   shelf: [],          // shelf life default rows
   functions: [],      // upcoming functions for the receive picker
   ufFnFilter: null,
+  ufSort: "storage",
   ufShowFar: false,
   draftOrders: [],
   ufItems: [],
@@ -1091,7 +1140,7 @@ async function loadFunctionPicker(){
 async function loadDatalists(){
   try{
     const dels = await run(sb.from("deliveries").select("supplier, received_by").order("created_at", {ascending:false}).limit(200));
-    $("supplierList").innerHTML = [...new Set(dels.map(d => d.supplier).filter(Boolean))]
+    $("supplierList").innerHTML = [...new Set(["Leisure Coast Fruit Market", "Bidfood", "Coles", "Woolworths"].concat(dels.map(d => d.supplier)).filter(Boolean))]
       .map(s => '<option value="' + esc(s) + '"></option>').join("");
     $("receiverList").innerHTML = [...new Set(dels.map(d => d.received_by).filter(Boolean))]
       .map(s => '<option value="' + esc(s) + '"></option>').join("");
@@ -1179,7 +1228,7 @@ function renderDraftItems(){
       else if(fid){ const f = state.functions.find(x => x.id === fid); col = f && f.colour ? f.colour : "#546e64"; }
     }
     const tint = it.short ? "" : (col ? hexTint(col, 0.13) : "#f0efe9");
-    const meta = [it.qty ? it.qty + " " + (it.unit || "") : "", it.storage, it.expiry ? "use by " + fmtDate(it.expiry) : ""].filter(Boolean).join(" · ");
+    const meta = [it.qty ? it.qty + " " + (it.unit || "") : "", it.storage ? storageLabel(it.storage) : "", it.expiry ? expWord(it.expiry_type) + " " + fmtDate(it.expiry) : ""].filter(Boolean).join(" · ");
     return '<div class="draft-item' + (it.short ? " short" : "") + (isSel ? " selected" : "") + '" data-tint="' + tint + '"' +
       (it.short || isSel ? "" : ' style="background:' + tint + ';"') + ">" +
       (state.draftSelect ? '<span class="sel-dot" style="margin-left:0;"></span>' : "") +
@@ -1235,12 +1284,12 @@ function editDraftItem(idx){
     '<div class="field"><label for="dmCategory">Category</label><select id="dmCategory"><option value="">None</option>' +
     cats.map(c => '<option value="' + esc(c) + '"' + (it.category === c ? " selected" : "") + ">" + esc(c) + "</option>").join("") + "</select></div>" +
     '<div class="field"><label for="dmStorage">Storage</label><select id="dmStorage"><option value="">None</option>' +
-    ["fridge","freezer","dry"].map(s => '<option value="' + s + '"' + (it.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") + "</select></div></div>" +
+    STORAGES.map(s => '<option value="' + s + '"' + (it.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label for="dmQty">Quantity</label><div style="display:flex; gap:8px;">' +
     '<input id="dmQty" type="number" inputmode="decimal" step="any" min="0" value="' + (it.qty ?? "") + '" style="flex:1;">' +
     '<input id="dmUnit" list="unitList" value="' + esc(it.unit || "") + '" style="flex:1;"></div></div>' +
-    '<div class="field"><label for="dmExpiry">Use by</label><input type="date" id="dmExpiry" value="' + esc(it.expiry || "") + '"></div></div>' +
+    '<div class="field"><label for="dmExpiry">Use by or best before</label>' + expTypeSelect("dmExpType", it.expiry_type) + '<input type="date" id="dmExpiry" value="' + esc(it.expiry || "") + '"></div></div>' +
     '<div class="field" id="dmAllocWrap"><label>Allocate to</label>' +
     '<div id="dmAllocRows"></div>' +
     '<button class="btn btn-ghost btn-sm" id="dmAddAlloc" style="width:100%; margin-top:6px;">+ Add another function</button>' +
@@ -1324,6 +1373,7 @@ function editDraftItem(idx){
       qty: q,
       unit: m.querySelector("#dmUnit").value.trim() || null,
       expiry: exp,
+      expiry_type: m.querySelector("#dmExpType").value,
       short,
       allocs: stored,
       // keep the link back to the order line so the difference still shows
@@ -1414,8 +1464,10 @@ function scanBarcode(onCode, onCancel){
     '<p class="scan-sub">Hold the barcode flat, 10–20 cm from the camera.</p>' +
     '<div id="scanReader"></div>' +
     '<div class="scan-msg" id="scanMsg">Starting camera…</div>' +
-    '<button class="btn btn-ghost" id="scanCancel" style="width:100%;">Cancel</button>' +
-    "</div>";
+    '<div style="display:flex; gap:8px;">' +
+    '<button class="btn btn-ghost" id="scanCancel" style="flex:1;">Cancel</button>' +
+    '<button class="btn btn-danger" id="scanExit" style="flex:1;">Exit to dashboard</button>' +
+    "</div></div>";
   document.body.appendChild(ov);
   let done = false, started = false, closed = false;
   let scanner = null;
@@ -1443,6 +1495,16 @@ function scanBarcode(onCode, onCancel){
     done = true;
     teardown();
     if(onCancel) onCancel();
+  });
+  // Exit drops whatever the scan was for and goes straight back to the Stock
+  // dashboard, closing any form or stocktake that was open underneath
+  ov.querySelector("#scanExit").addEventListener("click", () => {
+    if(done) return;
+    done = true;
+    teardown();
+    scanPending = null;
+    try{ closeModal(); }catch(e){}
+    showTab("usefirst");
   });
   try{
     scanner = new Html5Qrcode("scanReader", {formatsToSupport: scanFormats(), verbose: false, experimentalFeatures: {useBarCodeDetectorIfSupported: true}});
@@ -1561,13 +1623,14 @@ function addItemFromForm(){
     qty: $("iQty").value ? +$("iQty").value : null,
     unit: $("iUnit").value.trim() || null,
     expiry: $("iExpiry").value || null,
+    expiry_type: $("iExpType").value,
     short: false,
     allocs: null
   };
   state.draftItems.push(added);
   if(scanPending){ saveBarcode(scanPending, added); scanPending = null; }
   renderDraftItems();
-  $("iName").value = ""; $("iQty").value = ""; $("iExpiry").value = "";
+  $("iName").value = ""; $("iQty").value = ""; $("iExpiry").value = ""; $("iExpType").value = "use_by";
   if($("iCategory").value && state.itemStorage) autoExpiry();
   $("iName").focus();
 }
@@ -1594,7 +1657,8 @@ async function prepSheet(fn){
   }catch(e){}
 
   const inStock = items.filter(i => i.status === "in_stock");
-  const byStore = {fridge:[], freezer:[], dry:[], none:[]};
+  const byStore = {none:[]};
+  STORAGES.forEach(k => { byStore[k] = []; });
   inStock.forEach(i => (byStore[i.storage] || byStore.none).push(i));
   const missing = items.filter(i => i.status === "not_received");
 
@@ -1617,7 +1681,7 @@ async function prepSheet(fn){
       table(list.map(i => [
         i.item_name,
         i.quantity != null ? i.quantity + " " + (i.unit || "") : (i.unit || ""),
-        i.expiry_date ? "use by " + fmtDate(i.expiry_date) : "",
+        i.expiry_date ? expWord(i.expiry_type) + " " + fmtDate(i.expiry_date) : "",
         i.category || ""
       ]), ["Item", "Qty", "Use by", "Category"]);
   };
@@ -1647,7 +1711,7 @@ async function prepSheet(fn){
     ].filter(Boolean).join("  ·  ")) + "</p>" +
     (fn.notes ? "<h2>Notes</h2><p style=\"font-size:13.5px;\">" + esc(fn.notes) + "</p>" : "") +
     (inStock.length
-      ? storeBlock("fridge", "Fridge") + storeBlock("freezer", "Freezer") + storeBlock("dry", "Dry store") + storeBlock("none", "No location set")
+      ? STORAGES.map(k => storeBlock(k, storageLabel(k))).join("") + storeBlock("none", "No location set")
       : "<h2>Food set aside</h2><p class=\"none\">Nothing allocated to this function yet.</p>") +
     "<h2>Still to come (" + outstanding.length + ")</h2>" +
     (outstanding.length ? table(outstanding, ["Item", "Qty", "Supplier", "Status"]) : "<p class=\"none\">Nothing outstanding.</p>") +
@@ -1699,7 +1763,7 @@ async function stocktakeStart(){
   const m = openModal(
     "<h2>Start a stocktake</h2>" +
     '<p class="small muted" style="margin-top:-2px;">Walk the shelves with the tablet. Every line already in the app gets a Here, Adjust or Gone, and is stamped with your name and the time so whoever reviews the stock can see when it was last looked at. Anything on the shelf that is not in the app yet, add with the scanner or the camera.</p>' +
-    '<div class="field"><label for="stName">What are you counting?</label><input id="stName" placeholder="e.g. Dry store, or Full kitchen" autocomplete="off"></div>' +
+    '<div class="field"><label for="stName">What are you counting?</label><input id="stName" placeholder="e.g. Walk in pantry, or Full kitchen" autocomplete="off"></div>' +
     '<div class="field"><label for="stWho">Who is doing it</label><input id="stWho" list="receiverList" placeholder="Your name" autocomplete="off" value="' + esc(readStore("wslr_who") || "") + '"></div>' +
     '<button class="btn btn-primary" id="stGo" style="width:100%;">Start</button>'
   );
@@ -1725,9 +1789,8 @@ async function loadStVerify(){
         .eq("status", "in_stock").limit(600)
     );
   }catch(e){ stVerify = []; }
-  const order = {fridge: 0, freezer: 1, dry: 2};
   stVerify.sort((a, b) => {
-    const sa = a.storage in order ? order[a.storage] : 3, sbb = b.storage in order ? order[b.storage] : 3;
+    const sa = storageRank(a.storage), sbb = storageRank(b.storage);
     if(sa !== sbb) return sa - sbb;
     return String(a.item_name).localeCompare(String(b.item_name));
   });
@@ -1770,7 +1833,7 @@ function stocktakePane(){
         '<span class="small muted">' + esc([
           i.quantity != null ? i.quantity + " " + (i.unit || "") : "",
           storageLabel(i.storage),
-          i.expiry_date ? "use by " + fmtDate(i.expiry_date) : ""
+          i.expiry_date ? expWord(i.expiry_type) + " " + fmtDate(i.expiry_date) : ""
         ].filter(Boolean).join(" · ")) + "</span></div></div>").join("")
     : '<div class="empty" style="padding:18px;">Nothing added yet.</div>';
   m.querySelector("#stScan").addEventListener("click", () => {
@@ -1824,7 +1887,7 @@ function stocktakePane(){
       }
       const sub = [
         i.quantity != null ? i.quantity + " " + (i.unit || "") : "",
-        i.expiry_date ? "use by " + fmtDate(i.expiry_date) : "",
+        i.expiry_date ? expWord(i.expiry_type) + " " + fmtDate(i.expiry_date) : "",
         lastCheckedText(i) || "never checked"
       ].filter(Boolean).join(" · ");
       html += '<div class="stv-row' + (isDone ? " done" : "") + '" data-id="' + i.id + '">' +
@@ -1910,14 +1973,14 @@ function stocktakeItemForm(pre){
     '<div class="grid2">' +
     '<div class="field"><label for="siCat">Category</label><select id="siCat">' + catOpts + "</select></div>" +
     '<div class="field"><label for="siStorage">Storage</label><select id="siStorage">' +
-      ["", "fridge", "freezer", "dry"].map(v =>
+      [""].concat(STORAGES).map(v =>
         '<option value="' + v + '"' + (pre.storage === v ? " selected" : "") + ">" +
         (v ? storageLabel(v) : "Choose…") + "</option>").join("") + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>How much</label><div style="display:flex; gap:8px;">' +
       '<input id="siQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;">' +
       '<input id="siUnit" list="unitList" placeholder="Unit" value="' + esc(pre.unit || "") + '" style="flex:1;" autocomplete="off"></div></div>' +
-    '<div class="field"><label for="siExp">Use by</label><input type="date" id="siExp"></div></div>' +
+    '<div class="field"><label for="siExp">Use by or best before</label>' + expTypeSelect("siExpType", "use_by") + '<input type="date" id="siExp"></div></div>' +
     '<div class="field"><label>Photo</label>' +
       '<button class="btn btn-secondary" id="siPhoto" style="width:100%;">&#128247; Take a photo</button>' +
       '<div id="siPhotoWrap" style="margin-top:8px;"></div></div>' +
@@ -1954,6 +2017,7 @@ function stocktakeItemForm(pre){
         quantity: qv === "" ? null : +qv,
         unit: unit,
         expiry_date: exp,
+        ...expTypeNew(m.querySelector("#siExpType").value),
         status: "in_stock",
         origin: "stocktake",
         stocktake_id: stTake.id,
@@ -2220,6 +2284,7 @@ async function saveDelivery(){
           storage: it.storage,
           unit: it.unit,
           expiry_date: it.expiry,
+          ...expTypeNew(it.expiry_type),
           status: "in_stock",
           short_or_wrong: false,
           status_changed_at: null
@@ -2352,7 +2417,7 @@ async function readDocket(){
     (data.items || []).forEach(it => {
       if(!it || !it.name) return;
       const cat = it.category ? (catMap[String(it.category).toLowerCase()] || null) : null;
-      const st = ["fridge","freezer","dry"].includes(it.storage) ? it.storage : null;
+      const st = STORAGES.includes(it.storage) ? it.storage : null;
       let expiry = null;
       if(cat && st){
         const row = state.shelf.find(r => r.category === cat && r.storage === st);
@@ -2525,29 +2590,174 @@ async function renderDvUnalloc(){
     box.innerHTML = '<div class="empty">Could not load.</div>';
   }
 }
+// ---------- quick add ----------
+// Straight onto the stock list with nothing but a name. Everything else, the
+// supplier included, is optional and can be filled in later from the item.
+async function quickAddItem(){
+  try{ if(!state.shelf || !state.shelf.length) await loadShelf(); }catch(e){}
+  const cats = [...new Set((state.shelf || []).map(r => r.category))];
+  const m = openModal(
+    "<h2>Add an item</h2>" +
+    '<p class="small muted" style="margin-top:-2px;">Only the name is needed. Fill in anything else you know.</p>' +
+    '<div class="field"><label for="qaName">Item</label><input id="qaName" list="nameList" placeholder="e.g. Milk" autocomplete="off"></div>' +
+    '<div class="field"><label>Storage <span style="text-transform:none; font-weight:500;">(optional)</span></label><div class="stchips" id="qaStorage">' +
+      STORAGES.map(k => '<button type="button" data-st="' + k + '">' + storageLabel(k) + "</button>").join("") +
+    "</div></div>" +
+    '<div class="grid2">' +
+    '<div class="field"><label>How much <span style="text-transform:none; font-weight:500;">(optional)</span></label><div style="display:flex; gap:8px;">' +
+      '<input id="qaQty" type="number" inputmode="decimal" step="any" min="0" placeholder="Qty" style="flex:1;">' +
+      '<input id="qaUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
+    '<div class="field"><label for="qaExp">Use by or best before <span style="text-transform:none; font-weight:500;">(optional)</span></label>' +
+      expTypeSelect("qaExpType", "use_by") + '<input type="date" id="qaExp"></div></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label for="qaCat">Category <span style="text-transform:none; font-weight:500;">(optional)</span></label><select id="qaCat"><option value="">None</option>' +
+      cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("") + "</select></div>" +
+    '<div class="field"><label for="qaSup">Bought from <span style="text-transform:none; font-weight:500;">(optional)</span></label><input id="qaSup" list="supplierList" placeholder="e.g. Coles" autocomplete="off"></div></div>' +
+    '<button class="btn btn-primary" id="qaSave" style="width:100%;">Add to stock</button>'
+  );
+  let storage = null;
+  m.querySelectorAll("#qaStorage [data-st]").forEach(b =>
+    b.addEventListener("click", () => {
+      storage = storage === b.dataset.st ? null : b.dataset.st;
+      m.querySelectorAll("#qaStorage [data-st]").forEach(x => { x.className = storage === x.dataset.st ? "on " + x.dataset.st : ""; });
+    })
+  );
+  m.querySelector("#qaName").focus();
+  m.querySelector("#qaSave").addEventListener("click", async () => {
+    const name = m.querySelector("#qaName").value.trim();
+    if(!name){ toast("Give the item a name first", {type:"err"}); return; }
+    const cat = m.querySelector("#qaCat").value || null;
+    const qv = m.querySelector("#qaQty").value;
+    const sup = m.querySelector("#qaSup").value.trim();
+    let exp = m.querySelector("#qaExp").value || null;
+    if(!exp && cat && storage){
+      const row = (state.shelf || []).find(r => r.category === cat && r.storage === storage);
+      if(row) exp = localISO(new Date(Date.now() + row.days * 86400000));
+    }
+    const btn = m.querySelector("#qaSave");
+    btn.disabled = true;
+    try{
+      // a supplier gets its own small delivery record so the bought from icon
+      // shows on the row; with no supplier the item just goes straight in
+      let deliveryId = null;
+      if(sup){
+        const del = await run(sb.from("deliveries").insert({
+          supplier: sup,
+          received_by: readStore("wslr_who") || null,
+          received_in_full: true
+        }).select().single());
+        deliveryId = del.id;
+      }
+      await run(sb.from("stock_items").insert({
+        delivery_id: deliveryId,
+        item_name: name,
+        category: cat,
+        storage: storage,
+        quantity: qv === "" ? null : +qv,
+        unit: m.querySelector("#qaUnit").value.trim() || null,
+        expiry_date: exp,
+        ...expTypeNew(m.querySelector("#qaExpType").value),
+        status: "in_stock",
+        origin: "manual",
+        received_date: localISO()
+      }));
+      closeModal();
+      toast(name + " added");
+      refreshCurrentTab();
+    }catch(e){
+      btn.disabled = false;
+    }
+  });
+}
 function boardHtml(list, searching, showAlloc){
-  const cols = {fridge: [], freezer: [], dry: [], none: []};
+  // flat list, soonest use by or best before first, whatever shelf it is on
+  if(state.ufSort === "date"){
+    const sorted = list.slice().sort(byExpiry);
+    return '<div class="uf-flat">' + sorted.map(i => ufRowHtml(i, searching, showAlloc, true)).join("") + "</div>";
+  }
+  const cols = {none: []};
+  STORAGES.forEach(k => { cols[k] = []; });
   list.forEach(i => (cols[i.storage] || cols.none).push(i));
+  STORAGES.forEach(k => cols[k].sort(byExpiry));
   const colHtml = st =>
     '<div class="uf-col" data-storage="' + st + '"><div class="uf-col-h">' + storageLabel(st) +
     '<span class="cnt">' + cols[st].length + "</span></div>" +
     cols[st].map(i => ufRowHtml(i, searching, showAlloc)).join("") + "</div>";
-  return '<div class="uf-board">' + colHtml("fridge") + colHtml("freezer") + colHtml("dry") + "</div>" +
+  return '<div class="uf-board">' + STORAGES.map(colHtml).join("") + "</div>" +
     (cols.none.length
       ? '<div class="uf-group">No storage set<span class="cnt">' + cols.none.length + "</span></div>" +
         '<div class="small muted" style="margin:-2px 0 8px;">Drag these into a column, or tap to edit.</div>' +
         cols.none.map(i => ufRowHtml(i, searching, showAlloc)).join("")
       : "");
 }
-function ufRowHtml(i, searching, showAlloc){
-  let cls = "rail-none";
+// soonest date first, anything without a date at the bottom
+function byExpiry(a, b){
+  const x = a.expiry_date || "9999-12-31", y = b.expiry_date || "9999-12-31";
+  if(x !== y) return x < y ? -1 : 1;
+  return String(a.item_name || "").localeCompare(String(b.item_name || ""));
+}
+// ---------- use by vs best before ----------
+function expKind(t){ return t === "best_before" ? "best_before" : "use_by"; }
+function expWord(t){ return expKind(t) === "best_before" ? "best before" : "use by"; }
+function expLabel(t){ return expKind(t) === "best_before" ? "Best before" : "Use by"; }
+// "bad" = past its use by (red), "past" = past its best before (orange),
+// "warn" = due in the next 3 days, "ok" = fine, "none" = no date
+function expState(i){
+  if(!i.expiry_date) return "none";
+  const d = daysUntil(i.expiry_date);
+  if(d < 0) return expKind(i.expiry_type) === "best_before" ? "past" : "bad";
+  if(d <= 3) return "warn";
+  return "ok";
+}
+function expTypeSelect(id, current){
+  const k = expKind(current);
+  return '<select id="' + id + '" style="margin-bottom:6px;">' +
+    '<option value="use_by"' + (k === "use_by" ? " selected" : "") + ">Use by</option>" +
+    '<option value="best_before"' + (k === "best_before" ? " selected" : "") + ">Best before</option></select>";
+}
+// Only sends expiry_type when it is not the plain use by default, or when it
+// is changing, so saves keep working even before the SQL update has been run
+function expTypePatch(chosen, current){
+  return expKind(chosen) === expKind(current) ? {} : {expiry_type: expKind(chosen)};
+}
+function expTypeNew(chosen){
+  return expKind(chosen) === "best_before" ? {expiry_type: "best_before"} : {};
+}
+// ---------- where it was bought ----------
+function supplierKey(name){
+  const n = String(name || "").toLowerCase();
+  if(!n) return null;
+  if(n.indexOf("leisure coast") !== -1) return "lc";
+  if(n.indexOf("bidfood") !== -1) return "bf";
+  if(n.indexOf("coles") !== -1 || n.indexOf("woolworths") !== -1 || n.indexOf("woolies") !== -1) return "sm";
+  return "other";
+}
+function supplierIcon(name){
+  const k = supplierKey(name);
+  if(!k) return "";
+  const cart = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM5.2 4H2V2h4.6l.9 2H22l-3.4 8.2a2 2 0 0 1-1.8 1.3H8.1l-1 1.8V16h12v2H6a2 2 0 0 1-1.8-3l1.4-2.5L5.2 4z"/></svg>';
+  const truck = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h11v9H3zM15 8h3.5L21 11.5V14h-6zM6.5 15.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm11 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>';
+  const inner = k === "lc" ? "LC" : k === "bf" ? "BF" : k === "sm" ? cart : truck;
+  const title = k === "lc" ? "Leisure Coast" : k === "bf" ? "Bidfood" : k === "sm" ? "Coles / Woolworths" : name;
+  return '<span class="sup-ic ' + k + '" title="Bought from ' + esc(title) + '">' + inner + "</span>";
+}
+function boughtDate(i){
+  if(i.deliveries && i.deliveries.delivered_at) return fmtDate(localISO(new Date(i.deliveries.delivered_at)));
+  if(i.received_date) return fmtDate(i.received_date);
+  if(i.created_at) return fmtDate(localISO(new Date(i.created_at)));
+  return "";
+}
+function ufRowHtml(i, searching, showAlloc, showStorage){
+  const es = expState(i);
+  const cls = "rail-" + es;
+  // the rail on the left is the use by or best before date, labelled
+  let d0 = "No date", d1 = "–", d2 = "";
   if(i.expiry_date){
-    const d = daysUntil(i.expiry_date);
-    cls = d <= 0 ? "rail-bad" : d <= 3 ? "rail-warn" : "rail-ok";
+    const ex = new Date(i.expiry_date + "T12:00");
+    d0 = expLabel(i.expiry_type);
+    d1 = String(ex.getDate());
+    d2 = ex.toLocaleDateString("en-AU", {month:"short"});
   }
-  let d1 = "–", d2 = "";
-  const rec = i.deliveries && i.deliveries.delivered_at ? new Date(i.deliveries.delivered_at) : null;
-  if(rec){ d1 = String(rec.getDate()); d2 = rec.toLocaleDateString("en-AU", {month:"short"}); }
   const inStock = i.status === "in_stock";
   const isSel = state.selectMode && state.selected.has(i.id);
   const col = i.function_id && i.catering_functions ? (i.catering_functions.colour || "#546e64") : null;
@@ -2558,23 +2768,25 @@ function ufRowHtml(i, searching, showAlloc){
       : i.status === "binned" ? ' <span class="pill bad">Binned</span>'
       : ' <span class="pill bad">Not received</span>')
     : "";
-  let useBy = "";
-  if(i.expiry_date){
-    const d = daysUntil(i.expiry_date);
-    useBy = d < 0 ? "overdue, was " + fmtDate(i.expiry_date) : d === 0 ? "use by today" : "use by " + fmtDate(i.expiry_date);
-  }
+  let expPill = "";
+  if(inStock && es === "bad") expPill = ' <span class="pill bad">Expired</span>';
+  else if(inStock && es === "past") expPill = ' <span class="pill past">Past best before</span>';
+  else if(inStock && i.expiry_date && daysUntil(i.expiry_date) === 0) expPill = ' <span class="pill warn">' + expLabel(i.expiry_type) + " today</span>";
+  const bought = boughtDate(i);
   const meta = [
     i.quantity ? i.quantity + " " + (i.unit || "") : "",
-    useBy,
-    searching && i.deliveries ? "delivered " + fmtDateTime(i.deliveries.delivered_at) + (i.deliveries.supplier ? " from " + i.deliveries.supplier : "") : "",
+    bought ? "bought " + bought : "",
+    showStorage ? storageLabel(i.storage) : "",
     inStock ? lastCheckedText(i) : ""
   ].filter(Boolean).join(" · ");
+  const supplier = i.deliveries ? i.deliveries.supplier : null;
   const draggable = inStock && !state.selectMode ? ' draggable="true"' : "";
-  return '<div class="uf-row' + (isSel ? " selected" : "") + '" data-id="' + i.id + '" data-tint="' + tint + '"' + draggable +
+  const expCls = inStock && (es === "bad" || es === "past") ? " exp-" + es : "";
+  return '<div class="uf-row' + expCls + (isSel ? " selected" : "") + '" data-id="' + i.id + '" data-tint="' + tint + '"' + draggable +
     (isSel ? "" : ' style="background:' + tint + ';"') + ">" +
-    '<div class="uf-rail ' + cls + '"><div class="d1">' + d1 + '</div><div class="d2">' + esc(d2) + "</div></div>" +
+    '<div class="uf-rail ' + cls + '"><div class="d0">' + esc(d0) + '</div><div class="d1">' + d1 + '</div><div class="d2">' + esc(d2) + "</div></div>" +
     (state.selectMode && inStock ? '<span class="sel-dot"></span>' : "") +
-    '<div class="uf-main" data-id="' + i.id + '"><div class="uf-name">' + esc(i.item_name) + statusPill +
+    '<div class="uf-main" data-id="' + i.id + '"><div class="uf-name">' + supplierIcon(supplier) + esc(i.item_name) + statusPill + expPill +
     (evWarn ? ' <span class="pill warn">Expires before event</span>' : "") + "</div>" +
     '<div class="uf-meta">' + fnChip(i.catering_functions, i.function_id) + (meta ? " <span>" + esc(meta) + "</span>" : "") + "</div></div>" +
     (!state.selectMode && inStock ?
@@ -2620,7 +2832,7 @@ function wireBoard(box, items){
             toast("Marked as not received");
           }else{
             if(fn && it.expiry_date && it.expiry_date < fn.event_date &&
-               !confirm("Use by " + fmtDate(it.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+               !confirm(expLabel(it.expiry_type) + " " + fmtDate(it.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
             await run(sb.from("stock_items").update({function_id: fnId}).eq("id", it.id));
             toast("Allocated to " + (fn ? fn.name : "general stock"));
           }
@@ -2651,8 +2863,24 @@ function fnChip(fnObj, fnId){
   if(!fnId || !fnObj) return '<span class="pill plain">General</span>';
   return '<span class="pill" style="background:' + esc(fnObj.colour || "#546e64") + '; color:#fff;">' + esc(fnObj.name) + "</span>";
 }
+// Every storage area in the kitchen, in the order they show on the board. The
+// first three keep their original keys (fridge, freezer, dry) so older stock
+// still lands in the right place, they just show under the new names.
+const STORAGES = ["fridge", "freezer", "dry", "kitchen_fridge", "bar_fridge", "restaurant"];
+const STORAGE_LABELS = {
+  fridge: "Cool room",
+  freezer: "Walk in freezer",
+  dry: "Walk in pantry",
+  kitchen_fridge: "Large kitchen fridge",
+  bar_fridge: "Glass bar fridges",
+  restaurant: "Restaurant fridge/freezer"
+};
 function storageLabel(s){
-  return s === "fridge" ? "Fridge" : s === "freezer" ? "Freezer" : s === "dry" ? "Dry" : "No location";
+  return STORAGE_LABELS[s] || "No location";
+}
+function storageRank(s){
+  const i = STORAGES.indexOf(s);
+  return i === -1 ? STORAGES.length : i;
 }
 function updateBulkBar(){
   $("bulkBar").style.display = state.selectMode ? "flex" : "none";
@@ -2771,6 +2999,7 @@ function markModal(i, status){
             quantity: aq,
             unit: i.unit,
             expiry_date: i.expiry_date,
+            ...expTypeNew(i.expiry_type),
             function_id: i.function_id,
             status,
             status_note: note,
@@ -2823,9 +3052,9 @@ async function itemModal(i){
     '<input id="imQty" type="number" inputmode="decimal" step="any" min="0" value="' + (i.quantity ?? "") + '" style="flex:1;">' +
     '<input id="imUnit" list="unitList" value="' + esc(i.unit || "") + '" style="flex:1;"></div></div>' +
     '<div class="field"><label for="imStorage">Storage</label><select id="imStorage"><option value="">None</option>' +
-    ["fridge","freezer","dry"].map(s => '<option value="' + s + '"' + (i.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") +
+    STORAGES.map(s => '<option value="' + s + '"' + (i.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") +
     "</select></div></div>" +
-    '<div class="field"><label for="imExpiry">Use by</label><input type="date" id="imExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
+    '<div class="field"><label for="imExpiry">Use by or best before</label>' + expTypeSelect("imExpType", i.expiry_type) + '<input type="date" id="imExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
     '<button class="btn btn-primary" id="btnImSave">Save changes</button>' +
     (inStock && i.catering_functions ? '<button class="btn btn-secondary" id="btnImReturn" style="width:100%; margin-top:8px;">Return to general stock</button>' : "") +
     (inStock ? '<button class="btn btn-ghost" id="btnImNotRec" style="width:100%; margin-top:8px; color:var(--red);">Mark as not received</button>' : "") +
@@ -2849,7 +3078,8 @@ async function itemModal(i){
         storage: m.querySelector("#imStorage").value || null,
         quantity: qv === "" ? null : +qv,
         unit: m.querySelector("#imUnit").value.trim() || null,
-        expiry_date: m.querySelector("#imExpiry").value || null
+        expiry_date: m.querySelector("#imExpiry").value || null,
+        ...expTypePatch(m.querySelector("#imExpType").value, i.expiry_type)
       }).eq("id", i.id));
       closeModal(); toast("Saved"); refreshCurrentTab();
     }catch(e){}
@@ -2889,6 +3119,7 @@ async function itemModal(i){
             quantity: aq0,
             unit: i.unit,
             expiry_date: i.expiry_date,
+            ...expTypeNew(i.expiry_type),
             status: "not_received",
             short_or_wrong: true,
             status_changed_at: new Date().toISOString()
@@ -2905,7 +3136,7 @@ async function itemModal(i){
     const fnId = +fval;
     const fn = allocFns.find(f => f.id === fnId);
     if(fn && i.expiry_date && i.expiry_date < fn.event_date){
-      if(!confirm("Use by " + fmtDate(i.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+      if(!confirm(expLabel(i.expiry_type) + " " + fmtDate(i.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
     }
     try{
       const aqEl = m.querySelector("#imAllocQty");
@@ -2922,6 +3153,7 @@ async function itemModal(i){
             quantity: aq,
             unit: i.unit,
             expiry_date: i.expiry_date,
+            ...expTypeNew(i.expiry_type),
             function_id: fnId
           }));
           await run(sb.from("stock_items").update({quantity: Math.round((i.quantity - aq) * 100) / 100}).eq("id", i.id));
@@ -3482,7 +3714,7 @@ function kitchenItemModal(i){
          i.deliveries ? "from " + (i.deliveries.supplier || "delivery") + ", " + fmtDateTime(i.deliveries.delivered_at) : "",
          lastCheckedText(i)].filter(Boolean).join(" · ")) + "</p>" +
     '<div style="margin:0 0 14px;">' + fnChip(i.catering_functions, i.function_id) +
-    (i.expiry_date ? ' <span class="pill ' + (daysUntil(i.expiry_date) <= 0 ? "bad" : daysUntil(i.expiry_date) <= 3 ? "warn" : "ok") + '">use by ' + esc(fmtDate(i.expiry_date)) + "</span>" : "") + "</div>" +
+    (i.expiry_date ? ' <span class="pill ' + ({bad:"bad", past:"past", warn:"warn", ok:"ok"}[expState(i)] || "ok") + '">' + expWord(i.expiry_type) + " " + esc(fmtDate(i.expiry_date)) + "</span>" : "") + "</div>" +
     '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
     '<button class="btn" id="kiUsed" style="flex:1; background:var(--green); color:#fff;">Used</button>' +
     '<button class="btn btn-danger" id="kiBin" style="flex:1;">Bin</button>' +
@@ -3490,9 +3722,9 @@ function kitchenItemModal(i){
     '<button class="btn btn-secondary" id="kiAlloc" style="width:100%;">Allocate to a function</button>' +
     "<h3>Fix the label</h3>" +
     '<div class="grid2">' +
-    '<div class="field"><label for="kiExpiry">Use by (from the product)</label><input type="date" id="kiExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
+    '<div class="field"><label for="kiExpiry">Use by or best before (from the product)</label>' + expTypeSelect("kiExpType", i.expiry_type) + '<input type="date" id="kiExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
     '<div class="field"><label for="kiStorage">Storage</label><select id="kiStorage"><option value="">None</option>' +
-    ["fridge","freezer","dry"].map(s => '<option value="' + s + '"' + (i.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") +
+    STORAGES.map(s => '<option value="' + s + '"' + (i.storage === s ? " selected" : "") + ">" + storageLabel(s) + "</option>").join("") +
     "</select></div></div>" +
     '<button class="btn btn-ghost" id="kiSave" style="width:100%;">Save changes</button>' +
     '<p class="small muted" style="margin:10px 0 0;">Wrong name, quantity or category? That gets fixed in admin mode.</p>'
@@ -3504,7 +3736,7 @@ function kitchenItemModal(i){
     pickFunction(async (fnId, fn) => {
       try{
         if(fn && i.expiry_date && i.expiry_date < fn.event_date &&
-           !confirm("Use by " + fmtDate(i.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
+           !confirm(expLabel(i.expiry_type) + " " + fmtDate(i.expiry_date) + " is before " + fn.name + " on " + fmtDate(fn.event_date) + ". Allocate anyway?")) return;
         await run(sb.from("stock_items").update({function_id: fnId}).eq("id", i.id));
         toast("Allocated to " + (fn ? fn.name : "general stock"));
         refreshCurrentTab();
@@ -3515,6 +3747,7 @@ function kitchenItemModal(i){
     try{
       await run(sb.from("stock_items").update({
         expiry_date: m.querySelector("#kiExpiry").value || null,
+        ...expTypePatch(m.querySelector("#kiExpType").value, i.expiry_type),
         storage: m.querySelector("#kiStorage").value || null
       }).eq("id", i.id));
       closeModal(); toast("Saved"); refreshCurrentTab();
@@ -3543,7 +3776,7 @@ async function functionDetailRO(fn){
     (tagged.length
       ? tagged.map(i =>
           '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(i.item_name) + "</div>" +
-          '<div class="s">' + esc([i.quantity ? i.quantity + " " + (i.unit || "") : "", storageLabel(i.storage), i.expiry_date ? "use by " + fmtDate(i.expiry_date) : ""].filter(Boolean).join(" · ")) + "</div></div></div>"
+          '<div class="s">' + esc([i.quantity ? i.quantity + " " + (i.unit || "") : "", storageLabel(i.storage), i.expiry_date ? expWord(i.expiry_type) + " " + fmtDate(i.expiry_date) : ""].filter(Boolean).join(" · ")) + "</div></div></div>"
         ).join("")
       : '<p class="small muted">Nothing allocated yet.</p>') +
     "<h3>Deliveries tagged</h3>" +
@@ -3972,7 +4205,7 @@ async function confirmOrderModal(input){
     '<div class="field"><label>Category</label><select id="cxCat">' + catOpts(null) + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="cxQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="cxUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
-    '<div class="field"><label>Storage</label><select id="cxStorage"><option value="">Choose&hellip;</option><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select></div></div>' +
+    '<div class="field"><label>Storage</label><select id="cxStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Large kitchen fridge</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select></div></div>' +
     '<div class="field" id="cxForWrap" style="display:none;"><label>For which group?</label><select id="cxFor"></select></div>' +
     '<button class="btn btn-secondary btn-sm" id="cxAdd" style="width:100%;">Add it</button>' +
     "</div>" +
@@ -4047,7 +4280,7 @@ async function confirmOrderModal(input){
       return '<div class="ord-row" data-k="' + esc(p.key) + '"><div class="nm">' + esc(p.name) +
         '<div class="sub">' + esc(expTxt(p)) + "</div>" +
         '<div class="stchips">' +
-          ["fridge","freezer","dry"].map(s => '<button data-st="' + s + '" class="' + (mk.storage === s ? "on " + s : "") + '">' + storageLabel(s) + "</button>").join("") +
+          STORAGES.map(s => '<button data-st="' + s + '" class="' + (mk.storage === s ? "on " + s : "") + '">' + storageLabel(s) + "</button>").join("") +
           '<select class="stcat">' + catOpts(mk.category) + "</select></div>" +
         '<div class="ord-qty" style="display:' + (showQty ? "flex" : "none") + ';">' +
           '<input type="number" inputmode="decimal" step="any" min="0" class="oq" value="' + (mk.qty ?? "") + '" placeholder="Qty">' +
@@ -4767,7 +5000,7 @@ function orderForm(o){
     '<div class="field"><label>Category</label><select id="omICat">' + catOpts + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="omIQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="omIUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
-    '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="dry">Dry</option></select></div></div>' +
+    '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Large kitchen fridge</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select></div></div>' +
     '<button class="btn btn-ghost" id="omAddItem" style="width:100%;">+ Add item</button>' +
     '<button class="btn btn-primary" id="omSave" style="margin-top:14px;">' + (o ? "Save order" : "Add order") + "</button>" +
     statusBtn +
@@ -5273,6 +5506,7 @@ function bindStatic(){
   $("btnNoOrder").addEventListener("click", () => { state.dvPane = "receive"; showTab("deliveries"); });
   const bst = $("btnStocktake");
   if(bst) bst.addEventListener("click", stocktakeStart);
+  $("btnQuickAdd").addEventListener("click", quickAddItem);
   const bpo = $("btnPickOrders");
   if(bpo) bpo.addEventListener("click", pickOrders);
   $("btnAddOrder").addEventListener("click", () => orderForm(null));
@@ -5292,6 +5526,8 @@ function bindStatic(){
     $("segFull").querySelector('[data-v="issue"]').classList.toggle("warn", v === "issue");
   });
   wireSeg($("segStorage"), "", v => { state.itemStorage = v; autoExpiry(); });
+  state.ufSort = readStore("wslr_uf_sort") === "date" ? "date" : "storage";
+  wireSeg($("ufSortSeg"), state.ufSort, v => { state.ufSort = v; store("wslr_uf_sort", v); refreshCurrentTab(); });
   $("iCategory").addEventListener("change", autoExpiry);
   $("rFunction").addEventListener("change", renderDraftItems);
   $("btnTakePhoto").addEventListener("click", () => $("cameraInput").click());
