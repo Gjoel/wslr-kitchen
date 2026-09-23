@@ -3,71 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Passport Phrasebook</title>
+<title>Paso a Paso</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
   :root {
-    --ground: #FFF8DB;
-    --surface: #FFFFFF;
-    --ink: #3A1631;
-    --muted: #7D5B70;
-    --line: #F1DDB4;
-    --accent: #D6336C;
-    --accent-ink: #FFFFFF;
-    --accent-soft: #FDE2EC;
-    --stamp: #C2257A;
-    --gold: #F2B400;
-    --highlight: #FFE066;
-    --good: #2F7D3E;
-    --good-soft: #E1F0E2;
-    --bad: #B23A2A;
-    --bad-soft: #F7E1DC;
-    --shadow: 0 1px 2px rgba(58,22,49,.06), 0 8px 24px rgba(214,51,108,.08);
+    color-scheme: light;
+    --ground: #FFE14D;
+    --panel: #FFC4DD;
+    --surface: #FFF4A8;
+    --ink: #6B0A3C;
+    --muted: #A0306A;
+    --line: #F58BB8;
+    --accent: #D10A63;
+    --accent-ink: #FFF4A8;
+    --accent-soft: #FF8FC0;
+    --stamp: #D10A63;
+    --gold: #F5B700;
+    --highlight: #FF8FC0;
+    --good: #D10A63;
+    --good-soft: #FFE14D;
+    --bad: #6B0A3C;
+    --bad-soft: #FF8FC0;
+    --shadow: 0 1px 2px rgba(107,10,60,.10), 0 10px 28px rgba(209,10,99,.18);
     --display: "Young Serif", Georgia, "Times New Roman", serif;
     --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --ground: #1F1420;
-      --surface: #2B1C2C;
-      --ink: #FFF3D6;
-      --muted: #C9A9BC;
-      --line: #46304A;
-      --accent: #FF6FA5;
-      --accent-ink: #2A0716;
-      --accent-soft: #4A1F36;
-      --stamp: #FF8EC0;
-      --gold: #FFD23F;
-      --highlight: #6B5313;
-      --good: #6CC27B;
-      --good-soft: #1E3324;
-      --bad: #EE7A68;
-      --bad-soft: #3A2220;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
-    }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --ground: #1F1420;
-    --surface: #2B1C2C;
-    --ink: #FFF3D6;
-    --muted: #C9A9BC;
-    --line: #46304A;
-    --accent: #FF6FA5;
-    --accent-ink: #2A0716;
-    --accent-soft: #4A1F36;
-    --stamp: #FF8EC0;
-    --gold: #FFD23F;
-    --highlight: #6B5313;
-    --good: #6CC27B;
-    --good-soft: #1E3324;
-    --bad: #EE7A68;
-    --bad-soft: #3A2220;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
   }
 
   * { box-sizing: border-box; }
@@ -88,28 +50,19 @@
   .stats { display: flex; gap: 16px; font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .stats b { color: var(--ink); font-weight: 500; font-size: 18px; display: block; line-height: 1.1; }
 
-  .langs { display: flex; flex-wrap: wrap; gap: 8px; }
-  .lang {
-    font: inherit; font-size: 14px; font-weight: 600;
-    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
-    padding: 7px 14px 7px 10px; border-radius: 999px; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 8px;
-  }
-  .lang .code { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .06em; border: 1.5px solid currentColor; border-radius: 4px; padding: 0 4px; color: var(--muted); }
-  .lang[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
-  .lang[aria-pressed="true"] .code { color: var(--accent); }
 
   .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
   .tabs { display: flex; gap: 2px; background: var(--line); padding: 3px; border-radius: 10px; flex-wrap: wrap; }
   .tab { font: inherit; font-size: 14px; font-weight: 600; border: 0; background: transparent; color: var(--muted); padding: 7px 14px; border-radius: 8px; cursor: pointer; }
-  .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(107,10,60,.15); }
+  .tab { color: var(--ink); }
   select {
     font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
     border: 1.5px solid var(--line); border-radius: 8px; padding: 7px 10px;
   }
   button:focus-visible, select:focus-visible, input:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
 
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: clamp(18px, 4vw, 32px); display: grid; gap: 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: clamp(18px, 4vw, 32px); display: grid; gap: 20px; }
   .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
   /* Flashcard */
@@ -155,6 +108,7 @@
   .opt .k { font-family: var(--mono); font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; flex: none; }
   .opt.right { border-color: var(--good); background: var(--good-soft); }
   .opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .opt.wrong span:last-child { text-decoration: line-through; }
   .opt:disabled { cursor: default; }
 
   .feedback { min-height: 24px; text-align: center; font-weight: 600; }
@@ -220,6 +174,10 @@
   .opt.letteropt { font-family: var(--display); font-size: 28px; justify-content: flex-start; align-items: center; }
   .opt.letteropt .k { font-family: var(--mono); }
 
+  .tip { font-size: 14px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 14px; text-align: left; }
+  .tip b { font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-right: 6px; }
+  .card .tip { margin-top: 16px; max-width: 46ch; }
+
   .empty { text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; padding: 20px 0; }
   .empty h3 { font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--ink); margin: 0; }
   .note { font-size: 13px; color: var(--muted); }
@@ -240,8 +198,8 @@
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Passport <span>Phrasebook</span></h1>
-      <p>Everyday words for your next trip, learned a few minutes at a time.</p>
+      <h1>Paso a <span>Paso</span></h1>
+      <p>Spanish for English speakers, step by step. A few minutes a day is enough.</p>
     </div>
     <div class="stats" aria-label="Your progress">
       <div><b id="statDue">0</b>due today</div>
@@ -249,8 +207,6 @@
       <div><b id="statStreak">0</b>day streak</div>
     </div>
   </header>
-
-  <nav class="langs" id="langs" aria-label="Language"></nav>
 
   <div class="row">
     <div class="tabs" role="tablist" id="tabs">
@@ -274,76 +230,111 @@
 
   // ---------- Languages ----------
   var LANGS = {
-    es: { name: "Spanish", code: "ES", voice: "es-ES", accents: ["á","é","í","ó","ú","ñ","ü","¿","¡"] },
-    fr: { name: "French", code: "FR", voice: "fr-FR", accents: ["à","â","ç","é","è","ê","ë","î","ï","ô","ù","û","œ"] },
-    it: { name: "Italian", code: "IT", voice: "it-IT", accents: ["à","è","é","ì","ò","ù"] },
-    id: { name: "Indonesian", code: "ID", voice: "id-ID", accents: [] }
+    es: { name: "Spanish", code: "ES", voice: "es-ES", accents: ["á","é","í","ó","ú","ñ","ü","¿","¡"] }
   };
 
-  // ---------- Vocabulary: [english, spanish, french, italian, indonesian] ----------
+  // ---------- Vocabulary: [english, spanish, tip for English speakers] ----------
+  // Nouns carry el/la because Spanish nouns have a gender that English doesn't.
   var TOPICS = {
     "Greetings": [
-      ["hello", "hola", "bonjour", "ciao", "halo"],
-      ["goodbye", "adiós", "au revoir", "arrivederci", "selamat tinggal"],
-      ["please", "por favor", "s'il vous plaît", "per favore", "tolong"],
-      ["thank you", "gracias", "merci", "grazie", "terima kasih"],
-      ["yes", "sí", "oui", "sì", "ya"],
-      ["no", "no", "non", "no", "tidak"],
-      ["excuse me", "perdón", "excusez-moi", "mi scusi", "permisi"],
-      ["good morning", "buenos días", "bonjour", "buongiorno", "selamat pagi"],
-      ["good night", "buenas noches", "bonne nuit", "buonanotte", "selamat malam"],
-      ["how are you?", "¿cómo estás?", "comment ça va ?", "come stai?", "apa kabar?"]
+      ["hello", "hola", "The h is always silent: say “OH-lah”."],
+      ["goodbye", "adiós"],
+      ["please", "por favor"],
+      ["thank you", "gracias", "Say “GRAH-see-ahs” (or “GRAH-thee-ahs” in Spain)."],
+      ["yes", "sí", "The accent matters: sí means yes, si means if."],
+      ["no", "no"],
+      ["excuse me / sorry", "perdón"],
+      ["good morning", "buenos días", "It's plural in Spanish, literally “good days”."],
+      ["good night", "buenas noches", "Also used for “good evening” once it's dark."],
+      ["how are you?", "¿cómo estás?", "Spanish questions open with an upside-down ¿."],
+      ["nice to meet you", "mucho gusto"],
+      ["my name is...", "me llamo...", "Literally “I call myself...”. The ll sounds like y."]
     ],
     "Food & drink": [
-      ["water", "agua", "eau", "acqua", "air"],
-      ["coffee", "café", "café", "caffè", "kopi"],
-      ["bread", "pan", "pain", "pane", "roti"],
-      ["cheese", "queso", "fromage", "formaggio", "keju"],
-      ["fish", "pescado", "poisson", "pesce", "ikan"],
-      ["chicken", "pollo", "poulet", "pollo", "ayam"],
-      ["rice", "arroz", "riz", "riso", "nasi"],
-      ["the bill, please", "la cuenta, por favor", "l'addition, s'il vous plaît", "il conto, per favore", "minta bon"],
-      ["delicious", "delicioso", "délicieux", "delizioso", "enak"],
-      ["breakfast", "desayuno", "petit-déjeuner", "colazione", "sarapan"]
+      ["water", "el agua", "Agua is feminine but takes el, because it starts with a stressed a."],
+      ["coffee", "el café"],
+      ["bread", "el pan"],
+      ["cheese", "el queso", "The u is silent: “KEH-so”."],
+      ["fish (to eat)", "el pescado", "A live fish is el pez. On your plate it's el pescado."],
+      ["chicken", "el pollo", "ll sounds like y: “POH-yo”."],
+      ["rice", "el arroz", "rr is a strong rolled r."],
+      ["the bill, please", "la cuenta, por favor"],
+      ["delicious", "delicioso"],
+      ["breakfast", "el desayuno"],
+      ["I would like...", "quisiera...", "A polite way to order, softer than quiero (I want)."]
     ],
     "Travel": [
-      ["beach", "playa", "plage", "spiaggia", "pantai"],
-      ["hotel", "hotel", "hôtel", "albergo", "hotel"],
-      ["train station", "estación de tren", "gare", "stazione", "stasiun kereta"],
-      ["airport", "aeropuerto", "aéroport", "aeroporto", "bandara"],
-      ["ticket", "billete", "billet", "biglietto", "tiket"],
-      ["where is...?", "¿dónde está...?", "où est... ?", "dov'è...?", "di mana...?"],
-      ["left", "izquierda", "gauche", "sinistra", "kiri"],
-      ["right", "derecha", "droite", "destra", "kanan"],
-      ["room", "habitación", "chambre", "camera", "kamar"],
-      ["key", "llave", "clé", "chiave", "kunci"]
+      ["beach", "la playa"],
+      ["hotel", "el hotel", "The h is silent: “oh-TEL”."],
+      ["train station", "la estación de tren"],
+      ["airport", "el aeropuerto"],
+      ["ticket", "el billete", "In Latin America you'll often hear el boleto."],
+      ["where is...?", "¿dónde está...?", "Locations always use estar, never ser."],
+      ["left", "izquierda", "Think “is-key-AIR-dah”."],
+      ["right", "derecha", "Careful: derecho means “straight on”."],
+      ["room", "la habitación"],
+      ["key", "la llave"]
     ],
     "Numbers": [
-      ["one", "uno", "un", "uno", "satu"],
-      ["two", "dos", "deux", "due", "dua"],
-      ["three", "tres", "trois", "tre", "tiga"],
-      ["four", "cuatro", "quatre", "quattro", "empat"],
-      ["five", "cinco", "cinq", "cinque", "lima"],
-      ["six", "seis", "six", "sei", "enam"],
-      ["seven", "siete", "sept", "sette", "tujuh"],
-      ["eight", "ocho", "huit", "otto", "delapan"],
-      ["nine", "nueve", "neuf", "nove", "sembilan"],
-      ["ten", "diez", "dix", "dieci", "sepuluh"]
+      ["one", "uno", "Shortens to un before a masculine noun: un café."],
+      ["two", "dos"],
+      ["three", "tres", "Tap the r quickly, like the tt in “butter”."],
+      ["four", "cuatro"],
+      ["five", "cinco"],
+      ["six", "seis", "Rhymes with “case”."],
+      ["seven", "siete"],
+      ["eight", "ocho"],
+      ["nine", "nueve"],
+      ["ten", "diez"]
     ],
     "Everyday": [
-      ["today", "hoy", "aujourd'hui", "oggi", "hari ini"],
-      ["tomorrow", "mañana", "demain", "domani", "besok"],
-      ["friend", "amigo", "ami", "amico", "teman"],
-      ["house", "casa", "maison", "casa", "rumah"],
-      ["big", "grande", "grand", "grande", "besar"],
-      ["small", "pequeño", "petit", "piccolo", "kecil"],
-      ["hot", "caliente", "chaud", "caldo", "panas"],
-      ["cold", "frío", "froid", "freddo", "dingin"],
-      ["I don't understand", "no entiendo", "je ne comprends pas", "non capisco", "saya tidak mengerti"],
-      ["how much is it?", "¿cuánto cuesta?", "c'est combien ?", "quanto costa?", "berapa harganya?"]
+      ["today", "hoy", "Silent h again: sounds like “oy”."],
+      ["tomorrow", "mañana", "Also means “morning”. Tomorrow morning is mañana por la mañana."],
+      ["friend", "el amigo", "A female friend is la amiga."],
+      ["house", "la casa"],
+      ["big", "grande"],
+      ["small", "pequeño"],
+      ["hot", "caliente", "For the weather say hace calor (“it makes heat”)."],
+      ["cold", "frío"],
+      ["I don't understand", "no entiendo", "Spanish puts no in front of the verb. No need for “do”."],
+      ["how much is it?", "¿cuánto cuesta?"]
+    ],
+    "Verbs": [
+      ["to be (who or what)", "ser", "For identity and lasting traits: soy australiano (I'm Australian)."],
+      ["to be (how or where)", "estar", "For feelings and locations: estoy cansado (I'm tired)."],
+      ["to have", "tener", "Also used for age: tengo treinta años, “I have thirty years”."],
+      ["to go", "ir"],
+      ["to want", "querer"],
+      ["to speak", "hablar", "Silent h: “ah-BLAR”."],
+      ["to eat", "comer"],
+      ["to live", "vivir", "b and v sound the same in Spanish."],
+      ["to need", "necesitar"],
+      ["to like", "gustar", "Works backwards: me gusta el café means “coffee pleases me”."]
+    ],
+    "Questions": [
+      ["what?", "¿qué?"],
+      ["where?", "¿dónde?"],
+      ["when?", "¿cuándo?"],
+      ["who?", "¿quién?"],
+      ["why?", "¿por qué?", "Written as one word with no accent, porque means “because”."],
+      ["how?", "¿cómo?"],
+      ["how much?", "¿cuánto?"],
+      ["which?", "¿cuál?"]
+    ],
+    "False friends": [
+      ["pregnant", "embarazada", "Not “embarrassed”! That's avergonzado."],
+      ["success", "el éxito", "Not “exit”. The way out is la salida."],
+      ["bookshop", "la librería", "A library is la biblioteca."],
+      ["current, present-day", "actual", "“Actually” is en realidad."],
+      ["sensitive", "sensible", "“Sensible” in English is sensato."],
+      ["to carry out", "realizar", "Not “realise”. To realise is darse cuenta."],
+      ["folder", "la carpeta", "A carpet is la alfombra."],
+      ["clothes", "la ropa", "Rope is la cuerda."],
+      ["to attend", "asistir", "Not “assist”. To help is ayudar."],
+      ["having a cold", "constipado", "Not “constipated”! In Spain it means a stuffy cold."]
     ]
   };
-  var LANG_INDEX = { es: 1, fr: 2, it: 3, id: 4 };
+  var LANG_INDEX = { es: 1 };
 
   // ---------- Spanish alphabet: [letter, name, how it sounds, example word, meaning, second example, meaning] ----------
   var ALPHABET = [
@@ -400,7 +391,7 @@
   }
 
   var state = load() || { lang: "es", mode: "cards", topic: "All topics", words: {}, days: [] };
-  if (!LANGS[state.lang]) state.lang = "es";
+  state.lang = "es";
   if (!state.words) state.words = {};
   if (!state.days) state.days = [];
 
@@ -420,7 +411,7 @@
     Object.keys(TOPICS).forEach(function (t) {
       if (topic !== "All topics" && topic !== t) return;
       TOPICS[t].forEach(function (row) {
-        out.push({ en: row[0], target: row[i], topic: t, id: lang + "|" + row[0] });
+        out.push({ en: row[0], target: row[i], tip: row[2] || "", topic: t, id: lang + "|" + row[0] });
       });
     });
     return out;
@@ -483,6 +474,7 @@
       window.speechSynthesis.speak(u);
     } catch (e) {}
   }
+  function tipHtml(w) { return w.tip ? '<div class="tip"><b>Tip</b>' + esc(w.tip) + '</div>' : ''; }
   function speakBtn(text) {
     if (!canSpeak) return "";
     return '<button class="speak" type="button" data-say="' + esc(text) + '">' + ICON_SPEAK + 'Listen</button>';
@@ -492,11 +484,6 @@
   var $ = function (id) { return document.getElementById(id); };
   var panel = $("panel");
 
-  function renderLangs() {
-    $("langs").innerHTML = Object.keys(LANGS).map(function (k) {
-      return '<button class="lang" type="button" data-lang="' + k + '" aria-pressed="' + (k === state.lang) + '"><span class="code">' + LANGS[k].code + '</span>' + LANGS[k].name + '</button>';
-    }).join("");
-  }
   function renderTopics() {
     var opts = ["All topics"].concat(Object.keys(TOPICS));
     $("topic").innerHTML = opts.map(function (t) {
@@ -507,7 +494,6 @@
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
       b.setAttribute("aria-selected", String(b.dataset.mode === state.mode));
     });
-    $("alphaTab").hidden = state.lang !== "es";
     $("topic").hidden = state.mode === "progress" || state.mode === "alphabet";
   }
   function renderStats() {
@@ -547,7 +533,7 @@
       '<div class="card" id="flip" role="button" tabindex="0" aria-label="Flip card">' +
         (r.box === 0 ? '<span class="stampmark">New</span>' : '') +
         '<div><div class="word">' + esc(card.target) + '</div>' +
-        (flipped ? '<div class="meaning">' + esc(card.en) + '</div>' : '<div class="hint">Tap to reveal the English</div>') +
+        (flipped ? '<div class="meaning">' + esc(card.en) + '</div>' + tipHtml(card) : '<div class="hint">Tap to reveal the English</div>') +
         '</div></div>' +
       '<div class="row">' + speakBtn(card.target) + '<span class="note">' + L.name + ' → English</span></div>' +
       '<div class="actions">' +
@@ -600,7 +586,7 @@
       '<div class="feedback ' + (q.answered ? (q.picked === q.w ? "good" : "bad") : "") + '">' +
         (q.answered ? (q.picked === q.w ? "Correct!" : "Not quite. It's “" + esc(q.toEnglish ? q.w.en : q.w.target) + "”.") : "") +
       '</div>' +
-      (q.answered ? '<button class="btn primary" type="button" id="next">Next question</button>' : "");
+      (q.answered ? tipHtml(q.w) + '<button class="btn primary" type="button" id="next">Next question</button>' : "");
     if (q.answered) { var n = $("next"); if (n) n.focus(); }
   }
   function answer(i) {
@@ -631,15 +617,15 @@
       '<div class="eyebrow"><span>Write it in ' + L.name + '</span><span>' + esc(t.w.topic) + '</span></div>' +
       '<div class="prompt"><div class="word">' + esc(t.w.en) + '</div></div>' +
       '<form class="typebox" id="typeform" autocomplete="off">' +
-        '<input id="typein" type="text" lang="' + state.lang + '" spellcheck="false" autocapitalize="off" placeholder="Type the ' + L.name + ' word" value="' + esc(t.value) + '"' +
+        '<input id="typein" type="text" lang="' + state.lang + '" spellcheck="false" autocapitalize="off" placeholder="Type it in Spanish" value="' + esc(t.value) + '"' +
         (t.result ? ' class="' + (t.result === "wrong" ? "bad" : "good") + '" readonly' : "") + '>' +
         (t.result ? '<button class="btn primary" type="button" id="nexttype">Next word</button>' : '<button class="btn primary" type="submit">Check</button>') +
       '</form>' +
       (L.accents.length && !t.result ? '<div class="accents" aria-label="Insert accented letter">' + L.accents.map(function (a) { return '<button type="button" data-ins="' + a + '">' + a + '</button>'; }).join("") + '</div>' : "") +
       '<div class="feedback ' + (t.result === "wrong" ? "bad" : t.result ? "good" : "") + '">' +
-        (t.result === "exact" ? "Perfect!" : t.result === "close" ? "Correct, but watch the accents: “" + esc(t.w.target) + "”" : t.result === "wrong" ? "The answer is “" + esc(t.w.target) + "”." : "") +
+        (t.result === "exact" ? "Perfect!" : t.result === "noart" ? "Correct! Learn it with its article, though: “" + esc(t.w.target) + "”" : t.result === "close" ? "Correct, but watch the accents: “" + esc(t.w.target) + "”" : t.result === "wrong" ? "The answer is “" + esc(t.w.target) + "”." : "") +
       '</div>' +
-      (t.result ? '<div class="row" style="justify-content:center">' + speakBtn(t.w.target) + '</div>' : "") +
+      (t.result ? '<div class="row" style="justify-content:center">' + speakBtn(t.w.target) + '</div>' + tipHtml(t.w) : "") +
       (!t.result ? '<button class="reset" type="button" id="reveal">Show me the answer</button>' : "");
     var inp = $("typein");
     if (inp && !t.result) inp.focus();
@@ -651,7 +637,9 @@
     if (!giveUp && !v.trim()) return;
     var target = typ.w.target;
     var result;
+    var bare = target.replace(/^(el|la|los|las) /i, "");
     if (strict(v) === strict(target)) result = "exact";
+    else if (bare !== target && (strict(v) === strict(bare) || norm(v) === norm(bare))) result = "noart";
     else if (norm(v) === norm(target)) result = "close";
     else result = "wrong";
     typ.result = result;
@@ -819,12 +807,6 @@
   function resetSessions() { card = null; quiz = null; typ = null; confirmReset = false; buildCardQueue(); }
 
   // ---------- Events ----------
-  $("langs").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-lang]"); if (!b) return;
-    state.lang = b.dataset.lang;
-    if (state.mode === "alphabet" && state.lang !== "es") state.mode = "cards";
-    save(); renderLangs(); resetSessions(); render();
-  });
   $("tabs").addEventListener("click", function (e) {
     var b = e.target.closest("[data-mode]"); if (!b) return;
     state.mode = b.dataset.mode; save(); confirmReset = false;
@@ -892,7 +874,7 @@
   });
 
   // ---------- Start ----------
-  renderLangs(); renderTopics(); buildCardQueue(); render();
+  renderTopics(); buildCardQueue(); render();
 })();
 </script>
 </body>
