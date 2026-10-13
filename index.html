@@ -123,6 +123,27 @@ nav{
 #segStorage button[data-v="kitchen_fridge"].on{background:var(--kfridge); border-color:var(--kfridge);}
 #segStorage button[data-v="bar_fridge"].on{background:var(--bar); border-color:var(--bar);}
 #segStorage button[data-v="restaurant"].on{background:var(--rest); border-color:var(--rest);}
+/* Incoming orders: one box per item */
+.inc-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px; margin-bottom:6px;}
+.inc-card{background:#fff; border:1px solid var(--line); border-top:6px solid var(--sc, #98a29c); border-radius:12px;
+  padding:10px 12px 11px; box-shadow:var(--shadow); cursor:pointer; display:flex; flex-direction:column; gap:6px;}
+.inc-card.todo{background:#faf8f3; border-style:dashed; border-top-style:solid;}
+.inc-card .nm{font-weight:700; font-size:15.5px; line-height:1.25;}
+.inc-card .sz{font-size:13px; color:var(--muted); margin-top:1px;}
+.inc-card dl{display:grid; grid-template-columns:auto 1fr; gap:3px 10px; margin:0; font-size:13px;}
+.inc-card dt{color:var(--muted); font-weight:600;}
+.inc-card dd{margin:0; text-align:right; display:flex; justify-content:flex-end; align-items:center; gap:5px; min-width:0;}
+.inc-card dd .sup-ic{margin-right:0; width:20px; height:20px; font-size:9px; vertical-align:0;}
+.inc-exp{display:flex; align-items:center; justify-content:space-between; gap:8px; border-radius:9px; padding:6px 9px; font-size:13px; font-weight:700; color:#fff;}
+.inc-exp.ok{background:var(--green);} .inc-exp.warn{background:#f2c230; color:var(--ink);} .inc-exp.bad{background:var(--red);}
+.inc-exp.none{background:#e9e6de; color:var(--muted); font-weight:600;}
+.inc-exp small{font-weight:600; opacity:.9;}
+.inc-tags{display:flex; flex-wrap:wrap; gap:5px;}
+.inc-head{display:flex; align-items:center; gap:9px; margin:16px 0 8px; font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:16px;}
+.inc-head .cnt{color:var(--muted); font-weight:600; font-size:13px;}
+.inc-head .bar{width:6px; align-self:stretch; border-radius:3px; background:var(--sc, var(--line));}
+.inc-head .sub{font-family:'Public Sans',sans-serif; font-weight:500; font-size:13px; color:var(--muted);}
+#incViewSeg button{font-size:13.5px;}
 .sup-legend{display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; font-size:12.5px; color:var(--muted); margin:-2px 0 10px;}
 .sup-legend span{display:inline-flex; align-items:center;}
 .sup-legend .sup-ic{margin-right:5px; vertical-align:0;}
@@ -585,6 +606,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
       <div class="hd-sub" id="hdSub">Receiving &middot; Use first &middot; Waste</div>
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
+      <a class="hd-admin" href="shed.html" style="text-decoration:none;">Bike shed</a>
       <button class="hd-admin" id="btnMode">Admin</button>
       <div id="statusDot" title="Connection"></div>
     </div>
@@ -594,6 +616,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 <nav>
   <div class="tabbar">
     <button data-tab="usefirst" class="active">Stock</button>
+    <button data-tab="incoming">Incoming</button>
     <button data-tab="arrivals" class="kit-only">Arrivals<span id="arrBadge" class="badge-dot" style="display:none;"></span></button>
     <button data-tab="orders" class="adm-only">Orders</button>
     <button data-tab="unalloc" class="adm-only">Unallocated</button>
@@ -632,6 +655,25 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 </section>
 
 <!-- ============ ARRIVALS (kitchen tick-off) ============ -->
+<section id="sec-incoming">
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <input id="incSearch" placeholder="Search incoming, e.g. milk or an order number" autocomplete="off" style="flex:1;">
+    <button class="btn btn-primary adm-only" id="btnIncNew" style="flex:none; width:auto;">+ New order</button>
+  </div>
+  <div class="uf-sort">
+    <span class="lbl">View</span>
+    <div class="seg" id="incViewSeg">
+      <button data-v="expiry">Going off soonest</button>
+      <button data-v="storage">By storage area</button>
+      <button data-v="shop">By shop</button>
+      <button data-v="order">By order</button>
+    </div>
+  </div>
+  <div class="fnlegend" id="incShow"></div>
+  <div id="incList"><div class="loading">Loading&hellip;</div></div>
+  <p class="small muted" style="margin-top:12px;">Use by and best before dates are estimates until the order arrives, worked out from the shelf life defaults in Settings. The real date is entered when the delivery is ticked off.</p>
+</section>
+
 <section id="sec-arrivals">
   <p class="muted small" style="margin:0 0 12px;">Orders the office is expecting. Tap one when it lands to tick off what actually arrived. When one truck brings food for several groups they show as one card, you enter what came off the truck once, and the app splits it between the groups.</p>
   <div id="arrList"><div class="loading">Loading&hellip;</div></div>
@@ -1039,6 +1081,7 @@ const ICONS = {
   coolroom: '<rect x="4" y="2" width="16" height="20" rx="1"/><path d="M16 11v3"/><path d="M9 7v6a2 2 0 1 0 2 0V7a1 1 0 0 0-2 0z"/>',
   glass: '<path d="M7 3h10l-1 8a4 4 0 0 1-8 0z"/><path d="M12 15v6M8 21h8"/>',
   utensils: '<path d="M6 2v7a2 2 0 0 0 4 0V2M8 2v20"/><path d="M17 2c-2 2-2 6 0 8v12"/>',
+  incoming: '<path d="M3 12v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M12 3v12M7 10l5 5 5-5"/>',
   none: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>'
 };
 function icon(name, cls){
@@ -1049,7 +1092,7 @@ const STORAGE_ICONS = {fridge: "coolroom", freezer: "freezer", dry: "dry", kitch
 function storageIcon(s){
   return icon(STORAGE_ICONS[s] || "none", "st-ic-" + (STORAGE_ICONS[s] ? s : "none"));
 }
-const TAB_ICONS = {usefirst: "stock", arrivals: "truck", orders: "orders", unalloc: "inbox", functions: "calendar", deliveries: "receipt", settings: "gear"};
+const TAB_ICONS = {usefirst: "stock", incoming: "incoming", arrivals: "truck", orders: "orders", unalloc: "inbox", functions: "calendar", deliveries: "receipt", settings: "gear"};
 function paintDashboardIcons(){
   document.querySelectorAll(".tabbar button").forEach(b => {
     if(b.querySelector(".ic")) return;
@@ -1172,6 +1215,7 @@ function showTab(name){
   document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
   document.querySelectorAll("main section").forEach(s => s.classList.toggle("active", s.id === "sec-" + name));
   if(name === "usefirst") renderUseFirst();
+  if(name === "incoming") renderIncoming();
   if(name === "arrivals") renderArrivals();
   if(name === "orders") renderOrders();
   if(name === "unalloc") renderUnallocated();
@@ -1191,6 +1235,7 @@ function refreshCurrentTab(){
   const b = document.querySelector(".tabbar button.active");
   const t = b ? b.dataset.tab : "usefirst";
   if(t === "usefirst") renderUseFirst();
+  else if(t === "incoming") renderIncoming();
   else if(t === "arrivals") renderArrivals();
   else if(t === "orders") renderOrders();
   else if(t === "unalloc") renderUnallocated();
@@ -5064,7 +5109,7 @@ async function unplaceOrder(id){
   }catch(e){}
 }
 function orderForm(o){
-  const draft = o ? (o.order_items || []).map(it => ({name: it.item_name, category: it.category, storage: it.storage, qty: it.quantity, unit: it.unit})) : [];
+  const draft = o ? (o.order_items || []).map(it => ({name: it.item_name, category: it.category, storage: it.storage, qty: it.quantity, unit: it.unit, size: it.size || null})) : [];
   const dupWrap = o ? '<div id="ordDupes"></div>' : "";
   const statusBtn = o && o.status === "to_order"
     ? '<button class="btn btn-primary" id="ofPlace" style="width:100%; margin-top:10px;">Mark as ordered</button>'
@@ -5084,6 +5129,7 @@ function orderForm(o){
     '<div class="grid2">' +
     '<div class="field"><label for="omSupplier">Supplier</label><input id="omSupplier" list="supplierList" value="' + esc(o ? o.supplier || "" : "") + '" autocomplete="off"></div>' +
     '<div class="field"><label for="omDate">Expected on</label><input type="date" id="omDate" value="' + esc(o ? o.expected_date || "" : "") + '"></div></div>' +
+    '<div class="field"><label for="omNum">Order number <span style="text-transform:none; font-weight:500;">(optional)</span></label><input id="omNum" value="' + esc(o ? o.order_number || "" : "") + '" placeholder="From the confirmation email or docket" autocomplete="off"></div>' +
     '<div class="field"><label for="omFn">This order is for</label><select id="omFn"><option value="">General stock</option>' +
     state.functions.map(f => fnOptionHtml(f, o ? o.function_id : null)).join("") + "</select></div>" +
     '<div class="field"><label for="omNotes">Note for the kitchen</label><textarea id="omNotes" rows="2" placeholder="e.g. comes on the afternoon truck">' + esc(o ? o.notes || "" : "") + "</textarea></div>" +
@@ -5093,7 +5139,7 @@ function orderForm(o){
     '<div class="field"><label>Item</label><input id="omIName" list="nameList" autocomplete="off"></div>' +
     '<div class="field"><label>Category</label><select id="omICat">' + catOpts + "</select></div></div>" +
     '<div class="grid2">' +
-    '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="omIQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="omIUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
+    '<div class="field"><label>Quantity and size</label><div style="display:flex; gap:8px;"><input id="omIQty" type="number" inputmode="decimal" step="any" min="0" placeholder="Qty" style="flex:1;"><input id="omIUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"><input id="omISize" placeholder="Size, e.g. 500 g" style="flex:1.3;" autocomplete="off"></div></div>' +
     '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Large kitchen fridge</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select></div></div>' +
     '<button class="btn btn-ghost" id="omAddItem" style="width:100%;">+ Add item</button>' +
     '<button class="btn btn-primary" id="omSave" style="margin-top:14px;">' + (o ? "Save order" : "Add order") + "</button>" +
@@ -5111,7 +5157,7 @@ function orderForm(o){
   const drawItems = () => {
     m.querySelector("#omList").innerHTML = draft.length ? draft.map((x, i) =>
       '<div class="draft-item"><div class="n">' + esc(x.name) +
-      '<div class="small muted">' + esc([x.qty ? x.qty + " " + (x.unit || "") : "", x.category, x.storage ? storageLabel(x.storage) : ""].filter(Boolean).join(" · ")) + "</div></div>" +
+      '<div class="small muted">' + esc([x.qty ? x.qty + " " + (x.unit || "") : "", x.size, x.category, x.storage ? storageLabel(x.storage) : ""].filter(Boolean).join(" · ")) + "</div></div>" +
       '<button class="x" data-i="' + i + '">&times;</button></div>'
     ).join("") : '<p class="small muted" style="margin:0;">Nothing on it yet.</p>';
     m.querySelectorAll("#omList .x").forEach(b =>
@@ -5126,17 +5172,18 @@ function orderForm(o){
       category: m.querySelector("#omICat").value || null,
       storage: m.querySelector("#omIStorage").value || null,
       qty: m.querySelector("#omIQty").value ? +m.querySelector("#omIQty").value : null,
-      unit: m.querySelector("#omIUnit").value.trim() || null
+      unit: m.querySelector("#omIUnit").value.trim() || null,
+      size: m.querySelector("#omISize").value.trim() || null
     });
-    ["omIName","omIQty","omIUnit"].forEach(id => m.querySelector("#" + id).value = "");
+    ["omIName","omIQty","omIUnit","omISize"].forEach(id => m.querySelector("#" + id).value = "");
     drawItems();
     m.querySelector("#omIName").focus();
   });
   m.querySelector("#omSave").addEventListener("click", async () => {
-    const supplier = m.querySelector("#omSupplier").value.trim();
-    if(!supplier){ toast("Enter the supplier", {type:"err"}); return; }
+    const supplier = m.querySelector("#omSupplier").value.trim() || null;
     const payload = {
       supplier,
+      order_number: m.querySelector("#omNum").value.trim() || null,
       expected_date: m.querySelector("#omDate").value || null,
       function_id: m.querySelector("#omFn").value ? +m.querySelector("#omFn").value : null,
       notes: m.querySelector("#omNotes").value.trim() || null
@@ -5153,11 +5200,11 @@ function orderForm(o){
       }
       if(draft.length){
         await run(sb.from("order_items").insert(draft.map(x => ({
-          order_id: oid, item_name: x.name, category: x.category, storage: x.storage, quantity: x.qty, unit: x.unit
+          order_id: oid, item_name: x.name, category: x.category, storage: x.storage, quantity: x.qty, unit: x.unit, size: x.size || null
         }))));
       }
       closeModal(); toast(o ? "Order saved" : "Order added, the kitchen can see it now");
-      renderOrders(); updateArrBadge();
+      refreshCurrentTab(); updateArrBadge();
     }catch(e){}
   });
   const rc = m.querySelector("#omReceive");
@@ -5207,6 +5254,166 @@ function orderViewModal(o){
       closeModal(); toast("Order reopened"); renderOrders(); updateArrBadge();
     }catch(e){}
   });
+}
+// ============================================================
+// INCOMING: everything ordered (or still to order), one box per item
+// ============================================================
+const STORAGE_VARS = {fridge: "--fridge", freezer: "--freezer", dry: "--dry", kitchen_fridge: "--kfridge", bar_fridge: "--bar", restaurant: "--rest"};
+function storageColour(s){ return STORAGE_VARS[s] ? "var(" + STORAGE_VARS[s] + ")" : "#98a29c"; }
+// estimated use by: the day it should land plus the shelf life for that
+// category (and storage, when there is a default for that exact pair)
+function incEstimate(it, o){
+  const cat = it.category, st = it.storage;
+  if(!cat) return null;
+  const shelf = state.shelf || [];
+  const row = shelf.find(r => r.category === cat && r.storage === st) || shelf.find(r => r.category === cat);
+  if(!row) return null;
+  const base = o.expected_date ? new Date(o.expected_date + "T12:00") : new Date();
+  return localISO(new Date(base.getTime() + row.days * 86400000));
+}
+function incItems(orders){
+  const out = [];
+  orders.forEach(o => (o.order_items || []).forEach(it => {
+    out.push({
+      it, o,
+      name: it.item_name,
+      storage: STORAGES.includes(it.storage) ? it.storage : null,
+      est: incEstimate(it, o)
+    });
+  }));
+  return out;
+}
+function incCardHtml(x){
+  const it = x.it, o = x.o;
+  const qty = [it.quantity != null ? it.quantity + (it.unit ? " " + it.unit : "") : (it.unit || ""), it.size || ""].filter(Boolean).join(" · ");
+  let exp = '<div class="inc-exp none"><span>Use by</span><small>add a category to estimate</small></div>';
+  if(x.est){
+    const d = daysUntil(x.est);
+    const cls = d < 0 ? "bad" : d <= 3 ? "warn" : "ok";
+    exp = '<div class="inc-exp ' + cls + '"><span>Est. use by ' + esc(fmtDate(x.est)) + "</span><small>" +
+      (d < 0 ? "already past" : d === 0 ? "today" : d + (d === 1 ? " day" : " days")) + "</small></div>";
+  }
+  const shop = o.supplier || "";
+  const ordered = o.ordered_at ? fmtDate(localISO(new Date(o.ordered_at))) : (o.status === "to_order" ? "not yet" : "");
+  const rows = [
+    ["Shop", shop ? supplierIcon(shop) + "<span>" + esc(shop) + "</span>" : '<span class="muted">not set</span>'],
+    ["Order no.", o.order_number ? esc(o.order_number) : '<span class="muted">not set</span>'],
+    ["Bought", ordered ? esc(ordered) : '<span class="muted">not set</span>'],
+    ["Arriving", o.expected_date ? esc(fmtDate(o.expected_date)) : '<span class="muted">not set</span>']
+  ];
+  return '<div class="inc-card' + (o.status === "to_order" ? " todo" : "") + '" data-o="' + o.id + '" style="--sc:' + storageColour(x.storage) + ';">' +
+    "<div><div class=\"nm\">" + esc(x.name) + "</div>" + (qty ? '<div class="sz">' + esc(qty) + "</div>" : "") + "</div>" +
+    exp +
+    "<dl>" + rows.map(r => "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>").join("") + "</dl>" +
+    '<div class="inc-tags">' +
+      '<span class="pill st ' + esc(x.storage || "plain") + '">' + storageLabel(x.storage) + "</span>" +
+      (o.status === "to_order" ? '<span class="pill warn">Not ordered yet</span>' : '<span class="pill ok">Ordered</span>') +
+      (o.catering_functions ? fnChip(o.catering_functions, o.function_id) : "") +
+    "</div></div>";
+}
+function incSection(title, list, opts){
+  opts = opts || {};
+  return '<div class="inc-head" style="--sc:' + (opts.colour || "var(--line)") + ';"><span class="bar"></span>' +
+    (opts.icon || "") + "<span>" + title + '</span><span class="cnt">' + list.length + "</span>" +
+    (opts.sub ? '<span class="sub">' + opts.sub + "</span>" : "") + "</div>" +
+    '<div class="inc-grid">' + list.map(incCardHtml).join("") + "</div>";
+}
+function byEst(a, b){
+  const x = a.est || "9999-12-31", y = b.est || "9999-12-31";
+  if(x !== y) return x < y ? -1 : 1;
+  return String(a.name).localeCompare(String(b.name));
+}
+async function renderIncoming(){
+  const box = $("incList");
+  try{
+    if(!state.shelf || !state.shelf.length){ try{ await loadShelf(); }catch(e){} }
+    const orders = await run(
+      sb.from("orders").select(ORDER_SELECT).in("status", ["open", "to_order"])
+        .order("expected_date", {ascending:true, nullsFirst:false}).limit(300)
+    );
+    const nOpen = orders.filter(o => o.status === "open").length;
+    const nTodo = orders.length - nOpen;
+    const show = state.incShow || "all";
+    $("incShow").innerHTML =
+      '<button class="all' + (show === "all" ? " on" : "") + '" data-s="all">Everything (' + orders.length + ")</button>" +
+      '<button class="gen' + (show === "open" ? " on" : "") + '" data-s="open">Ordered (' + nOpen + ")</button>" +
+      '<button class="gen' + (show === "todo" ? " on" : "") + '" data-s="todo">Not ordered yet (' + nTodo + ")</button>";
+    $("incShow").querySelectorAll("button").forEach(b =>
+      b.addEventListener("click", () => { state.incShow = b.dataset.s; renderIncoming(); })
+    );
+
+    let list = orders;
+    if(show === "open") list = orders.filter(o => o.status === "open");
+    else if(show === "todo") list = orders.filter(o => o.status === "to_order");
+    let items = incItems(list);
+    const q = ($("incSearch").value || "").trim().toLowerCase();
+    if(q) items = items.filter(x =>
+      [x.name, x.it.category, x.it.size, x.o.supplier, x.o.order_number].some(v => v && String(v).toLowerCase().indexOf(q) !== -1));
+
+    if(!items.length){
+      box.innerHTML = '<div class="empty">' + (q ? 'Nothing incoming matches "' + esc(q) + '".'
+        : "Nothing incoming" + (show !== "all" ? " for this filter" : "") + ".<br>Orders show here as soon as they are added, from the shopping list, by hand, or from a supplier's confirmation email.") + "</div>";
+      return;
+    }
+
+    const view = state.incView || "expiry";
+    let html = "";
+    if(view === "expiry"){
+      html = '<div class="inc-grid">' + items.slice().sort(byEst).map(incCardHtml).join("") + "</div>";
+    }else if(view === "storage"){
+      STORAGES.concat([null]).forEach(st => {
+        const g = items.filter(x => x.storage === st).sort(byEst);
+        if(g.length) html += incSection(st ? storageLabel(st) : "No storage area set", g, {colour: storageColour(st), icon: storageIcon(st)});
+      });
+    }else if(view === "shop"){
+      const shops = {};
+      items.forEach(x => { const k = (x.o.supplier || "").trim() || "No shop set"; (shops[k] = shops[k] || []).push(x); });
+      Object.keys(shops).sort().forEach(k => {
+        html += incSection(esc(k), shops[k].sort(byEst), {icon: k === "No shop set" ? "" : supplierIcon(k)});
+      });
+    }else{
+      const seen = [];
+      items.forEach(x => { if(seen.indexOf(x.o) === -1) seen.push(x.o); });
+      seen.forEach(o => {
+        const g = items.filter(x => x.o === o).sort(byEst);
+        const sub = [
+          o.order_number ? "Order " + esc(o.order_number) : "",
+          o.expected_date ? "arriving " + esc(fmtDate(o.expected_date)) : "",
+          o.status === "to_order" ? "not ordered yet" : ""
+        ].filter(Boolean).join(" · ");
+        html += incSection(esc(o.supplier || "Order"), g, {icon: o.supplier ? supplierIcon(o.supplier) : "", sub});
+      });
+    }
+    box.innerHTML = html;
+    box.querySelectorAll(".inc-card").forEach(c =>
+      c.addEventListener("click", () => {
+        const o = orders.find(x => x.id === +c.dataset.o);
+        if(!o) return;
+        if(state.mode === "admin") orderForm(o);
+        else incOrderPeek(o);
+      })
+    );
+  }catch(e){
+    box.innerHTML = '<div class="empty">Could not load incoming orders. Check the connection.</div>';
+  }
+}
+// kitchen mode: a read only look at the whole order the box came from
+function incOrderPeek(o){
+  const items = o.order_items || [];
+  openModal(
+    "<h2>" + (o.supplier ? supplierIcon(o.supplier) : "") + esc(o.supplier || "Order") + "</h2>" +
+    '<p class="small muted" style="margin-top:2px;">' + esc([
+      o.order_number ? "Order " + o.order_number : "",
+      o.status === "to_order" ? "not ordered yet" : (o.ordered_at ? "ordered " + fmtDate(localISO(new Date(o.ordered_at))) : "ordered"),
+      o.expected_date ? "arriving " + fmtDate(o.expected_date) : "",
+      o.catering_functions ? "for " + o.catering_functions.name : ""
+    ].filter(Boolean).join(" · ")) + "</p>" +
+    (o.notes ? '<p class="small">' + esc(o.notes) + "</p>" : "") +
+    "<h3>" + items.length + " item" + (items.length === 1 ? "" : "s") + "</h3>" +
+    items.map(it => '<div class="small" style="padding:6px 0; border-bottom:1px solid var(--line);"><b>' + esc(it.item_name) + "</b> · " +
+      esc([it.quantity != null ? it.quantity + " " + (it.unit || "") : (it.unit || ""), it.size, it.storage ? storageLabel(it.storage) : ""].filter(Boolean).join(" · ")) + "</div>").join("") +
+    '<p class="small muted" style="margin-top:12px;">When it turns up, tick it off on the Arrivals tab.</p>'
+  );
 }
 // APP-JS-PART2-END
 // ============================================================
@@ -5602,6 +5809,11 @@ function bindStatic(){
   const bst = $("btnStocktake");
   if(bst) bst.addEventListener("click", stocktakeStart);
   $("btnQuickAdd").addEventListener("click", quickAddItem);
+  state.incView = ["expiry","storage","shop","order"].includes(readStore("wslr_inc_view")) ? readStore("wslr_inc_view") : "expiry";
+  wireSeg($("incViewSeg"), state.incView, v => { state.incView = v; store("wslr_inc_view", v); renderIncoming(); });
+  let incT;
+  $("incSearch").addEventListener("input", () => { clearTimeout(incT); incT = setTimeout(renderIncoming, 250); });
+  $("btnIncNew").addEventListener("click", () => orderForm(null));
   const bpo = $("btnPickOrders");
   if(bpo) bpo.addEventListener("click", pickOrders);
   $("btnAddOrder").addEventListener("click", () => orderForm(null));

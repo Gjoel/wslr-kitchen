@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f6b4f">
+<title>WSLR Bike Shed</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one column tool, sticky header with tabs, category bands of stock rows, sheet modals with tap-to-pick slots */
+:root{
+  --bg:#f3f5f2; --panel:#ffffff; --ink:#18231d; --muted:#5d6b63; --line:#dde3dc;
+  --accent:#1f6b4f; --accent-ink:#ffffff; --accent-soft:#e1efe8;
+  --out:#c0392b; --out-bg:#fbe8e5; --low:#d4690c; --low-bg:#fdeedd; --ok:#2e7d4f; --ok-bg:#e3f2e8;
+  --c1:#1e66b0; --c2:#0f7a72; --c3:#c2307a; --c4:#8a5a1e; --c5:#6d3fc0; --c6:#37474f; --c7:#7b8781; --c8:#b8860b; --c9:#00838f;
+  --shadow:0 1px 2px rgba(24,35,29,.06),0 4px 14px rgba(24,35,29,.06);
+  --f-display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121815; --panel:#1b2420; --ink:#e7eee9; --muted:#9aaba1; --line:#2c3933;
+  --accent:#4cb98b; --accent-ink:#0d1a14; --accent-soft:#1d3a2e;
+  --out:#ff7a6b; --out-bg:#3a1d1a; --low:#ffa65c; --low-bg:#3b2a17; --ok:#6fd39a; --ok-bg:#183326;
+  --c1:#5aa2ef; --c2:#3fc2b5; --c3:#f06aae; --c4:#d4a25e; --c5:#a98af2; --c6:#9fb0b8; --c7:#9aa59f; --c8:#e0b84a; --c9:#4dd0e1;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --panel:#1b2420; --ink:#e7eee9; --muted:#9aaba1; --line:#2c3933;
+  --accent:#4cb98b; --accent-ink:#0d1a14; --accent-soft:#1d3a2e;
+  --out:#ff7a6b; --out-bg:#3a1d1a; --low:#ffa65c; --low-bg:#3b2a17; --ok:#6fd39a; --ok-bg:#183326;
+  --c1:#5aa2ef; --c2:#3fc2b5; --c3:#f06aae; --c4:#d4a25e; --c5:#a98af2; --c6:#9fb0b8; --c7:#9aa59f; --c8:#e0b84a; --c9:#4dd0e1;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.45; margin:0}
+button,input,select,textarea{font:inherit; color:inherit}
+.wrap{max-width:980px; margin:0 auto; padding-inline:16px; padding-block:0 60px}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg); padding-block:14px 10px; border-bottom:1px solid var(--line)}
+.hd{max-width:980px; margin:0 auto; padding-inline:16px; display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px}
+.brand{font-family:var(--f-display); font-weight:700; font-size:28px; letter-spacing:.02em; text-transform:uppercase; line-height:1}
+.brand span{color:var(--accent)}
+.preview{font-size:12.5px; font-weight:700; color:var(--low); background:var(--low-bg); border-radius:999px; padding:3px 10px}
+.who{margin-left:auto; display:flex; align-items:center; gap:8px; min-width:0}
+.who > span{font-size:13px; color:var(--muted); font-weight:700; white-space:nowrap}
+.who .slot{min-width:150px; max-width:46vw; padding:8px 12px; min-height:42px}
+input,select,textarea{background:var(--panel); border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; width:100%}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2.5px solid var(--accent); outline-offset:1px}
+.tabs{max-width:980px; margin:10px auto 0; padding-inline:16px; display:flex; gap:6px}
+.tabs button{flex:1; border:1.5px solid var(--line); background:var(--panel); border-radius:10px; padding:10px 4px; font-weight:700; cursor:pointer; color:var(--muted); min-width:0}
+.tabs button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.tabs .n{display:inline-block; min-width:20px; padding:0 6px; margin-left:6px; border-radius:999px; background:var(--out); color:#fff; font-size:12px}
+@media (max-width:460px){.tabs button{font-size:14px}}
+section{display:none; padding-top:16px}
+section.on{display:block}
+.btn{border:none; border-radius:11px; padding:12px 16px; font-weight:700; cursor:pointer; min-height:46px}
+.btn-out{background:var(--out); color:#fff}
+.btn-in{background:var(--ok); color:#fff}
+.btn-ghost{background:var(--panel); border:1.5px solid var(--line); color:var(--ink)}
+.btn-accent{background:var(--accent); color:var(--accent-ink)}
+.actions{display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:12px}
+@media (max-width:640px){.actions{grid-template-columns:1fr 1fr}}
+.filters{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 4px}
+.chip{border:1.5px solid var(--line); background:var(--panel); border-radius:999px; padding:6px 12px; font-size:14px; font-weight:700; cursor:pointer; color:var(--muted)}
+.chip.on{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.cat{margin-top:18px}
+.cat-h{display:flex; align-items:center; gap:10px; font-family:var(--f-display); font-weight:700; font-size:21px; text-transform:uppercase; letter-spacing:.03em; color:var(--cc); padding-bottom:6px; border-bottom:3px solid var(--cc); margin-bottom:8px}
+.cat-h .cnt{font-family:var(--f-body); font-size:13px; color:var(--muted); letter-spacing:0; text-transform:none; font-weight:700}
+.row{display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 10px 10px 14px; margin-bottom:7px; box-shadow:var(--shadow)}
+.row.low{border-left:6px solid var(--low)}
+.row.out{border-left:6px solid var(--out)}
+.row .main{flex:1; min-width:0; cursor:pointer}
+.row .nm{font-weight:700; font-size:16.5px}
+.row .sub{font-size:13.5px; color:var(--muted)}
+.qty{text-align:center; min-width:84px}
+.qty b{display:block; font-family:var(--f-display); font-size:30px; line-height:1; font-variant-numeric:tabular-nums}
+.qty small{font-size:12px; color:var(--muted)}
+.row.low .qty b{color:var(--low)} .row.out .qty b{color:var(--out)}
+.pm{display:flex; gap:6px}
+.pm button{width:48px; height:48px; border-radius:11px; border:none; font-size:24px; font-weight:700; cursor:pointer; line-height:1}
+.pm .m{background:var(--out-bg); color:var(--out)} .pm .p{background:var(--ok-bg); color:var(--ok)}
+.tag{display:inline-block; font-size:12px; font-weight:700; border-radius:999px; padding:2px 9px; margin-left:6px; vertical-align:2px}
+.tag.out{background:var(--out-bg); color:var(--out)} .tag.low{background:var(--low-bg); color:var(--low)}
+.empty{text-align:center; color:var(--muted); padding:30px 10px}
+.hist{background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.hrow{display:grid; grid-template-columns:58px 1fr auto; gap:10px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line)}
+.hrow:last-child{border-bottom:none}
+.hrow .ch{font-family:var(--f-display); font-weight:700; font-size:22px; text-align:center; border-radius:9px; padding:4px 0; font-variant-numeric:tabular-nums}
+.hrow .ch.o{background:var(--out-bg); color:var(--out)} .hrow .ch.i{background:var(--ok-bg); color:var(--ok)} .hrow .ch.a{background:var(--accent-soft); color:var(--accent)}
+.hrow .t{font-size:13px; color:var(--muted); text-align:right; white-space:nowrap}
+.hrow .w{min-width:0}
+.summary{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px}
+.pill{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:14px}
+.pill b{font-variant-numeric:tabular-nums}
+.shop{background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:12px; overflow:hidden}
+.shop h3{margin:0; padding:10px 14px; font-family:var(--f-display); font-size:20px; text-transform:uppercase; letter-spacing:.03em; background:var(--accent-soft); color:var(--accent)}
+.srow{display:flex; justify-content:space-between; gap:10px; padding:9px 14px; border-top:1px solid var(--line)}
+.srow .need{font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:13.5px}
+.note{font-size:13.5px; color:var(--muted); margin:14px 0 0}
+/* tap-to-pick slot: looks like a field, opens a list */
+.slot{display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; background:var(--panel); border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; min-height:46px; cursor:pointer}
+.slot .v{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.slot .v.ph{color:var(--muted)}
+.slot::after{content:"▾"; color:var(--muted); flex:none}
+.slot.bad{border-color:var(--out)}
+/* settings lists */
+.setcard{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px}
+.setcard h3{margin:0 0 2px; font-family:var(--f-display); font-size:21px; text-transform:uppercase; letter-spacing:.03em}
+.setcard p{margin:0 0 10px}
+.opts{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px}
+.opt-chip{display:inline-flex; align-items:center; gap:4px; background:var(--bg); border:1px solid var(--line); border-radius:999px; padding:4px 4px 4px 12px; font-size:14px}
+.opt-chip .dot{width:10px; height:10px; border-radius:50%; background:var(--cc); margin-right:2px}
+.opt-chip button{border:none; background:none; color:var(--muted); font-size:18px; line-height:1; width:28px; height:28px; border-radius:50%; cursor:pointer}
+.opt-chip button:hover{background:var(--out-bg); color:var(--out)}
+.addrow{display:flex; gap:8px}
+.addrow .btn{flex:none; min-height:44px; padding:8px 14px}
+.addrow select{width:auto; max-width:45%}
+/* modal + picker */
+.back{position:fixed; inset:0; background:rgba(10,16,13,.55); display:flex; align-items:flex-end; justify-content:center; z-index:20; padding:16px}
+.back.pick{z-index:25}
+@media (min-width:640px){.back{align-items:center}}
+.modal{background:var(--panel); border-radius:16px; width:100%; max-width:480px; max-height:calc(100% - 20px); overflow:auto; padding:18px}
+.modal h2{margin:0 0 12px; font-family:var(--f-display); font-size:26px; text-transform:uppercase; letter-spacing:.02em}
+.plist{display:flex; flex-direction:column; gap:6px; margin:10px 0}
+.plist button{text-align:left; border:1.5px solid var(--line); background:var(--bg); border-radius:11px; padding:12px 14px; font-weight:700; cursor:pointer; min-height:48px}
+.plist button.on{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+.plist .grp{font-size:12.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:8px 2px 0}
+.plist .clear{color:var(--muted); font-weight:400}
+.field{margin-bottom:12px}
+.field > label, .field > .lbl{display:block; font-size:13px; font-weight:700; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em}
+.opt{text-transform:none; font-weight:400; letter-spacing:0}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}}
+.stepper{display:flex; align-items:center; gap:8px}
+.stepper button{width:52px; height:52px; border-radius:11px; border:1.5px solid var(--line); background:var(--bg); font-size:24px; font-weight:700; cursor:pointer}
+.stepper input{text-align:center; font-family:var(--f-display); font-size:28px; font-weight:700; padding:6px}
+.mbtns{display:flex; gap:8px; margin-top:6px}
+.mbtns .btn{flex:1}
+.err{color:var(--out); font-size:14px; font-weight:700; min-height:20px; margin:2px 0 6px}
+.toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:11px; font-weight:700; z-index:30; max-width:calc(100% - 32px)}
+.drop{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; border:2px dashed var(--line); border-radius:14px; padding:22px 14px; text-align:center; cursor:pointer; background:var(--bg)}
+.drop b{font-size:17px}
+.drop.has{border-style:solid; border-color:var(--accent)}
+.thumb{max-height:150px; border-radius:10px; display:block; margin:0 auto}
+.demo{background:var(--low-bg); color:var(--low); border-radius:10px; padding:9px 12px; font-size:13.5px; font-weight:700; margin:10px 0}
+.rline{display:grid; grid-template-columns:auto 1fr 76px; gap:6px 10px; align-items:start; padding:10px 0; border-top:1px solid var(--line)}
+.rline input[type="checkbox"]{width:22px; height:22px; margin-top:8px; accent-color:var(--accent)}
+.rline .rn{font-weight:700}
+.rline .rq{text-align:center; padding:8px 6px}
+.rline .slot{margin-top:6px; min-height:40px; padding:7px 10px; font-size:14px}
+.rline.off{opacity:.45}
+.mini{font-size:13.5px}
+.mini .hrow{padding:7px 0; grid-template-columns:48px 1fr auto}
+.mini .hrow .ch{font-size:18px}
+@media (prefers-reduced-motion:no-preference){.btn:active,.pm button:active,.slot:active{transform:scale(.98)}}
+.hd .back-link{font-size:13.5px; font-weight:700; color:var(--accent); text-decoration:none; border:1.5px solid var(--line); border-radius:999px; padding:4px 11px; background:var(--panel)}
+.dot-status{width:10px; height:10px; border-radius:50%; background:var(--ok); flex:none}
+.dot-status.off{background:var(--out)}
+:root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="brand">WSLR <span>Bike Shed</span></div>
+    <a class="back-link" href="./">Kitchen app</a>
+    <span class="dot-status" id="net" title="Connection"></span>
+    <div class="who"><span>You are</span><button class="slot" id="whoSlot"></button></div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button data-tab="shed" class="on">Shed</button>
+    <button data-tab="history">History</button>
+    <button data-tab="shopping">Shopping<span class="n" id="shopN" hidden></span></button>
+    <button data-tab="settings">Settings</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section id="tab-shed" class="on">
+    <div class="actions">
+      <button class="btn btn-out" id="aOut">Take out</button>
+      <button class="btn btn-in" id="aIn">Put in</button>
+      <button class="btn btn-accent" id="aRcpt">From a receipt</button>
+      <button class="btn btn-ghost" id="aNew">+ New item</button>
+    </div>
+    <input id="q" placeholder="Search the shed, e.g. bin liners" autocomplete="off">
+    <div class="filters" id="cats"></div>
+    <div id="list"></div>
+    <p class="note">Tap <b>−</b> to take one out or <b>+</b> to put one in. Tap an item's name to edit it, count it, or see who has taken it. Use <b>From a receipt</b> to put a whole shop away at once.</p>
+  </section>
+
+  <section id="tab-history">
+    <div class="summary" id="sum"></div>
+    <div class="filters" id="hf"></div>
+    <div class="hist" id="hist"></div>
+  </section>
+
+  <section id="tab-shopping">
+    <p class="small muted" style="margin:0 0 12px">Everything at or below its reorder level, grouped by where you buy it, with how many to buy to get back to what the shed should have. Tap an item on the Shed tab to set both numbers.</p>
+    <div id="shop"></div>
+    <button class="btn btn-ghost" id="copyShop" style="width:100%; margin-top:6px">Copy the list</button>
+  </section>
+
+  <section id="tab-settings">
+    <p class="small muted" style="margin:0 0 12px">These are the choices people tap from when they add or move stock. Add anything that is missing, or remove what you no longer use. Removing an option does not change items that already use it.</p>
+    <div id="settings"></div>
+  </section>
+
+</div>
+
+<div id="modalRoot"></div>
+<div id="pickRoot"></div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const COLOURS = ["--c1","--c2","--c3","--c4","--c5","--c6","--c8","--c9","--c7"];
+
+// ---------- data (Supabase) ----------
+const SUPABASE_URL = "https://agmonjcnxoguwvjppcxs.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_G5ZTmaaLwa8qbkFMBmUCeQ_sJs753qH";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let db = {items: [], moves: [], lists: {cats: [], names: [], suppliers: [], units: [], spots: [], people: []}};
+function online(ok){ $("net").classList.toggle("off", !ok); $("net").title = ok ? "Connected" : "Not connected"; }
+// every call goes through here so a failure always tells the person what happened
+async function run(q, what){
+  const { data, error } = await q;
+  if(error){ online(false); console.error(error); toast((what ? what + ": " : "") + (error.message || "could not reach the database"), true); throw error; }
+  online(true);
+  return data;
+}
+const mapItem = r => ({id: r.id, name: r.name, cat: r.category || "Other", unit: r.unit, qty: +r.quantity, par: r.par_level == null ? null : +r.par_level,
+  min: r.min_level == null ? null : +r.min_level, supplier: r.supplier, spot: r.location});
+const mapMove = r => ({id: r.id, item: r.item_id, kind: r.kind, n: r.kind === "adjust" ? +r.change : Math.abs(+r.change), who: r.who,
+  supplier: r.supplier, note: [r.receipt, r.note].filter(Boolean).join(" · ") || null, at: new Date(r.created_at).getTime()});
+async function loadAll(){
+  const [items, moves, cats, opts] = await Promise.all([
+    run(sb.from("shed_items").select("*").eq("active", true).order("name").limit(2000), "Loading the shed"),
+    run(sb.from("shed_movements").select("*").order("created_at", {ascending: false}).limit(500), "Loading history"),
+    run(sb.from("shed_categories").select("*").order("sort").order("name"), "Loading categories"),
+    run(sb.from("shed_options").select("*").order("value").limit(5000), "Loading lists")
+  ]);
+  db.items = items.map(mapItem);
+  db.moves = moves.map(mapMove);
+  db.lists.cats = cats.map(c => ({k: c.name, n: c.name, c: "--" + (c.colour || "c7"), id: c.id}));
+  if(!db.lists.cats.some(c => c.k === "Other")) db.lists.cats.push({k: "Other", n: "Other", c: "--c7"});
+  ["suppliers", "units", "spots", "people"].forEach(k => db.lists[k] = opts.filter(o => o.list === k).map(o => o.value));
+  db.lists.names = opts.filter(o => o.list === "names").map(o => ({name: o.value, cat: o.category || "Other"}));
+}
+async function refresh(){ try{ await loadAll(); renderAll(); }catch(e){} }
+async function addOption(list, value, category){
+  try{ await run(sb.from("shed_options").upsert({list, value, category: category || null}, {onConflict: "list,value"}), "Adding " + value); }catch(e){ return false; }
+  if(list === "names"){ if(!db.lists.names.some(n => n.name === value)) db.lists.names.push({name: value, cat: category || "Other"}); }
+  else if(db.lists[list].indexOf(value) === -1) db.lists[list].push(value);
+  return true;
+}
+async function move(itemId, kind, n, extra){
+  extra = extra || {};
+  await run(sb.rpc("shed_move", {p_item: itemId, p_kind: kind, p_qty: n, p_who: extra.who || null, p_note: extra.note || null,
+    p_supplier: extra.supplier || null, p_receipt: extra.receipt || null}), "Saving");
+}
+let me = "";
+try{ me = localStorage.getItem("wslr_shed_who") || ""; }catch(e){}
+function setMe(v){ me = v || ""; try{ localStorage.setItem("wslr_shed_who", me); }catch(e){} paintWho(); }
+
+const CATS = () => db.lists.cats;
+const catOf = k => CATS().find(c => c.k === k) || CATS().find(c => c.k === "Other") || {k: "Other", n: "Other", c: "--c7"};
+const state = {tab: "shed", cat: "all", hf: "all"};
+const itemById = id => db.items.find(i => i.id === id);
+const status = it => it.qty <= 0 ? "out" : (it.min != null && it.qty <= it.min ? "low" : "ok");
+const fmtN = n => (Math.round(n * 100) / 100).toString();
+const toBuy = i => Math.max(1, Math.ceil(i.par != null ? i.par - i.qty : (i.min || 1) * 2 - i.qty));
+function ago(t){
+  const m = Math.round((Date.now() - t) / 60000);
+  if(m < 1) return "just now"; if(m < 60) return m + " min ago";
+  const h = Math.round(m / 60); if(h < 24) return h + " h ago";
+  return new Date(t).toLocaleDateString("en-AU", {weekday:"short", day:"numeric", month:"short"});
+}
+function toast(msg, isErr){
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  if(isErr){ t.style.background = "var(--out)"; t.style.color = "#fff"; }
+  document.body.appendChild(t); setTimeout(() => t.remove(), isErr ? 5000 : 2600);
+}
+
+// ---------- tap-to-pick ----------
+// A slot looks like a field. Tapping it opens a list of the options from
+// Settings; "Add a new option" saves straight into that Settings list.
+const LISTS = {
+  people: {title: "Who", one: "name", key: "people"},
+  suppliers: {title: "Bought from", one: "shop", key: "suppliers"},
+  units: {title: "Counted in", one: "unit", key: "units"},
+  spots: {title: "Shelf spot", one: "spot", key: "spots"},
+  names: {title: "Item", one: "item name", key: "names"},
+  cats: {title: "Category", one: "category", key: "cats"}
+};
+function slotHtml(id, value, placeholder, display){
+  return '<button type="button" class="slot" id="' + id + '" data-v="' + esc(value || "") + '"><span class="v' + (value ? "" : " ph") + '">' +
+    esc(value ? (display || value) : placeholder) + "</span></button>";
+}
+function setSlot(el, value, display, placeholder){
+  el.dataset.v = value || "";
+  const v = el.querySelector(".v");
+  v.textContent = value ? (display || value) : (placeholder || "Choose…");
+  v.classList.toggle("ph", !value);
+  el.classList.remove("bad");
+}
+function closePick(){ $("pickRoot").innerHTML = ""; }
+function openPick(listKey, current, onPick, opts){
+  opts = opts || {};
+  const L = LISTS[listKey];
+  const render = q => {
+    q = (q || "").toLowerCase();
+    let html = "";
+    if(listKey === "names"){
+      CATS().forEach(c => {
+        const g = db.lists.names.filter(n => n.cat === c.k && (!q || n.name.toLowerCase().includes(q))).sort((a, b) => a.name.localeCompare(b.name));
+        if(!g.length) return;
+        html += '<div class="grp">' + esc(c.n) + "</div>" + g.map(n => '<button data-val="' + esc(n.name) + '" data-cat="' + esc(n.cat) + '"' + (n.name === current ? ' class="on"' : "") + ">" + esc(n.name) + "</button>").join("");
+      });
+    }else if(listKey === "cats"){
+      html = CATS().filter(c => !q || c.n.toLowerCase().includes(q)).map(c => '<button data-val="' + esc(c.k) + '"' + (c.k === current ? ' class="on"' : "") + ' style="--cc:var(' + c.c + ')"><span class="opt-chip" style="border:none; background:none; padding:0"><span class="dot"></span></span> ' + esc(c.n) + "</button>").join("");
+    }else{
+      html = db.lists[listKey].filter(v => !q || v.toLowerCase().includes(q)).map(v => '<button data-val="' + esc(v) + '"' + (v === current ? ' class="on"' : "") + ">" + esc(v) + "</button>").join("");
+    }
+    if(!html) html = '<p class="small muted" style="margin:6px 2px">Nothing matches. Add it below.</p>';
+    if(opts.clearable && current) html += '<button class="clear" data-clear="1">Clear this</button>';
+    return html;
+  };
+  const showSearch = (listKey === "names" ? db.lists.names.length : (db.lists[listKey] || []).length) > 8;
+  $("pickRoot").innerHTML = '<div class="back pick"><div class="modal" role="dialog" aria-modal="true" aria-label="' + esc(L.title) + '">' +
+    "<h2>" + esc(opts.title || L.title) + "</h2>" +
+    (showSearch ? '<input id="pkQ" placeholder="Search" autocomplete="off">' : "") +
+    '<div class="plist" id="pkList">' + render("") + "</div>" +
+    (listKey === "cats" ? "" :
+      '<div class="lbl small muted" style="margin:8px 0 5px">Not on the list?</div><div class="addrow"><input id="pkNew" placeholder="Add a new ' + L.one + '" autocomplete="off">' +
+      (listKey === "names" ? '<select id="pkNewCat">' + CATS().map(c => '<option value="' + c.k + '">' + esc(c.n) + "</option>").join("") + "</select>" : "") +
+      '<button class="btn btn-accent" id="pkAdd">Add</button></div>') +
+    '<div class="mbtns" style="margin-top:12px"><button class="btn btn-ghost" id="pkX">Close</button></div></div></div>';
+  const back = $("pickRoot").querySelector(".back");
+  back.addEventListener("click", e => { if(e.target === back) closePick(); });
+  const wire = () => $("pkList").querySelectorAll("button").forEach(b => b.onclick = () => {
+    if(b.dataset.clear){ closePick(); onPick(null, null); return; }
+    closePick(); onPick(b.dataset.val, b.dataset.cat || null);
+  });
+  wire();
+  const qi = $("pkQ");
+  if(qi){ qi.addEventListener("input", () => { $("pkList").innerHTML = render(qi.value); wire(); }); qi.focus(); }
+  $("pkX").onclick = closePick;
+  const add = $("pkAdd");
+  if(add) add.onclick = async () => {
+    const v = $("pkNew").value.trim();
+    if(!v){ $("pkNew").focus(); return; }
+    add.disabled = true;
+    const cat = listKey === "names" ? $("pkNewCat").value : null;
+    const existing = listKey === "names" ? db.lists.names.find(n => n.name.toLowerCase() === v.toLowerCase())
+      : db.lists[listKey].find(x => x.toLowerCase() === v.toLowerCase());
+    if(existing){ closePick(); onPick(listKey === "names" ? existing.name : existing, listKey === "names" ? existing.cat : null); return; }
+    if(!(await addOption(listKey, v, cat))){ add.disabled = false; return; }
+    closePick(); onPick(v, cat);
+    toast("Added " + v + " to the list");
+    if(state.tab === "settings") renderSettings();
+  };
+}
+function paintWho(){
+  const s = $("whoSlot");
+  s.innerHTML = '<span class="v' + (me ? "" : " ph") + '">' + esc(me || "Tap to choose") + "</span>";
+}
+$("whoSlot").onclick = () => openPick("people", me, v => setMe(v), {title: "Who are you?"});
+
+// ---------- shed ----------
+function renderShed(){
+  const q = $("q").value.trim().toLowerCase();
+  const counts = {};
+  db.items.forEach(i => counts[catOf(i.cat).k] = (counts[catOf(i.cat).k] || 0) + 1);
+  $("cats").innerHTML = '<button class="chip' + (state.cat === "all" ? " on" : "") + '" data-c="all">All (' + db.items.length + ")</button>" +
+    '<button class="chip' + (state.cat === "attn" ? " on" : "") + '" data-c="attn">Low or out (' + db.items.filter(i => status(i) !== "ok").length + ")</button>" +
+    CATS().filter(c => counts[c.k]).map(c => '<button class="chip' + (state.cat === c.k ? " on" : "") + '" data-c="' + c.k + '">' + esc(c.n) + " (" + counts[c.k] + ")</button>").join("");
+  $("cats").querySelectorAll(".chip").forEach(b => b.onclick = () => { state.cat = b.dataset.c; renderShed(); });
+  let list = db.items.slice();
+  if(state.cat === "attn") list = list.filter(i => status(i) !== "ok");
+  else if(state.cat !== "all") list = list.filter(i => catOf(i.cat).k === state.cat);
+  if(q) list = list.filter(i => [i.name, i.supplier, i.spot, catOf(i.cat).n].some(v => v && v.toLowerCase().includes(q)));
+  if(!list.length){ $("list").innerHTML = '<div class="empty">' + (q ? 'Nothing in the shed matches "' + esc(q) + '".' : db.items.length ? "Nothing in this group." : "The shed is empty so far.<br>Tap <b>+ New item</b> to add the first thing on the shelves, or <b>From a receipt</b> to add a whole shop at once.") + "</div>"; return; }
+  let html = "";
+  CATS().forEach(c => {
+    const g = list.filter(i => catOf(i.cat).k === c.k).sort((a, b) => a.name.localeCompare(b.name));
+    if(!g.length) return;
+    html += '<div class="cat" style="--cc:var(' + c.c + ')"><div class="cat-h">' + esc(c.n) + '<span class="cnt">' + g.length + "</span></div>" + g.map(rowHtml).join("") + "</div>";
+  });
+  $("list").innerHTML = html;
+  $("list").querySelectorAll("[data-m]").forEach(b => b.onclick = () => moveModal(b.dataset.m === "-" ? "out" : "in", +b.dataset.id));
+  $("list").querySelectorAll(".main").forEach(el => el.onclick = () => itemModal(+el.dataset.id));
+}
+function rowHtml(i){
+  const st = status(i);
+  return '<div class="row ' + (st !== "ok" ? st : "") + '">' +
+    '<div class="main" data-id="' + i.id + '"><div class="nm">' + esc(i.name) +
+      (st === "out" ? '<span class="tag out">Out</span>' : st === "low" ? '<span class="tag low">Low</span>' : "") + "</div>" +
+      '<div class="sub">' + esc([i.spot, i.supplier].filter(Boolean).join(" · ")) + "</div></div>" +
+    '<div class="qty"><b>' + fmtN(i.qty) + "</b><small>" + (i.par != null ? "of " + fmtN(i.par) + " " : "") + esc(i.unit || "on shelf") + "</small></div>" +
+    '<div class="pm"><button class="m" data-m="-" data-id="' + i.id + '" aria-label="Take out ' + esc(i.name) + '">−</button>' +
+    '<button class="p" data-m="+" data-id="' + i.id + '" aria-label="Put in ' + esc(i.name) + '">+</button></div></div>';
+}
+
+// ---------- modals ----------
+function openModal(html){
+  $("modalRoot").innerHTML = '<div class="back"><div class="modal" role="dialog" aria-modal="true">' + html + "</div></div>";
+  const back = $("modalRoot").querySelector(".back");
+  back.addEventListener("click", e => { if(e.target === back) closeModal(); });
+  return back.querySelector(".modal");
+}
+function closeModal(){ $("modalRoot").innerHTML = ""; }
+document.addEventListener("keydown", e => { if(e.key === "Escape"){ if($("pickRoot").innerHTML) closePick(); else closeModal(); } });
+// pick one of the shed's own items
+function openItemPick(current, onPick){
+  const render = q => {
+    q = (q || "").toLowerCase();
+    let html = "";
+    CATS().forEach(c => {
+      const g = db.items.filter(i => catOf(i.cat).k === c.k && (!q || i.name.toLowerCase().includes(q))).sort((a, b) => a.name.localeCompare(b.name));
+      if(g.length) html += '<div class="grp">' + esc(c.n) + "</div>" + g.map(i => '<button data-id="' + i.id + '"' + (i.id === current ? ' class="on"' : "") + ">" + esc(i.name) + ' <span class="muted" style="font-weight:400">· ' + fmtN(i.qty) + " on shelf</span></button>").join("");
+    });
+    return html || '<p class="small muted">Nothing matches.</p>';
+  };
+  $("pickRoot").innerHTML = '<div class="back pick"><div class="modal" role="dialog" aria-modal="true"><h2>Which item</h2><input id="pkQ" placeholder="Search the shed" autocomplete="off"><div class="plist" id="pkList">' + render("") + '</div><div class="mbtns"><button class="btn btn-ghost" id="pkX">Close</button></div></div></div>';
+  const back = $("pickRoot").querySelector(".back");
+  back.addEventListener("click", e => { if(e.target === back) closePick(); });
+  const wire = () => $("pkList").querySelectorAll("button").forEach(b => b.onclick = () => { closePick(); onPick(+b.dataset.id); });
+  wire();
+  $("pkQ").addEventListener("input", () => { $("pkList").innerHTML = render($("pkQ").value); wire(); });
+  $("pkX").onclick = closePick;
+}
+function moveModal(kind, itemId){
+  const out = kind === "out";
+  const it0 = itemId ? itemById(itemId) : null;
+  const m = openModal(
+    "<h2>" + (out ? "Take out" : "Put in") + "</h2>" +
+    '<div class="field"><span class="lbl">Item</span>' + slotHtml("mItem", it0 ? String(it0.id) : "", "Choose an item", it0 ? it0.name : "") + "</div>" +
+    '<div class="field"><label for="mQty">How many</label><div class="stepper"><button type="button" id="mMinus">−</button>' +
+      '<input id="mQty" type="number" inputmode="decimal" min="0" step="any" value="1"><button type="button" id="mPlus">+</button></div></div>' +
+    '<div class="field"><span class="lbl">' + (out ? "Who is taking it" : 'Who is putting it in <span class="opt">(optional)</span>') + "</span>" + slotHtml("mWho", me, "Choose your name") + "</div>" +
+    (out ? "" : '<div class="field"><span class="lbl">Bought from <span class="opt">(optional)</span></span>' + slotHtml("mSup", it0 ? it0.supplier : "", "Choose a shop") + "</div>") +
+    '<div class="field"><label for="mNote">Note <span class="opt">(optional)</span></label><input id="mNote" placeholder="' + (out ? "e.g. for the deep clean in block C" : "e.g. Bidfood delivery") + '" autocomplete="off"></div>' +
+    '<div class="err" id="mErr"></div>' +
+    '<div class="mbtns"><button class="btn btn-ghost" id="mCancel">Cancel</button><button class="btn ' + (out ? "btn-out" : "btn-in") + '" id="mSave">' + (out ? "Take out" : "Put in") + "</button></div>"
+  );
+  const qty = m.querySelector("#mQty");
+  const sItem = m.querySelector("#mItem"), sWho = m.querySelector("#mWho"), sSup = m.querySelector("#mSup");
+  sItem.onclick = () => openItemPick(+sItem.dataset.v || null, id => {
+    const it = itemById(id); setSlot(sItem, String(id), it.name);
+    if(sSup && !sSup.dataset.v && it.supplier) setSlot(sSup, it.supplier);
+  });
+  sWho.onclick = () => openPick("people", sWho.dataset.v, v => setSlot(sWho, v, null, "Choose your name"), {clearable: !out});
+  if(sSup) sSup.onclick = () => openPick("suppliers", sSup.dataset.v, v => setSlot(sSup, v, null, "Choose a shop"), {clearable: true});
+  m.querySelector("#mMinus").onclick = () => { qty.value = Math.max(1, (+qty.value || 1) - 1); };
+  m.querySelector("#mPlus").onclick = () => { qty.value = (+qty.value || 0) + 1; };
+  m.querySelector("#mCancel").onclick = closeModal;
+  m.querySelector("#mSave").onclick = async () => {
+    const err = m.querySelector("#mErr");
+    const it = itemById(+sItem.dataset.v);
+    const n = +qty.value;
+    const who = sWho.dataset.v;
+    if(!it){ err.textContent = "Choose the item first."; sItem.classList.add("bad"); return; }
+    if(!(n > 0)){ err.textContent = "Enter how many, more than 0."; return; }
+    if(out && !who){ err.textContent = "Choose your name so the shed knows who took it."; sWho.classList.add("bad"); return; }
+    const btn = m.querySelector("#mSave"); btn.disabled = true;
+    try{
+      await move(it.id, kind, n, {who, note: m.querySelector("#mNote").value.trim() || null, supplier: out ? null : (sSup.dataset.v || null)});
+    }catch(e){ btn.disabled = false; return; }
+    if(who) setMe(who);
+    const after = out ? it.qty - n : it.qty + n;
+    closeModal(); await refresh();
+    toast((out ? "Took out " : "Put in ") + fmtN(n) + " " + it.name + (out && after < 0 ? ". The count is now below zero, so tap the item and count it." : ""));
+  };
+}
+async function itemModal(id){
+  const it = id ? itemById(id) : null;
+  let moves = [];
+  if(it){
+    try{ moves = (await run(sb.from("shed_movements").select("*").eq("item_id", it.id).order("created_at", {ascending: false}).limit(10), "Loading history")).map(mapMove); }
+    catch(e){ moves = db.moves.filter(x => x.item === it.id).slice(0, 10); }
+  }
+  const cat0 = it ? it.cat : "";
+  const m = openModal(
+    "<h2>" + (it ? esc(it.name) : "New item") + "</h2>" +
+    '<div class="field"><span class="lbl">Item</span>' + slotHtml("iName", it ? it.name : "", "Choose an item") + "</div>" +
+    '<div class="grid2">' +
+      '<div class="field"><span class="lbl">Category</span>' + slotHtml("iCat", cat0, "Choose a category", cat0 ? catOf(cat0).n : "") + "</div>" +
+      '<div class="field"><span class="lbl">Counted in <span class="opt">(optional)</span></span>' + slotHtml("iUnit", it ? it.unit : "", "Choose a unit") + "</div>" +
+    "</div><div class=\"grid2\">" +
+      '<div class="field"><label for="iQty">' + (it ? "Count on the shelf now" : 'On the shelf now <span class="opt">(optional)</span>') + '</label><input id="iQty" type="number" inputmode="decimal" step="any" value="' + (it ? fmtN(it.qty) : "") + '" placeholder="0"></div>' +
+      '<div class="field"><label for="iPar">Should have <span class="opt">(optional)</span></label><input id="iPar" type="number" inputmode="decimal" step="any" min="0" value="' + (it && it.par != null ? fmtN(it.par) : "") + '" placeholder="When fully stocked"></div>' +
+    "</div><div class=\"grid2\">" +
+      '<div class="field"><label for="iMin">Reorder at <span class="opt">(optional)</span></label><input id="iMin" type="number" inputmode="decimal" step="any" min="0" value="' + (it && it.min != null ? fmtN(it.min) : "") + '" placeholder="Goes on the shopping list"></div>' +
+      '<div class="field"><span class="lbl">&nbsp;</span><p class="small muted" style="margin:6px 0 0">At or below this it shows as Low and goes on the shopping list.</p></div>' +
+    "</div><div class=\"grid2\">" +
+      '<div class="field"><span class="lbl">Bought from <span class="opt">(optional)</span></span>' + slotHtml("iSup", it ? it.supplier : "", "Choose a shop") + "</div>" +
+      '<div class="field"><span class="lbl">Shelf spot <span class="opt">(optional)</span></span>' + slotHtml("iSpot", it ? it.spot : "", "Choose a spot") + "</div>" +
+    "</div>" +
+    '<div class="err" id="iErr"></div>' +
+    '<div class="mbtns"><button class="btn btn-ghost" id="iCancel">Cancel</button><button class="btn btn-accent" id="iSave">' + (it ? "Save" : "Add to the shed") + "</button></div>" +
+    (it ? '<h3 style="margin:18px 0 6px; font-size:15px">Recent</h3><div class="mini">' + (moves.length ? moves.map(histRow).join("") : '<p class="muted">Nothing taken out or put in yet.</p>') + "</div>" +
+      '<div id="delWrap" style="margin-top:14px"><button class="btn btn-ghost" id="iDel" style="width:100%; color:var(--out)">Remove this item from the shed</button></div>' : "")
+  );
+  const sName = m.querySelector("#iName"), sCat = m.querySelector("#iCat"), sUnit = m.querySelector("#iUnit"), sSup = m.querySelector("#iSup"), sSpot = m.querySelector("#iSpot");
+  sName.onclick = () => openPick("names", sName.dataset.v, (v, cat) => {
+    setSlot(sName, v, null, "Choose an item");
+    if(cat) setSlot(sCat, cat, catOf(cat).n);
+  });
+  sCat.onclick = () => openPick("cats", sCat.dataset.v, v => setSlot(sCat, v, catOf(v).n, "Choose a category"));
+  sUnit.onclick = () => openPick("units", sUnit.dataset.v, v => setSlot(sUnit, v, null, "Choose a unit"), {clearable: true});
+  sSup.onclick = () => openPick("suppliers", sSup.dataset.v, v => setSlot(sSup, v, null, "Choose a shop"), {clearable: true});
+  sSpot.onclick = () => openPick("spots", sSpot.dataset.v, v => setSlot(sSpot, v, null, "Choose a spot"), {clearable: true});
+  m.querySelector("#iCancel").onclick = closeModal;
+  m.querySelector("#iSave").onclick = async () => {
+    const name = sName.dataset.v;
+    if(!name){ m.querySelector("#iErr").textContent = "Choose the item."; sName.classList.add("bad"); return; }
+    const qv = m.querySelector("#iQty").value, mv = m.querySelector("#iMin").value, pv = m.querySelector("#iPar").value;
+    const data = {name, cat: sCat.dataset.v || "Other", unit: sUnit.dataset.v || null,
+      min: mv === "" ? null : +mv, par: pv === "" ? null : +pv, supplier: sSup.dataset.v || null, spot: sSpot.dataset.v || null};
+    if(!it && db.items.some(x => x.name.toLowerCase() === name.toLowerCase())){
+      m.querySelector("#iErr").textContent = name + " is already in the shed. Use Put in to add more."; return;
+    }
+    const row = {name: data.name, category: data.cat, unit: data.unit, par_level: data.par, min_level: data.min, supplier: data.supplier, location: data.spot, updated_at: new Date().toISOString()};
+    const btn = m.querySelector("#iSave"); btn.disabled = true;
+    try{
+      if(it){
+        await run(sb.from("shed_items").update(row).eq("id", it.id), "Saving " + name);
+        const nq = qv === "" ? it.qty : +qv;
+        if(nq !== it.qty) await move(it.id, "adjust", nq, {who: me || null, note: "Counted"});
+      }else{
+        const ins = await run(sb.from("shed_items").insert(row).select().single(), "Adding " + name);
+        const q0 = qv === "" ? 0 : +qv;
+        if(q0) await move(ins.id, "in", q0, {who: me || null, note: "Starting count"});
+      }
+    }catch(e){ btn.disabled = false; return; }
+    closeModal(); await refresh();
+    toast((it ? "Saved " : "Added ") + name);
+  };
+  const del = m.querySelector("#iDel");
+  if(del) del.onclick = () => {
+    m.querySelector("#delWrap").innerHTML = '<p class="small" style="margin:0 0 8px">Remove <b>' + esc(it.name) + '</b> and its history from the shed?</p>' +
+      '<div class="mbtns"><button class="btn btn-ghost" id="dNo">Keep it</button><button class="btn btn-out" id="dYes">Remove</button></div>';
+    m.querySelector("#dNo").onclick = () => itemModal(it.id);
+    m.querySelector("#dYes").onclick = async () => {
+      try{ await run(sb.from("shed_items").delete().eq("id", it.id), "Removing " + it.name); }catch(e){ return; }
+      closeModal(); await refresh(); toast("Removed " + it.name);
+    };
+  };
+}
+
+// ---------- receipt ----------
+// The photo goes to the same AI reader the kitchen app uses for dockets.
+async function compressImage(file, maxDim = 1600, q = 0.75){
+  try{
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", q));
+    URL.revokeObjectURL(img.src);
+    return blob || file;
+  }catch(e){ return file; }
+}
+function blobToB64(blob){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(new Error("Could not read the file")); r.readAsDataURL(blob); });
+}
+async function readReceipt(file){
+  const isPdf = file.type === "application/pdf";
+  const blob = isPdf ? file : await compressImage(file);
+  const files = [{media_type: isPdf ? "application/pdf" : "image/jpeg", data_b64: await blobToB64(blob)}];
+  const { data, error } = await sb.functions.invoke("read-docket", {body: {files, categories: CATS().map(c => c.n), supplier: null}});
+  if(error){
+    let msg = "Could not read the receipt";
+    try{ const body = await error.context.json(); if(body && body.error) msg = body.error; }catch(_){}
+    throw new Error(msg);
+  }
+  if(data && data.error) throw new Error(data.error);
+  const supRaw = (data.supplier || "").trim();
+  const sup = db.lists.suppliers.find(x => supRaw && (supRaw.toLowerCase().indexOf(x.toLowerCase()) !== -1 || x.toLowerCase().indexOf(supRaw.toLowerCase()) !== -1)) || supRaw;
+  const catNames = CATS().map(c => c.n);
+  return {supplier: sup, number: data.invoice_number || "",
+    lines: (data.items || []).filter(x => x && x.name).map(x => ({name: x.name, qty: x.quantity || 1,
+      cat: catNames.find(c => x.category && c.toLowerCase() === String(x.category).toLowerCase()) || "Other"}))};
+}
+function bestMatch(name, pool){
+  const words = name.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length > 2 && !/^\d+$/.test(w));
+  let best = null, score = 0;
+  (pool || db.items).forEach(i => {
+    const iw = i.name.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(x => x.length > 2);
+    const hit = words.filter(w => iw.some(x => x.indexOf(w.slice(0, 5)) === 0 || w.indexOf(x.slice(0, 5)) === 0)).length;
+    if(hit > score){ score = hit; best = i; }
+  });
+  return score ? best : null;
+}
+function receiptModal(){
+  const m = openModal(
+    "<h2>From a receipt</h2>" +
+    '<p class="small muted" style="margin-top:-4px">Take a photo of the receipt or choose one from the phone. The items on it are read for you, so you just check them and put them all in at once.</p>' +
+    '<label class="drop" id="rDrop" for="rFile"><b>Take or choose a photo</b><span class="small muted">A photo or a PDF of the receipt</span></label>' +
+    '<input type="file" id="rFile" accept="image/*,application/pdf" hidden><div id="rBody"></div>'
+  );
+  m.querySelector("#rFile").addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const drop = m.querySelector("#rDrop");
+    drop.classList.add("has");
+    if(f.type.indexOf("image/") === 0){
+      const r = new FileReader();
+      r.onload = () => { drop.innerHTML = '<img class="thumb" alt="The receipt you chose" src="' + r.result + '"><span class="small muted">Tap to choose a different photo</span>'; };
+      r.readAsDataURL(f);
+    }else drop.innerHTML = "<b>" + esc(f.name) + '</b><span class="small muted">Tap to choose a different file</span>';
+    m.querySelector("#rBody").innerHTML = '<p class="muted" style="text-align:center; margin:14px 0">Reading the receipt… this takes about 10 seconds.</p>';
+    readReceipt(f).then(rc => {
+      if(!rc.lines.length){ m.querySelector("#rBody").innerHTML = '<p class="err" style="text-align:center">No items could be read from that photo. Try a clearer, flatter photo, or put the items in one at a time.</p>'; return; }
+      showReceipt(m, rc);
+    }).catch(err => {
+      m.querySelector("#rBody").innerHTML = '<p class="err" style="text-align:center">' + esc(err.message || "Could not read the receipt") + ". Try again, or put the items in one at a time.</p>";
+    });
+  });
+}
+function showReceipt(m, rc){
+  const lines = rc.lines.map(l => {
+    const match = bestMatch(l.name);
+    if(match) return {...l, target: {id: match.id}};
+    // not on the shelves yet: use the matching name from the Item names list so names stay consistent
+    const preset = bestMatch(l.name, db.lists.names);
+    return {...l, target: preset ? {newName: preset.name, cat: preset.cat} : {newName: l.name, cat: l.cat || "Other"}};
+  });
+  const targetLabel = t => t.id ? itemById(t.id).name : "New item: " + t.newName + " (" + catOf(t.cat).n + ")";
+  m.querySelector("#rBody").innerHTML =
+    '<div class="small muted" style="margin:10px 0">' + lines.length + " line" + (lines.length === 1 ? "" : "s") + " read from the receipt. Check them before putting them in.</div>" +
+    '<div class="grid2"><div class="field"><span class="lbl">Bought from</span>' + slotHtml("rSup", rc.supplier, "Choose a shop") + "</div>" +
+    '<div class="field"><label for="rNum">Receipt <span class="opt">(optional)</span></label><input id="rNum" value="' + esc(rc.number || "") + '" autocomplete="off"></div></div>' +
+    '<div class="small muted" style="margin:2px 0 4px">Untick anything that is not for the shed. Tap a line to change which item it goes to.</div>' +
+    '<div id="rLines">' + lines.map((l, i) =>
+      '<div class="rline" data-i="' + i + '"><input type="checkbox" checked aria-label="Include ' + esc(l.name) + '">' +
+      '<div><div class="rn">' + esc(l.name) + "</div>" + slotHtml("rT" + i, "x", "", targetLabel(l.target)) + "</div>" +
+      '<input class="rq" type="number" inputmode="decimal" min="0" step="any" value="' + l.qty + '" aria-label="Quantity"></div>').join("") + "</div>" +
+    '<div class="field" style="margin-top:12px"><span class="lbl">Who is putting it in <span class="opt">(optional)</span></span>' + slotHtml("rWho", me, "Choose your name") + "</div>" +
+    '<div class="err" id="rErr"></div>' +
+    '<div class="mbtns"><button class="btn btn-ghost" id="rCancel">Cancel</button><button class="btn btn-in" id="rSave">Put them all in</button></div>';
+  const sSup = m.querySelector("#rSup"), sWho = m.querySelector("#rWho");
+  sSup.onclick = () => openPick("suppliers", sSup.dataset.v, v => setSlot(sSup, v, null, "Choose a shop"), {clearable: true});
+  sWho.onclick = () => openPick("people", sWho.dataset.v, v => setSlot(sWho, v, null, "Choose your name"), {clearable: true});
+  m.querySelectorAll(".rline").forEach(row => {
+    const i = +row.dataset.i, l = lines[i];
+    const cb = row.querySelector('input[type="checkbox"]');
+    cb.onchange = () => row.classList.toggle("off", !cb.checked);
+    const s = row.querySelector(".slot");
+    s.onclick = () => {
+      // first choice: one of the shed's items, or make it a new item from the item list
+      $("pickRoot").innerHTML = '<div class="back pick"><div class="modal"><h2>' + esc(l.name) + '</h2><div class="plist">' +
+        '<button id="pkExist">Match it to an item in the shed</button><button id="pkNewI">Add it as a new item</button></div>' +
+        '<div class="mbtns"><button class="btn btn-ghost" id="pkX">Close</button></div></div></div>';
+      $("pkX").onclick = closePick;
+      $("pkExist").onclick = () => openItemPick(l.target.id || null, id => { l.target = {id}; setSlot(s, "x", targetLabel(l.target)); });
+      $("pkNewI").onclick = () => openPick("names", null, (v, cat) => { l.target = {newName: v, cat: cat || "Other"}; setSlot(s, "x", targetLabel(l.target)); }, {title: "Which item is it?"});
+    };
+  });
+  m.querySelector("#rCancel").onclick = closeModal;
+  m.querySelector("#rSave").onclick = async () => {
+    const sup = sSup.dataset.v || null, num = m.querySelector("#rNum").value.trim() || null, who = sWho.dataset.v || null;
+    const todo = [];
+    m.querySelectorAll(".rline").forEach(row => {
+      if(!row.querySelector('input[type="checkbox"]').checked) return;
+      const n = +row.querySelector(".rq").value;
+      if(n > 0) todo.push({l: lines[+row.dataset.i], n});
+    });
+    if(!todo.length){ m.querySelector("#rErr").textContent = "Tick at least one line with a quantity."; return; }
+    const btn = m.querySelector("#rSave"); btn.disabled = true; btn.textContent = "Saving…";
+    let done = 0;
+    try{
+      for(const t of todo){
+        let id = t.l.target.id || null;
+        if(!id){
+          const existing = db.items.find(x => x.name.toLowerCase() === t.l.target.newName.toLowerCase());
+          if(existing) id = existing.id;
+          else{
+            const ins = await run(sb.from("shed_items").insert({name: t.l.target.newName, category: t.l.target.cat, supplier: sup}).select().single(), "Adding " + t.l.target.newName);
+            id = ins.id;
+            db.items.push(mapItem(ins));
+            if(!db.lists.names.some(x => x.name.toLowerCase() === t.l.target.newName.toLowerCase())) await addOption("names", t.l.target.newName, t.l.target.cat);
+          }
+        }
+        await move(id, "in", t.n, {who, supplier: sup, receipt: num});
+        const it = itemById(id);
+        if(sup && it && !it.supplier) await run(sb.from("shed_items").update({supplier: sup}).eq("id", id));
+        done++;
+      }
+    }catch(e){
+      btn.disabled = false; btn.textContent = "Put them all in";
+      m.querySelector("#rErr").textContent = done ? done + " went in before the problem. Untick those and try the rest again." : "Nothing was saved. Try again.";
+      await refresh(); return;
+    }
+    if(who) setMe(who);
+    closeModal(); await refresh();
+    toast("Put in " + done + " item" + (done === 1 ? "" : "s") + " from the receipt");
+  };
+}
+
+// ---------- history ----------
+function histRow(x){
+  const it = itemById(x.item);
+  const cls = x.kind === "out" ? "o" : x.kind === "in" ? "i" : "a";
+  const sign = x.kind === "out" ? "−" : (x.n >= 0 ? "+" : "−");
+  const what = x.kind === "out" ? "taken out" : x.kind === "in" ? "put in" : "count corrected";
+  return '<div class="hrow"><div class="ch ' + cls + '">' + sign + fmtN(Math.abs(x.n)) + "</div>" +
+    '<div class="w"><b>' + esc(it ? it.name : "Removed item") + "</b> " + what +
+      '<div class="small muted">' + esc([x.who || "no name", x.supplier ? "from " + x.supplier : "", x.note].filter(Boolean).join(" · ")) + "</div></div>" +
+    '<div class="t">' + esc(ago(x.at)) + "</div></div>";
+}
+function renderHistory(){
+  const week = Date.now() - 7 * 86400000;
+  const recentOut = db.moves.filter(x => x.kind === "out" && x.at >= week);
+  const byWho = {};
+  recentOut.forEach(x => byWho[x.who || "No name"] = (byWho[x.who || "No name"] || 0) + x.n);
+  $("sum").innerHTML = '<div class="pill">Last 7 days: <b>' + recentOut.length + "</b> take-outs</div>" +
+    Object.keys(byWho).sort((a, b) => byWho[b] - byWho[a]).map(w => '<div class="pill">' + esc(w) + ": <b>" + fmtN(byWho[w]) + "</b> items out</div>").join("");
+  const people = [...new Set(db.moves.map(x => x.who).filter(Boolean))].sort();
+  $("hf").innerHTML = [["all", "Everything"], ["out", "Taken out"], ["in", "Put in"]].map(f => '<button class="chip' + (state.hf === f[0] ? " on" : "") + '" data-f="' + f[0] + '">' + f[1] + "</button>").join("") +
+    people.map(p => '<button class="chip' + (state.hf === "p:" + p ? " on" : "") + '" data-f="p:' + esc(p) + '">' + esc(p) + "</button>").join("");
+  $("hf").querySelectorAll(".chip").forEach(b => b.onclick = () => { state.hf = b.dataset.f; renderHistory(); });
+  let list = db.moves.slice().sort((a, b) => b.at - a.at);
+  if(state.hf === "out" || state.hf === "in") list = list.filter(x => x.kind === state.hf);
+  else if(state.hf.indexOf("p:") === 0) list = list.filter(x => x.who === state.hf.slice(2));
+  $("hist").innerHTML = list.length ? list.slice(0, 150).map(histRow).join("") : '<div class="empty">Nothing yet.</div>';
+}
+
+// ---------- shopping ----------
+function shopping(){
+  const groups = {};
+  db.items.filter(i => status(i) !== "ok").forEach(i => (groups[i.supplier || "No shop set"] = groups[i.supplier || "No shop set"] || []).push(i));
+  return groups;
+}
+function renderShopping(){
+  const g = shopping();
+  const n = Object.values(g).reduce((t, a) => t + a.length, 0);
+  $("shopN").hidden = !n; $("shopN").textContent = n;
+  const keys = Object.keys(g).sort();
+  $("shop").innerHTML = keys.length ? keys.map(k => '<div class="shop"><h3>' + esc(k) + "</h3>" +
+    g[k].sort((a, b) => a.name.localeCompare(b.name)).map(i =>
+      '<div class="srow"><div><b>' + esc(i.name) + '</b><div class="small muted">' + fmtN(i.qty) + " on the shelf" +
+      (i.par != null ? ", should have " + fmtN(i.par) : ", reorder at " + fmtN(i.min || 0)) + "</div></div>" +
+      '<div class="need">Buy ' + toBuy(i) + " " + esc(i.unit || "") + "</div></div>").join("") + "</div>").join("")
+    : '<div class="empty">Nothing is running low.</div>';
+}
+$("copyShop").onclick = () => {
+  const g = shopping();
+  const text = Object.keys(g).sort().map(k => k + "\n" + g[k].map(i => "- " + i.name + ": buy " + toBuy(i) + " " + (i.unit || "")).join("\n")).join("\n\n");
+  try{ navigator.clipboard.writeText(text).then(() => toast("Shopping list copied"), () => fallbackCopy(text)); }catch(e){ fallbackCopy(text); }
+};
+function fallbackCopy(text){
+  const m = openModal('<h2>Shopping list</h2><p class="small muted">Select it all and copy.</p><textarea id="cpy" rows="12" style="font-size:14px">' + esc(text) + '</textarea><div class="mbtns"><button class="btn btn-ghost" id="cpyX">Close</button></div>');
+  const ta = m.querySelector("#cpy"); ta.focus(); ta.select();
+  m.querySelector("#cpyX").onclick = closeModal;
+}
+
+// ---------- settings ----------
+const SETTINGS = [
+  {key: "people", title: "People", help: "Names to choose from when taking items out.", ph: "Add a name"},
+  {key: "names", title: "Item names", help: "Items people can add to the shed. Each belongs to a category.", ph: "Add an item name"},
+  {key: "cats", title: "Categories", help: "How the shed is grouped. New categories get their own colour.", ph: "Add a category"},
+  {key: "suppliers", title: "Shops", help: "Where things are bought from.", ph: "Add a shop"},
+  {key: "units", title: "Counted in", help: "How each item is counted.", ph: "Add a unit, e.g. tub"},
+  {key: "spots", title: "Shelf spots", help: "Where things live in the shed.", ph: "Add a spot"}
+];
+function renderSettings(){
+  $("settings").innerHTML = SETTINGS.map(S => {
+    let chips;
+    if(S.key === "names"){
+      chips = CATS().map(c => {
+        const g = db.lists.names.filter(n => n.cat === c.k).sort((a, b) => a.name.localeCompare(b.name));
+        return g.length ? '<div class="small muted" style="width:100%; margin-top:4px; font-weight:700">' + esc(c.n) + "</div>" +
+          g.map(n => '<span class="opt-chip" style="--cc:var(' + c.c + ')"><span class="dot"></span>' + esc(n.name) + '<button data-del="names" data-v="' + esc(n.name) + '" aria-label="Remove ' + esc(n.name) + '">×</button></span>').join("") : "";
+      }).join("");
+    }else if(S.key === "cats"){
+      chips = CATS().map(c => '<span class="opt-chip" style="--cc:var(' + c.c + ')"><span class="dot"></span>' + esc(c.n) +
+        (c.k === "Other" ? '<span style="width:8px"></span>' : '<button data-del="cats" data-v="' + esc(c.k) + '" aria-label="Remove ' + esc(c.n) + '">×</button>') + "</span>").join("");
+    }else{
+      chips = db.lists[S.key].map(v => '<span class="opt-chip">' + esc(v) + '<button data-del="' + S.key + '" data-v="' + esc(v) + '" aria-label="Remove ' + esc(v) + '">×</button></span>').join("");
+    }
+    return '<div class="setcard"><h3>' + esc(S.title) + '</h3><p class="small muted">' + esc(S.help) + "</p>" +
+      '<div class="opts">' + (chips || '<span class="small muted">Nothing yet.</span>') + "</div>" +
+      '<div class="addrow"><input id="add_' + S.key + '" placeholder="' + esc(S.ph) + '" autocomplete="off">' +
+      (S.key === "names" ? '<select id="addcat_names" aria-label="Category">' + CATS().map(c => '<option value="' + c.k + '">' + esc(c.n) + "</option>").join("") + "</select>" : "") +
+      '<button class="btn btn-accent" data-add="' + S.key + '">Add</button></div></div>';
+  }).join("");
+  $("settings").querySelectorAll("[data-add]").forEach(b => {
+    const key = b.dataset.add, input = $("add_" + key);
+    const go = async () => {
+      const v = input.value.trim(); if(!v) { input.focus(); return; }
+      if(key === "names"){
+        if(db.lists.names.some(n => n.name.toLowerCase() === v.toLowerCase())){ toast(v + " is already on the list"); return; }
+        if(!(await addOption("names", v, $("addcat_names").value))) return;
+      }else if(key === "cats"){
+        if(CATS().some(c => c.n.toLowerCase() === v.toLowerCase())){ toast(v + " is already a category"); return; }
+        const used = CATS().map(c => c.c);
+        const colour = (COLOURS.find(c => used.indexOf(c) === -1) || COLOURS[CATS().length % COLOURS.length]).replace("--", "");
+        try{ await run(sb.from("shed_categories").insert({name: v, colour, sort: 100}), "Adding " + v); }catch(e){ return; }
+        await refresh();
+      }else{
+        if(db.lists[key].some(x => x.toLowerCase() === v.toLowerCase())){ toast(v + " is already on the list"); return; }
+        if(!(await addOption(key, v))) return;
+      }
+      renderSettings(); toast("Added " + v);
+      const again = $("add_" + key); if(again) again.focus();
+    };
+    b.onclick = go;
+    input.addEventListener("keydown", e => { if(e.key === "Enter") go(); });
+  });
+  $("settings").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    const key = b.dataset.del, v = b.dataset.v;
+    b.disabled = true;
+    try{
+      if(key === "cats"){
+        await run(sb.from("shed_items").update({category: "Other"}).eq("category", v), "Moving items to Other");
+        await run(sb.from("shed_options").update({category: "Other"}).eq("list", "names").eq("category", v));
+        await run(sb.from("shed_categories").delete().eq("name", v), "Removing " + v);
+      }else{
+        await run(sb.from("shed_options").delete().eq("list", key).eq("value", v), "Removing " + v);
+      }
+    }catch(e){ b.disabled = false; return; }
+    await refresh(); renderSettings(); toast("Removed " + v);
+  });
+}
+
+// ---------- wiring ----------
+function renderAll(){ renderShed(); renderShopping(); if(state.tab === "history") renderHistory(); if(state.tab === "settings") renderSettings(); }
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  state.tab = b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === "tab-" + state.tab));
+  if(state.tab === "history") renderHistory();
+  if(state.tab === "shopping") renderShopping();
+  if(state.tab === "settings") renderSettings();
+});
+$("aOut").onclick = () => moveModal("out", null);
+$("aIn").onclick = () => moveModal("in", null);
+$("aNew").onclick = () => itemModal(null);
+$("aRcpt").onclick = receiptModal;
+$("q").addEventListener("input", renderShed);
+paintWho();
+$("list").innerHTML = '<div class="empty">Loading the shed…</div>';
+refresh();
+// stay current when several phones are in use
+setInterval(() => { if(!document.hidden && !$("modalRoot").innerHTML) refresh(); }, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden && !$("modalRoot").innerHTML) refresh(); });
+})();
+</script>
+</body>
+</html>
