@@ -1,0 +1,14 @@
+{
+  "name": "WSLR Bike Shed",
+  "short_name": "Bike Shed",
+  "start_url": "./shed.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f5f2",
+  "theme_color": "#5a3596",
+  "icons": [
+    {"src": "icons/shed-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/shed-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/shed-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
