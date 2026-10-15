@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WSLR Storage &amp; Orders</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#f4f7fa;--card:#fff;--ink:#1d2733;--muted:#6b7785;--line:#dde3ea;--accent:#0f6e8c;--accent-soft:#e3f1f6;--warn:#b54708;--warn-soft:#fef0e1;--bad:#b42318;--bad-soft:#fde8e7;--good:#067647;--good-soft:#e3f6ec}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+header{background:var(--accent);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1}
+header label{font-size:13px;display:flex;align-items:center;gap:6px}
+header select{padding:6px 8px;border-radius:6px;border:0;font-size:14px}
+#staffBanner{background:var(--warn-soft);color:var(--warn);padding:8px 16px;font-size:14px}
+nav{display:flex;gap:4px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:none;border:0;padding:10px 14px;border-radius:8px;font-size:15px;color:var(--muted);cursor:pointer;white-space:nowrap}
+nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1200px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.tile b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--muted)}
+input,select,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);max-width:100%}
+.btn{font:inherit;padding:8px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+.btn.sec{background:#fff;color:var(--accent)}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.linkish{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.linkish strong{border-bottom:1px dotted var(--muted)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
+tfoot td{border-bottom:0;font-weight:600}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.low td{background:var(--warn-soft)}
+tr.out td{background:var(--bad-soft)}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--accent-soft)}
+tr.group td{background:#eef1f4;font-weight:600;font-size:13px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;text-transform:capitalize;white-space:nowrap}
+.pill.draft{background:#eef1f4;color:var(--muted)}
+.pill.ordered{background:var(--accent-soft);color:var(--accent)}
+.pill.part_received,.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.received{background:var(--good-soft);color:var(--good)}
+.pill.cancelled{background:var(--bad-soft);color:var(--bad)}
+.up{color:var(--good)}
+.down{color:var(--bad)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.hidden{display:none!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.qty-in{width:90px;text-align:right}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60;max-width:90vw}
+#toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{background:#fff;border-radius:12px;padding:18px;width:100%;max-width:720px;max-height:90vh;overflow:auto}
+.modal h2{margin-top:0;font-size:18px}
+#print{display:none}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}main{padding:12px}}
+@media print{
+  body{background:#fff;font-size:12px}
+  body>*:not(#print){display:none!important}
+  #print{display:block}
+  #print th,#print td{padding:5px 6px}
+  #print .blank{width:110px;border-bottom:1px solid #999}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>WSLR Storage &amp; Orders</h1>
+  <label>Staff <select id="staffPick"><option value="">Loading...</option></select></label>
+</header>
+<div id="staffBanner" class="hidden">Pick your name at the top before changing anything. Every change is logged against it.</div>
+<nav id="tabs">
+  <button data-tab="stock" class="active">Stock</button>
+  <button data-tab="count">Stocktake</button>
+  <button data-tab="orders">Orders</button>
+  <button data-tab="receive">Receive</button>
+  <button data-tab="history">History</button>
+  <button data-tab="setup">Setup</button>
+</nav>
+<main id="main">
+  <section id="tab-stock"></section>
+  <section id="tab-count" class="hidden"></section>
+  <section id="tab-orders" class="hidden"></section>
+  <section id="tab-receive" class="hidden"></section>
+  <section id="tab-history" class="hidden"></section>
+  <section id="tab-setup" class="hidden"></section>
+</main>
+<div id="toast"></div>
+<div id="modalRoot"></div>
+<div id="print"></div>
+
+<script>
+// ===== CONFIG =====
+// WSLR Kitchen Supabase project. The anon key is meant to be public; schema.sql limits what it can do.
+const SUPABASE_URL = 'https://agmonjcnxoguwvjppcxs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnbW9uamNueG9ndXd2anBwY3hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3ODczMzMsImV4cCI6MjEwMDM2MzMzM30.O-uAIlruYUcpxIdNAL6zNyyCrfnoW8Lb80FCW4ExcAU';
+// Keeps casual users out of Setup. Anyone who views the page source can read it.
+const ADMIN_PIN = '3197';
+// ==================
+
+const RESORT_NAME = 'Wollongong Surf Leisure Resort';
+const RESORT_ADDRESS = '201 Pioneer Road, Fairy Meadow NSW 2519';
+const RESORT_PHONE = '02 4283 6999';
+
+const T = {
+  locations: 'store_locations', suppliers: 'store_suppliers', items: 'store_items', staff: 'store_staff',
+  orders: 'store_orders', lines: 'store_order_lines', moves: 'store_movements', soh: 'store_stock_on_hand'
+};
+const TYPE_LABEL = { receive: 'Received', use: 'Used', waste: 'Binned', adjust: 'Count adjust' };
+const COUNT_KEY = 'wslrStorageCountDraft';
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const state = {
+  items: [], suppliers: [], locations: [], staff: [], stock: [], receiveOrders: [],
+  adminOk: false, tab: 'stock', setupKey: 'items', setupQ: '',
+  stockFilter: { q: '', loc: '', cat: '', low: false },
+  countLoc: '', countShow: false, histDays: '30', histType: '', histView: 'list'
+};
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => Number(n || 0).toLocaleString('en-AU', { maximumFractionDigits: 2 });
+const money = n => (Number(n) < 0 ? '-$' : '$') + Math.abs(Number(n || 0)).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const signed = n => (Number(n) > 0 ? '+' : '') + fmt(n);
+const round2 = n => Math.round(n * 100) / 100;
+const num = v => Number(String(v ?? '').replace(/[$,\s]/g, ''));
+const todayStr = () => new Date().toLocaleDateString('en-CA');
+const whenFmt = d => new Date(d).toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const statusLabel = s => String(s || '').replace(/_/g, ' ');
+const itemById = id => state.items.find(i => i.id === id) || {};
+const itemName = id => itemById(id).name || '(deleted item)';
+const supplierById = id => state.suppliers.find(s => s.id === id) || {};
+const locOptions = sel => state.locations.map(l => `<option value="${l.id}" ${l.id === sel ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
+
+function toast(msg, ms = 2600) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), ms);
+}
+function errText(error) {
+  const msg = error.message || String(error);
+  if (error.code === '23505') return 'That name is already in use';
+  if (error.code === '23503') return 'It is still in use elsewhere. Set it to inactive instead.';
+  if (['42P01', '42883', 'PGRST202', 'PGRST205'].includes(error.code) || /could not find the (table|function)/i.test(msg))
+    return 'The store_ tables are missing. Run schema.sql in the Supabase SQL Editor first.';
+  if (/failed to fetch/i.test(msg)) return 'Could not reach the database. Check the internet connection.';
+  return msg;
+}
+function fail(error) {
+  if (!error) return false;
+  console.error(error);
+  toast('Error: ' + errText(error), 5000);
+  return true;
+}
+function staffName() { return $('#staffPick').value || ''; }
+function needStaff() {
+  if (staffName()) return false;
+  toast('Pick your name at the top first');
+  $('#staffPick').focus();
+  return true;
+}
+function updateBanner() { $('#staffBanner').classList.toggle('hidden', !!staffName() || !state.staff.length); }
+
+let modalOnClose = null;
+function modal(html, onClose) {
+  closeModal();
+  modalOnClose = onClose || null;
+  $('#modalRoot').innerHTML = `<div class="modal-bg"><div class="modal">${html}</div></div>`;
+  const bg = $('#modalRoot .modal-bg');
+  bg.addEventListener('click', e => { if (e.target === bg) closeModal(); });
+  return $('#modalRoot .modal');
+}
+function closeModal() {
+  $('#modalRoot').innerHTML = '';
+  const f = modalOnClose;
+  modalOnClose = null;
+  if (f) f();
+}
+// Review screen before a write. Resolves true only if they press the confirm button.
+function confirmModal(title, bodyHtml, okLabel = 'Confirm') {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = v => { if (!done) { done = true; resolve(v); } };
+    const m = modal(`<h2>${title}</h2>${bodyHtml}
+      <div class="row" style="margin-top:16px;justify-content:flex-end">
+        <button class="btn sec" id="cNo">Back</button><button class="btn" id="cYes">${okLabel}</button></div>`, () => finish(false));
+    m.querySelector('#cNo').onclick = closeModal;
+    m.querySelector('#cYes').onclick = () => { finish(true); closeModal(); };
+  });
+}
+function saveLocal(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function readLocal(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+function csvCell(v) {
+  const s = String(v ?? '');
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadCSV(filename, rows) {
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' }));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell); rows.push(row); row = []; cell = '';
+    } else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim() !== ''));
+}
+function printSheet(title, html) {
+  $('#print').innerHTML = `<h2 style="margin:0 0 4px">${esc(title)}</h2>
+    <div style="margin-bottom:12px;color:#555">${esc(RESORT_NAME)} &middot; printed ${esc(new Date().toLocaleString('en-AU'))}${staffName() ? ' by ' + esc(staffName()) : ''}</div>${html}`;
+  window.print();
+}
+
+// ---------- reference data ----------
+async function loadRef() {
+  const [it, su, lo, st] = await Promise.all([
+    db.from(T.items).select('*').order('name'),
+    db.from(T.suppliers).select('*').order('name'),
+    db.from(T.locations).select('*').order('sort_order').order('name'),
+    db.from(T.staff).select('*').order('name')
+  ]);
+  for (const r of [it, su, lo, st]) if (r.error) { state.loadError = r.error; return false; }
+  state.items = it.data; state.suppliers = su.data; state.locations = lo.data; state.staff = st.data;
+  const pick = $('#staffPick');
+  const current = pick.value || readLocal('wslrStorageStaff') || '';
+  const active = state.staff.filter(s => s.active);
+  pick.innerHTML = active.length
+    ? '<option value="">Choose...</option>' + active.map(s => `<option>${esc(s.name)}</option>`).join('')
+    : '<option value="">Add staff in Setup</option>';
+  if ([...pick.options].some(o => o.value === current)) pick.value = current;
+  updateBanner();
+  return true;
+}
+async function loadStock() {
+  const { data, error } = await db.from(T.soh).select('*')
+    .order('location_sort', { nullsFirst: false }).order('location_name', { nullsFirst: false }).order('name');
+  if (fail(error)) return null;
+  state.stock = data;
+  return data;
+}
+
+// ---------- tabs ----------
+function switchTab(t) {
+  if (t === 'setup' && !state.adminOk) {
+    const p = prompt('Admin PIN');
+    if (p !== ADMIN_PIN) { if (p !== null) toast('Wrong PIN'); return; }
+    state.adminOk = true;
+  }
+  state.tab = t;
+  if (t !== 'setup') saveLocal('wslrStorageTab', t);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  document.querySelectorAll('#main > section').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + t));
+  refresh();
+}
+function refresh() {
+  ({ stock: renderStock, count: renderCount, orders: renderOrders, receive: renderReceive,
+     history: renderHistory, setup: renderSetup })[state.tab]();
+}
+
+// ---------- STOCK ----------
+function stockRows() {
+  const f = state.stockFilter;
+  const q = f.q.toLowerCase();
+  return state.stock.filter(s =>
+    (!q || [s.name, s.category, s.supplier_name, s.supplier_code].join(' ').toLowerCase().includes(q)) &&
+    (!f.loc || s.location_id === f.loc) && (!f.cat || s.category === f.cat) && (!f.low || s.below_par));
+}
+
+async function renderStock() {
+  const el = $('#tab-stock');
+  const data = await loadStock();
+  if (!data) return;
+  const f = state.stockFilter;
+  const below = data.filter(s => s.below_par).length;
+  const out = data.filter(s => Number(s.on_hand) <= 0).length;
+  const value = data.reduce((a, s) => a + Math.max(Number(s.on_hand), 0) * Number(s.unit_cost || 0), 0);
+  const cats = [...new Set(data.map(s => s.category).filter(Boolean))].sort();
+  el.innerHTML = `
+    <div class="tiles">
+      <div class="tile"><b>${data.length}</b><span>Items tracked</span></div>
+      <div class="tile"><b style="color:var(--warn)">${below}</b><span>Below par</span></div>
+      <div class="tile"><b style="color:var(--bad)">${out}</b><span>Out of stock</span></div>
+      <div class="tile"><b>${money(value)}</b><span>Stock value at cost, ex GST</span></div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <input id="stockSearch" placeholder="Search item, category, supplier or code" style="flex:1;min-width:200px" value="${esc(f.q)}">
+        <select id="stockLoc"><option value="">All locations</option>${locOptions(f.loc)}</select>
+        <select id="stockCat"><option value="">All categories</option>
+          ${cats.map(c => `<option ${c === f.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+        <label class="row" style="gap:4px"><input type="checkbox" id="stockLow" ${f.low ? 'checked' : ''}> Below par only</label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnReorder">Build orders from below par</button>
+        <button class="btn sec" id="btnPrintStock">Print count sheet</button>
+        <button class="btn sec" id="btnExportStock">Export CSV</button>
+      </div>
+    </div>
+    <div class="card tablewrap"><table>
+      <thead><tr><th>Item</th><th class="hide-sm">Location</th><th class="num">On hand</th>
+        <th class="num hide-sm">Par</th><th class="num hide-sm">On order</th><th></th></tr></thead>
+      <tbody id="stockBody"></tbody></table></div>`;
+
+  const draw = () => {
+    const rows = stockRows();
+    $('#stockBody').innerHTML = rows.map(s => {
+      const cls = Number(s.on_hand) <= 0 ? 'out' : (s.below_par ? 'low' : '');
+      const onOrder = (Number(s.on_order) > 0 ? fmt(s.on_order) : '') +
+        (Number(s.in_draft) > 0 ? ` <span class="muted small">(${fmt(s.in_draft)} draft)</span>` : '');
+      return `<tr class="${cls}">
+        <td><button class="linkish" data-detail="${s.item_id}"><strong>${esc(s.name)}</strong></button>
+          <div class="muted small">${esc(s.category || '')}${s.supplier_name ? ' &middot; ' + esc(s.supplier_name) : ''}</div></td>
+        <td class="hide-sm">${esc(s.location_name || '')}</td>
+        <td class="num"><strong>${fmt(s.on_hand)}</strong> ${esc(s.unit)}</td>
+        <td class="num hide-sm">${fmt(s.par_level)}</td>
+        <td class="num hide-sm">${onOrder}</td>
+        <td class="num" style="white-space:nowrap">
+          <button class="btn sec sm" data-act="use" data-id="${s.item_id}">Use</button>
+          <button class="btn sec sm" data-act="count" data-id="${s.item_id}">Count</button>
+          <button class="btn sec sm" data-act="waste" data-id="${s.item_id}">Bin</button></td></tr>`;
+    }).join('') || `<tr><td colspan="6" class="muted">${data.length ? 'Nothing matches those filters.' : 'No items yet. Add some under Setup.'}</td></tr>`;
+    $('#stockBody').querySelectorAll('[data-act]').forEach(b => b.onclick = () => stockAction(b.dataset.id, b.dataset.act));
+    $('#stockBody').querySelectorAll('[data-detail]').forEach(b => b.onclick = () => itemDetail(b.dataset.detail));
+  };
+  $('#stockSearch').oninput = e => { f.q = e.target.value; draw(); };
+  $('#stockLoc').onchange = e => { f.loc = e.target.value; draw(); };
+  $('#stockCat').onchange = e => { f.cat = e.target.value; draw(); };
+  $('#stockLow').onchange = e => { f.low = e.target.checked; draw(); };
+  $('#btnReorder').onclick = buildReorders;
+  $('#btnPrintStock').onclick = () => printCountSheet(stockRows());
+  $('#btnExportStock').onclick = () => downloadCSV(`stock-${todayStr()}.csv`, [
+    ['Item', 'Category', 'Location', 'Supplier', 'Unit', 'On hand', 'Par', 'On order', 'Unit cost', 'Value'],
+    ...stockRows().map(s => [s.name, s.category, s.location_name, s.supplier_name, s.unit, s.on_hand, s.par_level,
+      s.on_order, s.unit_cost, round2(Math.max(Number(s.on_hand), 0) * Number(s.unit_cost || 0))])
+  ]);
+  draw();
+}
+
+function printCountSheet(rows) {
+  if (!rows.length) return toast('No items to print');
+  let html = '<table><thead><tr><th>Item</th><th>Unit</th><th class="num">Par</th><th>Counted</th></tr></thead><tbody>';
+  let lastLoc = null;
+  for (const s of rows) {
+    const loc = s.location_name || 'No location';
+    if (loc !== lastLoc) { html += `<tr class="group"><td colspan="4">${esc(loc)}</td></tr>`; lastLoc = loc; }
+    html += `<tr><td>${esc(s.name)}</td><td>${esc(s.unit)}</td><td class="num">${fmt(s.par_level)}</td><td class="blank"></td></tr>`;
+  }
+  printSheet('Stocktake count sheet', html + '</tbody></table>');
+}
+
+function moveRows(list, showItem) {
+  return list.map(r => {
+    const it = r.item || itemById(r.item_id);
+    return `<tr><td style="white-space:nowrap">${whenFmt(r.created_at)}</td>
+      ${showItem ? `<td>${esc(it.name || '(deleted item)')}</td>` : ''}
+      <td>${esc(TYPE_LABEL[r.type] || r.type)}</td>
+      <td class="num ${r.qty < 0 ? 'down' : 'up'}">${signed(r.qty)} ${esc(it.unit || '')}</td>
+      <td class="hide-sm">${esc(r.staff_name)}</td><td class="hide-sm">${esc(r.note)}</td></tr>`;
+  }).join('');
+}
+
+async function itemDetail(itemId) {
+  const s = state.stock.find(x => x.item_id === itemId) || {};
+  const { data, error } = await db.from(T.moves).select('*').eq('item_id', itemId)
+    .order('created_at', { ascending: false }).limit(30);
+  if (fail(error)) return;
+  const m = modal(`
+    <h2>${esc(s.name)}</h2>
+    <p class="muted" style="margin-top:-6px">${esc(s.location_name || 'No location')} &middot; ${esc(s.supplier_name || 'No supplier')}${s.supplier_code ? ' &middot; code ' + esc(s.supplier_code) : ''}</p>
+    <div class="tiles">
+      <div class="tile"><b>${fmt(s.on_hand)}</b><span>On hand (${esc(s.unit)})</span></div>
+      <div class="tile"><b>${fmt(s.par_level)}</b><span>Par level</span></div>
+      <div class="tile"><b>${fmt(s.on_order)}</b><span>On order</span></div>
+      <div class="tile"><b>${money(s.unit_cost)}</b><span>Unit cost</span></div>
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>When</th><th>Type</th><th class="num">Qty</th><th class="hide-sm">Staff</th><th class="hide-sm">Note</th></tr></thead>
+      <tbody>${moveRows(data.map(r => ({ ...r, item: { unit: s.unit } })), false) || '<tr><td colspan="5" class="muted">No movements yet</td></tr>'}</tbody></table></div>
+    <p class="muted small">Last 30 movements. The History tab has the rest.</p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="dClose">Close</button></div>`);
+  m.querySelector('#dClose').onclick = closeModal;
+}
+
+function stockAction(itemId, kind) {
+  const s = state.stock.find(x => x.item_id === itemId);
+  if (!s) return;
+  const titles = { use: 'Use stock', waste: 'Bin / waste', count: 'Count' };
+  const m = modal(`
+    <h2>${titles[kind]}: ${esc(s.name)}</h2>
+    <p class="muted">On hand now: ${fmt(s.on_hand)} ${esc(s.unit)}</p>
+    <div class="grid2">
+      <label class="field">${kind === 'count' ? 'How many are on the shelf' : 'Quantity'} (${esc(s.unit)})
+        <input id="mQty" type="number" step="any" min="0" inputmode="decimal"></label>
+      <label class="field">${kind === 'waste' ? 'Reason (expired, damaged...)' : 'Note (optional)'}<input id="mNote"></label>
+    </div>
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn sec" id="mCancel">Cancel</button><button class="btn" id="mSave">Save</button></div>`);
+  const btn = m.querySelector('#mSave');
+  m.querySelector('#mQty').focus();
+  m.querySelector('#mQty').onkeydown = e => { if (e.key === 'Enter') btn.click(); };
+  m.querySelector('#mCancel').onclick = closeModal;
+  btn.onclick = async () => {
+    if (needStaff()) return;
+    const raw = m.querySelector('#mQty').value;
+    const q = parseFloat(raw);
+    if (raw === '' || !(q >= 0)) return toast('Enter a quantity');
+    const note = m.querySelector('#mNote').value.trim() || null;
+    if (kind === 'count') {
+      btn.disabled = true;
+      const { error } = await db.rpc('store_count_items', { p_counts: [{ item_id: itemId, counted: q }], p_staff: staffName(), p_note: note });
+      if (fail(error)) { btn.disabled = false; return; }
+      const diff = round2(q - Number(s.on_hand));
+      closeModal();
+      toast(diff === 0 ? 'Count matches, nothing changed' : `Count saved, adjusted by ${signed(diff)} ${s.unit}`);
+      return renderStock();
+    }
+    if (q === 0) return toast('Enter a quantity');
+    if (q > Number(s.on_hand) && !confirm(`That takes ${s.name} below zero (on hand ${fmt(s.on_hand)}). Save anyway?\n\nIf the shelf count is wrong, use Count instead.`)) return;
+    btn.disabled = true;
+    const { error } = await db.from(T.moves).insert({ item_id: itemId, qty: -q, type: kind, staff_name: staffName(), note });
+    if (fail(error)) { btn.disabled = false; return; }
+    closeModal();
+    toast(kind === 'use' ? 'Usage saved' : 'Waste saved');
+    renderStock();
+  };
+}
+
+async function buildReorders() {
+  if (needStaff()) return;
+  const low = state.stock.filter(s => s.below_par && s.supplier_id && Number(s.on_order) === 0 && Number(s.in_draft) === 0);
+  if (!low.length) return toast('Nothing below par that has a supplier and is not already on an order', 4000);
+  const qtyFor = s => Number(s.reorder_qty) > 0 ? Number(s.reorder_qty) : Math.max(Math.ceil(Number(s.par_level) - Number(s.on_hand)), 1);
+  const bySup = {};
+  low.forEach(s => (bySup[s.supplier_id] = bySup[s.supplier_id] || []).push(s));
+  const body = Object.entries(bySup).map(([supId, list]) => `
+    <h3 style="font-size:15px;margin:14px 0 4px">${esc(supplierById(supId).name)}</h3>
+    <table><tbody>${list.map(s => `<tr><td>${esc(s.name)}</td>
+      <td class="num muted small">${fmt(s.on_hand)} on hand, par ${fmt(s.par_level)}</td>
+      <td class="num"><strong>${fmt(qtyFor(s))}</strong> ${esc(s.unit)}</td></tr>`).join('')}</tbody></table>`).join('');
+  const skipped = state.stock.filter(s => s.below_par && !s.supplier_id).length;
+  const ok = await confirmModal(`Create ${Object.keys(bySup).length} draft order(s)?`,
+    `<p class="muted">Drafts are not sent anywhere. You can change quantities before marking them ordered.</p>${body}` +
+    (skipped ? `<p class="muted small">${skipped} below-par item(s) have no supplier set and were left out.</p>` : ''),
+    'Create drafts');
+  if (!ok) return;
+  for (const [supId, list] of Object.entries(bySup)) {
+    const { error } = await db.rpc('store_save_draft', {
+      p_order: null, p_supplier: supId, p_expected: null, p_notes: null, p_staff: staffName(),
+      p_lines: list.map(s => ({ item_id: s.item_id, qty_ordered: qtyFor(s), unit_cost: Number(s.unit_cost) || 0 }))
+    });
+    if (fail(error)) return;
+  }
+  toast('Draft orders created');
+  switchTab('orders');
+}
+
+// ---------- STOCKTAKE ----------
+function countDraft() { try { return JSON.parse(readLocal(COUNT_KEY)) || {}; } catch (e) { return {}; } }
+function saveCountDraft(d) { saveLocal(COUNT_KEY, JSON.stringify(d)); }
+
+async function renderCount() {
+  const el = $('#tab-count');
+  const data = await loadStock();
+  if (!data) return;
+  const draft = countDraft();
+  el.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <select id="cLoc"><option value="">All locations</option>${locOptions(state.countLoc)}
+          <option value="none" ${state.countLoc === 'none' ? 'selected' : ''}>No location</option></select>
+        <label class="row" style="gap:4px"><input type="checkbox" id="cShow" ${state.countShow ? 'checked' : ''}> Show system quantity</label>
+        <span style="flex:1"></span><span class="muted small" id="cProgress"></span>
+      </div>
+      <p class="muted small" style="margin:8px 0 0">Type what is physically there. Leave an item blank to skip it.
+        Counts are kept on this device until you save, so you can walk between rooms.</p>
+    </div>
+    <div class="card tablewrap"><table>
+      <thead><tr><th>Item</th><th class="num ${state.countShow ? '' : 'hidden'}">System</th><th class="num">Counted</th></tr></thead>
+      <tbody id="cBody"></tbody></table></div>
+    <div class="card row" style="justify-content:flex-end">
+      <button class="btn sec" id="cClear">Clear all counts</button>
+      <button class="btn" id="cReview">Review and save</button></div>`;
+
+  const progress = () => {
+    const n = Object.keys(countDraft()).length;
+    $('#cProgress').textContent = n ? `${n} item(s) counted, not yet saved` : '';
+  };
+  const draw = () => {
+    const loc = state.countLoc;
+    const rows = data.filter(s => !loc || (loc === 'none' ? !s.location_id : s.location_id === loc));
+    let lastLoc = null;
+    $('#cBody').innerHTML = rows.map(s => {
+      const locName = s.location_name || 'No location';
+      const head = !loc && locName !== lastLoc ? `<tr class="group"><td colspan="3">${esc(locName)}</td></tr>` : '';
+      lastLoc = locName;
+      return `${head}<tr><td>${esc(s.name)} <span class="muted small">${esc(s.unit)}</span></td>
+        <td class="num ${state.countShow ? '' : 'hidden'}">${fmt(s.on_hand)}</td>
+        <td class="num"><input class="qty-in" type="number" step="any" min="0" inputmode="decimal"
+          data-count="${s.item_id}" value="${esc(draft[s.item_id] ?? '')}"></td></tr>`;
+    }).join('') || '<tr><td colspan="3" class="muted">No items here</td></tr>';
+    $('#cBody').querySelectorAll('[data-count]').forEach(inp => inp.oninput = () => {
+      const d = countDraft();
+      if (inp.value === '') delete d[inp.dataset.count]; else d[inp.dataset.count] = inp.value;
+      saveCountDraft(d);
+      progress();
+    });
+    progress();
+  };
+  $('#cLoc').onchange = e => { state.countLoc = e.target.value; draw(); };
+  $('#cShow').onchange = e => { state.countShow = e.target.checked; renderCount(); };
+  $('#cClear').onclick = () => {
+    if (!Object.keys(countDraft()).length) return;
+    if (!confirm('Clear every count entered on this device?')) return;
+    saveCountDraft({});
+    renderCount();
+  };
+  $('#cReview').onclick = reviewCounts;
+  draw();
+}
+
+async function reviewCounts() {
+  if (needStaff()) return;
+  const draft = countDraft();
+  const entries = Object.entries(draft)
+    .map(([id, v]) => ({ s: state.stock.find(x => x.item_id === id), counted: parseFloat(v) }))
+    .filter(e => e.s && e.counted >= 0);
+  if (!entries.length) return toast('No counts entered yet');
+  const changes = entries.filter(e => round2(e.counted - Number(e.s.on_hand)) !== 0);
+  const valueChange = changes.reduce((a, e) => a + (e.counted - Number(e.s.on_hand)) * Number(e.s.unit_cost || 0), 0);
+  const body = `
+    <p>${entries.length} item(s) counted. ${changes.length ? `${changes.length} differ from the system:` : 'Everything matches the system.'}</p>
+    ${changes.length ? `<div class="tablewrap"><table><thead><tr><th>Item</th><th class="num">System</th><th class="num">Counted</th><th class="num">Change</th></tr></thead>
+      <tbody>${changes.map(e => {
+        const d = round2(e.counted - Number(e.s.on_hand));
+        return `<tr><td>${esc(e.s.name)}</td><td class="num">${fmt(e.s.on_hand)}</td><td class="num">${fmt(e.counted)}</td>
+          <td class="num ${d < 0 ? 'down' : 'up'}">${signed(d)} ${esc(e.s.unit)}</td></tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td colspan="3">Value of adjustments at cost</td><td class="num ${valueChange < 0 ? 'down' : 'up'}">${money(valueChange)}</td></tr></tfoot></table></div>` : ''}
+    <label class="field" style="margin-top:12px">Note for this stocktake (optional)<input id="cNote" placeholder="e.g. Monthly stocktake"></label>`;
+  let note = '';
+  const ok = await new Promise(resolve => {
+    confirmModal('Save stocktake?', body, 'Save counts').then(resolve);
+    $('#cNote').oninput = e => { note = e.target.value.trim(); };
+  });
+  if (!ok) return;
+  const { data, error } = await db.rpc('store_count_items', {
+    p_counts: entries.map(e => ({ item_id: e.s.item_id, counted: e.counted })), p_staff: staffName(), p_note: note || null
+  });
+  if (fail(error)) return;
+  const left = countDraft();
+  entries.forEach(e => delete left[e.s.item_id]);
+  saveCountDraft(left);
+  toast(`Stocktake saved: ${data} item(s) adjusted`);
+  renderCount();
+}
+
+// ---------- ORDERS ----------
+async function renderOrders() {
+  const el = $('#tab-orders');
+  const { data, error } = await db.from(T.orders)
+    .select('*, supplier:store_suppliers(name), lines:store_order_lines(qty_ordered, qty_received, unit_cost)')
+    .order('created_at', { ascending: false }).limit(300);
+  if (fail(error)) return;
+  const prev = $('#ordFilter') ? $('#ordFilter').value : 'open';
+  el.innerHTML = `
+    <div class="card row">
+      <select id="ordFilter">
+        <option value="open">Open (draft, ordered, part received)</option>
+        <option value="draft">Drafts</option>
+        <option value="all">All</option>
+        <option value="received">Received</option>
+        <option value="cancelled">Cancelled</option></select>
+      <span style="flex:1"></span>
+      <button class="btn" id="btnNewOrder">New order</button></div>
+    <div class="card tablewrap"><table>
+      <thead><tr><th>Order</th><th>Supplier</th><th>Status</th><th class="hide-sm">Ordered</th>
+        <th class="hide-sm">Expected</th><th class="num">Value (ex GST)</th></tr></thead>
+      <tbody id="ordBody"></tbody></table></div>`;
+  $('#ordFilter').value = prev;
+  const draw = () => {
+    const f = $('#ordFilter').value;
+    const rows = data.filter(o => f === 'all' ||
+      (f === 'open' ? ['draft', 'ordered', 'part_received'].includes(o.status) : o.status === f));
+    $('#ordBody').innerHTML = rows.map(o => {
+      const val = o.lines.reduce((a, l) => a + Number(l.qty_ordered) * Number(l.unit_cost || 0), 0);
+      const late = o.expected_at && o.expected_at < todayStr() && ['ordered', 'part_received'].includes(o.status);
+      return `<tr class="click" data-id="${o.id}"><td>${esc(o.order_no)}</td><td>${esc(o.supplier?.name)}</td>
+        <td><span class="pill ${o.status}">${statusLabel(o.status)}</span></td>
+        <td class="hide-sm">${esc(o.ordered_at || '')}</td>
+        <td class="hide-sm">${esc(o.expected_at || '')}${late ? ' <span class="pill warn">late</span>' : ''}</td>
+        <td class="num">${money(val)}</td></tr>`;
+    }).join('') || '<tr><td colspan="6" class="muted">No orders</td></tr>';
+    document.querySelectorAll('#ordBody tr[data-id]').forEach(tr => tr.onclick = () => openOrder(tr.dataset.id));
+  };
+  $('#ordFilter').onchange = draw;
+  $('#btnNewOrder').onclick = () => openOrder(null);
+  draw();
+}
+
+function orderText(o, lines) {
+  const sup = supplierById(o.supplier_id);
+  const body = lines.filter(l => l.item_id && Number(l.qty_ordered) > 0).map(l => {
+    const it = itemById(l.item_id);
+    return `${fmt(l.qty_ordered)} x ${it.unit || ''}  ${it.name || ''}${it.supplier_code ? '  (code ' + it.supplier_code + ')' : ''}`;
+  }).join('\n');
+  return `Hi ${sup.contact_name || sup.name || ''},\n\nPlease supply the following for ${RESORT_NAME}.\n\n` +
+    `Order: ${o.order_no || ''}\n` +
+    (sup.account_no ? `Account: ${sup.account_no}\n` : '') +
+    (o.expected_at ? `Delivery requested: ${o.expected_at}\n` : '') +
+    `Deliver to: ${RESORT_ADDRESS}\n\n${body}\n` +
+    (o.notes ? `\nNotes: ${o.notes}\n` : '') +
+    `\nThanks,\n${staffName() || o.ordered_by || ''}\n${RESORT_NAME}\n${RESORT_PHONE}`;
+}
+
+function printOrder(o, lines) {
+  const sup = supplierById(o.supplier_id);
+  const total = lines.reduce((a, l) => a + Number(l.qty_ordered) * Number(l.unit_cost || 0), 0);
+  printSheet(`Purchase order ${o.order_no}`, `
+    <p><strong>${esc(sup.name)}</strong>${sup.account_no ? ' &middot; account ' + esc(sup.account_no) : ''}<br>
+      Status: ${statusLabel(o.status)}${o.ordered_at ? ' &middot; ordered ' + esc(o.ordered_at) : ''}${o.ordered_by ? ' by ' + esc(o.ordered_by) : ''}${o.expected_at ? ' &middot; expected ' + esc(o.expected_at) : ''}<br>
+      Deliver to: ${esc(RESORT_ADDRESS)}</p>
+    <table><thead><tr><th>Item</th><th>Code</th><th class="num">Qty</th><th>Unit</th><th class="num">Unit $</th><th class="num">Line $</th><th>Received</th></tr></thead>
+    <tbody>${lines.map(l => { const it = itemById(l.item_id); return `<tr><td>${esc(it.name)}</td><td>${esc(it.supplier_code || '')}</td>
+      <td class="num">${fmt(l.qty_ordered)}</td><td>${esc(it.unit || '')}</td><td class="num">${money(l.unit_cost)}</td>
+      <td class="num">${money(Number(l.qty_ordered) * Number(l.unit_cost || 0))}</td><td class="blank"></td></tr>`; }).join('')}</tbody>
+    <tfoot><tr><td colspan="5">Total ex GST</td><td class="num">${money(total)}</td><td></td></tr></tfoot></table>
+    ${o.notes ? `<p>Notes: ${esc(o.notes)}</p>` : ''}`);
+}
+
+async function openOrder(id) {
+  let o = { supplier_id: '', status: 'draft', expected_at: '', notes: '' };
+  let lines = [];
+  if (id) {
+    const { data, error } = await db.from(T.orders).select('*, lines:store_order_lines(*)').eq('id', id).single();
+    if (fail(error)) return;
+    o = data;
+    lines = data.lines.map(l => ({ ...l }));
+  }
+  const draft = o.status === 'draft';
+  const open = ['ordered', 'part_received'].includes(o.status);
+  const supOpts = state.suppliers.map(s =>
+    `<option value="${s.id}" ${s.id === o.supplier_id ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
+
+  const m = modal(`
+    <h2>${id ? 'Order ' + esc(o.order_no) + ` <span class="pill ${o.status}">${statusLabel(o.status)}</span>` : 'New order'}</h2>
+    ${o.ordered_at ? `<p class="muted small" style="margin-top:-8px">Ordered ${esc(o.ordered_at)}${o.ordered_by ? ' by ' + esc(o.ordered_by) : ''}</p>` : ''}
+    <div class="grid2">
+      <label class="field">Supplier<select id="oSup" ${draft ? '' : 'disabled'}><option value="">Choose...</option>${supOpts}</select></label>
+      <label class="field">Expected delivery<input id="oExp" type="date" value="${esc(o.expected_at || '')}" ${draft || open ? '' : 'disabled'}></label>
+    </div>
+    <div id="oSupNotes" class="muted small" style="margin-top:6px"></div>
+    <label class="field" style="margin-top:10px">Notes for the supplier<textarea id="oNotes" rows="2" ${draft || open ? '' : 'disabled'}>${esc(o.notes || '')}</textarea></label>
+    <div class="tablewrap"><table style="margin-top:12px"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit $</th>
+      <th class="num">Line $</th>${draft ? '<th></th>' : '<th class="num">Received</th>'}</tr></thead>
+      <tbody id="oLines"></tbody>
+      <tfoot><tr><td colspan="3">Total ex GST</td><td class="num" id="oTotal"></td><td></td></tr></tfoot></table></div>
+    ${draft ? '<button class="btn sec sm" id="oAdd" style="margin-top:8px">+ Add line</button>' : ''}
+    <div class="row" style="margin-top:16px">
+      ${draft && id ? '<button class="btn danger" id="oDelete">Delete draft</button>' : ''}
+      ${o.status === 'ordered' ? '<button class="btn danger" id="oCancelOrder">Cancel order</button>' : ''}
+      <span style="flex:1"></span>
+      ${id ? '<button class="btn sec" id="oPrint">Print</button><button class="btn sec" id="oCopy">Copy text</button><button class="btn sec" id="oEmail">Email supplier</button>' : ''}
+      ${id && !draft ? '<button class="btn sec" id="oAgain">Copy to new draft</button>' : ''}
+      ${draft ? '<button class="btn sec" id="oSave">Save draft</button><button class="btn" id="oPlace">Mark as ordered</button>' : ''}
+      ${open ? '<button class="btn" id="oSaveOpen">Save changes</button>' : ''}
+      ${!draft && !open ? '<button class="btn" id="oClose">Close</button>' : ''}
+    </div>`);
+
+  const itemOpts = (supId, sel) => '<option value="">Choose item...</option>' +
+    state.items.filter(i => (i.active !== false || i.id === sel) && (!supId || !i.supplier_id || i.supplier_id === supId || i.id === sel))
+      .map(i => `<option value="${i.id}" ${i.id === sel ? 'selected' : ''}>${esc(i.name)} (${esc(i.unit)})</option>`).join('');
+  const lineTotal = l => (Number(l.qty_ordered) || 0) * (Number(l.unit_cost) || 0);
+  const drawTotal = () => {
+    m.querySelector('#oTotal').textContent = money(lines.reduce((a, l) => a + lineTotal(l), 0));
+    m.querySelectorAll('[data-linetotal]').forEach(td => td.textContent = money(lineTotal(lines[Number(td.dataset.linetotal)])));
+  };
+  const drawSupNotes = () => {
+    const sup = supplierById(m.querySelector('#oSup').value);
+    m.querySelector('#oSupNotes').textContent = [sup.notes, sup.phone && 'Ph ' + sup.phone, sup.email].filter(Boolean).join(' · ');
+  };
+
+  const drawLines = () => {
+    const sup = m.querySelector('#oSup').value;
+    m.querySelector('#oLines').innerHTML = lines.map((l, ix) => draft
+      ? `<tr><td><select data-ix="${ix}" data-f="item_id" style="width:100%;min-width:160px">${itemOpts(sup, l.item_id)}</select></td>
+          <td class="num"><input data-ix="${ix}" data-f="qty_ordered" type="number" step="any" min="0" inputmode="decimal" value="${esc(l.qty_ordered ?? '')}" style="width:80px"></td>
+          <td class="num"><input data-ix="${ix}" data-f="unit_cost" type="number" step="any" min="0" inputmode="decimal" value="${esc(l.unit_cost ?? '')}" style="width:90px"></td>
+          <td class="num" data-linetotal="${ix}"></td>
+          <td><button class="btn sec sm" data-del="${ix}">Remove</button></td></tr>`
+      : `<tr><td>${esc(itemName(l.item_id))} <span class="muted small">${esc(itemById(l.item_id).unit || '')}</span></td>
+          <td class="num">${fmt(l.qty_ordered)}</td><td class="num">${money(l.unit_cost)}</td>
+          <td class="num" data-linetotal="${ix}"></td><td class="num">${fmt(l.qty_received)}</td></tr>`
+    ).join('') || '<tr><td colspan="5" class="muted">No lines yet</td></tr>';
+    drawTotal();
+    if (!draft) return;
+    m.querySelectorAll('#oLines [data-f]').forEach(inp => {
+      const l = lines[Number(inp.dataset.ix)];
+      if (inp.dataset.f === 'item_id') {
+        inp.onchange = () => {
+          l.item_id = inp.value;
+          const it = itemById(inp.value);
+          if (it.id && !Number(l.unit_cost)) l.unit_cost = it.unit_cost;
+          if (it.id && !Number(l.qty_ordered)) l.qty_ordered = Number(it.reorder_qty) || 1;
+          drawLines();
+        };
+      } else {
+        inp.oninput = () => { l[inp.dataset.f] = inp.value; drawTotal(); };
+      }
+    });
+    m.querySelectorAll('#oLines [data-del]').forEach(b => b.onclick = () => { lines.splice(Number(b.dataset.del), 1); drawLines(); });
+  };
+  drawLines();
+  drawSupNotes();
+
+  const val = sel => m.querySelector(sel) ? m.querySelector(sel).value : '';
+
+  async function saveDraft() {
+    const supplier_id = val('#oSup');
+    if (!supplier_id) { toast('Choose a supplier'); return null; }
+    const clean = lines.filter(l => l.item_id && Number(l.qty_ordered) > 0);
+    const { data, error } = await db.rpc('store_save_draft', {
+      p_order: o.id || null, p_supplier: supplier_id, p_expected: val('#oExp') || null,
+      p_notes: val('#oNotes').trim() || null, p_staff: staffName() || null,
+      p_lines: clean.map(l => ({ item_id: l.item_id, qty_ordered: Number(l.qty_ordered), unit_cost: Number(l.unit_cost) || 0 }))
+    });
+    if (fail(error)) return null;
+    o = data;
+    lines = clean;
+    return clean;
+  }
+
+  if (draft) {
+    m.querySelector('#oSup').onchange = () => { drawLines(); drawSupNotes(); };
+    m.querySelector('#oAdd').onclick = () => { lines.push({ item_id: '', qty_ordered: '', unit_cost: '' }); drawLines(); };
+    m.querySelector('#oSave').onclick = async () => {
+      if (await saveDraft()) { closeModal(); toast('Draft saved'); renderOrders(); }
+    };
+    m.querySelector('#oPlace').onclick = async () => {
+      if (needStaff()) return;
+      if (!lines.some(l => l.item_id && Number(l.qty_ordered) > 0)) return toast('Add at least one line first');
+      const clean = await saveDraft();
+      if (!clean) return;
+      const { data, error } = await db.from(T.orders)
+        .update({ status: 'ordered', ordered_at: todayStr(), ordered_by: staffName() })
+        .eq('id', o.id).eq('status', 'draft').select();
+      if (fail(error)) return;
+      if (!data.length) return toast('Someone else already changed this order. Reopen it to see the latest.', 4000);
+      toast(`${o.order_no} marked as ordered. Now send it to the supplier.`, 4000);
+      openOrder(o.id);
+      renderOrders();
+    };
+    if (m.querySelector('#oDelete')) m.querySelector('#oDelete').onclick = async () => {
+      if (!confirm('Delete this draft order?')) return;
+      const { error } = await db.from(T.orders).delete().eq('id', o.id);
+      if (fail(error)) return;
+      closeModal(); toast('Draft deleted'); renderOrders();
+    };
+  }
+  if (open) {
+    m.querySelector('#oSaveOpen').onclick = async () => {
+      const { error } = await db.from(T.orders).update({ expected_at: val('#oExp') || null, notes: val('#oNotes').trim() || null }).eq('id', o.id);
+      if (fail(error)) return;
+      closeModal(); toast('Saved'); renderOrders();
+    };
+  }
+  if (m.querySelector('#oCancelOrder')) m.querySelector('#oCancelOrder').onclick = async () => {
+    if (!confirm('Cancel this order? It will stop showing as on order. Let the supplier know separately.')) return;
+    const { error } = await db.from(T.orders).update({ status: 'cancelled' }).eq('id', o.id);
+    if (fail(error)) return;
+    closeModal(); toast('Order cancelled'); renderOrders();
+  };
+  if (m.querySelector('#oAgain')) m.querySelector('#oAgain').onclick = async () => {
+    // Re-order the same items at today's catalogue prices
+    const { data, error } = await db.rpc('store_save_draft', {
+      p_order: null, p_supplier: o.supplier_id, p_expected: null, p_notes: o.notes || null, p_staff: staffName() || null,
+      p_lines: lines.filter(l => itemById(l.item_id).active !== false)
+        .map(l => ({ item_id: l.item_id, qty_ordered: Number(l.qty_ordered), unit_cost: Number(itemById(l.item_id).unit_cost) || 0 }))
+    });
+    if (fail(error)) return;
+    toast(`New draft ${data.order_no} created`);
+    renderOrders();
+    openOrder(data.id);
+  };
+  if (m.querySelector('#oClose')) m.querySelector('#oClose').onclick = closeModal;
+  if (m.querySelector('#oPrint')) m.querySelector('#oPrint').onclick = () => printOrder(o, lines);
+  if (m.querySelector('#oCopy')) m.querySelector('#oCopy').onclick = async () => {
+    const text = orderText(o, lines);
+    try { await navigator.clipboard.writeText(text); toast('Order copied, paste it into an email'); }
+    catch (e) { prompt('Copy this order text:', text); }
+  };
+  if (m.querySelector('#oEmail')) m.querySelector('#oEmail').onclick = () => {
+    const sup = supplierById(o.supplier_id);
+    if (!sup.email) return toast('Add an email for this supplier under Setup first');
+    const subject = `Order ${o.order_no} from ${RESORT_NAME}`;
+    window.location.href = `mailto:${encodeURIComponent(sup.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(orderText(o, lines))}`;
+  };
+}
+
+// ---------- RECEIVE ----------
+async function renderReceive() {
+  const el = $('#tab-receive');
+  const { data, error } = await db.from(T.orders).select('*, supplier:store_suppliers(name), lines:store_order_lines(*)')
+    .in('status', ['ordered', 'part_received']).order('expected_at', { ascending: true, nullsFirst: false });
+  if (fail(error)) return;
+  state.receiveOrders = data;
+  el.innerHTML = `
+    <div class="card row"><span class="muted" style="flex:1">${data.length} order(s) waiting on delivery.
+      Quantities are filled in with what is still outstanding; change them to what actually arrived.</span>
+      <button class="btn sec" id="btnAdhoc">Delivery with no order</button></div>` +
+    data.map(o => {
+      const rows = o.lines.map(l => {
+        const out = Math.max(round2(Number(l.qty_ordered) - Number(l.qty_received)), 0);
+        return `<tr><td>${esc(itemName(l.item_id))} <span class="muted small">${esc(itemById(l.item_id).unit || '')}</span></td>
+          <td class="num">${fmt(l.qty_ordered)}</td><td class="num">${fmt(l.qty_received)}</td>
+          <td class="num"><input class="qty-in" type="number" step="any" min="0" inputmode="decimal"
+            data-recv="${o.id}" data-line="${l.id}" value="${out || ''}"></td></tr>`;
+      }).join('');
+      const late = o.expected_at && o.expected_at < todayStr();
+      return `<div class="card">
+        <div class="row" style="margin-bottom:8px"><strong style="flex:1">${esc(o.supplier?.name)} &middot; ${esc(o.order_no)}</strong>
+          <span class="pill ${o.status}">${statusLabel(o.status)}</span>
+          ${o.expected_at ? `<span class="${late ? 'pill warn' : 'muted'}">Due ${esc(o.expected_at)}</span>` : ''}</div>
+        <div class="tablewrap"><table><thead><tr><th>Item</th><th class="num">Ordered</th><th class="num">Received</th><th class="num">Receiving now</th></tr></thead>
+          <tbody>${rows}</tbody></table></div>
+        <div class="row" style="margin-top:10px">
+          <input id="docket-${o.id}" placeholder="Docket / invoice no. (optional)" style="flex:1;min-width:180px">
+          ${o.status === 'part_received' ? `<button class="btn sec" data-close="${o.id}">Close, rest not coming</button>` : ''}
+          <button class="btn" data-receive="${o.id}">Receive delivery</button></div></div>`;
+    }).join('');
+  el.querySelectorAll('[data-receive]').forEach(b => b.onclick = () => receiveOrder(b.dataset.receive, b));
+  el.querySelectorAll('[data-close]').forEach(b => b.onclick = async () => {
+    if (!confirm('Finish this order? Anything not received will stop showing as on order.')) return;
+    const { error } = await db.from(T.orders).update({ status: 'received' }).eq('id', b.dataset.close).eq('status', 'part_received');
+    if (fail(error)) return;
+    toast('Order closed'); renderReceive();
+  });
+  $('#btnAdhoc').onclick = adhocReceive;
+}
+
+async function receiveOrder(orderId, btn) {
+  if (needStaff()) return;
+  const o = state.receiveOrders.find(x => x.id === orderId);
+  const todo = [...document.querySelectorAll(`input[data-recv="${orderId}"]`)]
+    .map(i => ({ line_id: i.dataset.line, qty: parseFloat(i.value) }))
+    .filter(x => x.qty > 0);
+  if (!todo.length) return toast('Nothing entered to receive');
+  const docket = $(`#docket-${orderId}`).value.trim();
+  const rows = todo.map(t => {
+    const l = o.lines.find(x => x.id === t.line_id);
+    const it = itemById(l.item_id);
+    const over = Number(l.qty_received) + t.qty > Number(l.qty_ordered);
+    return `<tr><td>${esc(it.name)}</td><td class="num">${fmt(t.qty)} ${esc(it.unit || '')}</td>
+      <td>${over ? '<span class="pill warn">more than ordered</span>' : ''}</td></tr>`;
+  }).join('');
+  const short = o.lines.filter(l => {
+    const now = (todo.find(t => t.line_id === l.id) || {}).qty || 0;
+    return Number(l.qty_received) + now < Number(l.qty_ordered);
+  });
+  const ok = await confirmModal(`Receive ${esc(o.order_no)} from ${esc(o.supplier?.name)}?`,
+    `<div class="tablewrap"><table><tbody>${rows}</tbody></table></div>` +
+    (short.length ? `<p class="muted">Still to come after this: ${short.map(l => esc(itemName(l.item_id))).join(', ')}. The order will stay open as part received.</p>`
+                  : '<p class="muted">This completes the order.</p>') +
+    (docket ? `<p class="muted small">Docket: ${esc(docket)}</p>` : ''),
+    'Receive into stock');
+  if (!ok) return;
+  btn.disabled = true;
+  const { data, error } = await db.rpc('store_receive_order', { p_order: orderId, p_lines: todo, p_staff: staffName(), p_note: docket || null });
+  if (fail(error)) { btn.disabled = false; return; }
+  toast(data === 'received' ? `${o.order_no} fully received, stock updated` : `${o.order_no} part received, the rest is still on order`, 3500);
+  renderReceive();
+}
+
+function adhocReceive() {
+  const m = modal(`
+    <h2>Delivery with no order</h2>
+    <p class="muted" style="margin-top:-6px">For top-ups bought on the run or stock moved in from elsewhere.</p>
+    <div class="grid2">
+      <label class="field">Item<select id="aItem"><option value="">Choose...</option>
+        ${state.items.filter(i => i.active !== false).map(i => `<option value="${i.id}">${esc(i.name)} (${esc(i.unit)})</option>`).join('')}</select></label>
+      <label class="field">Quantity<input id="aQty" type="number" step="any" min="0" inputmode="decimal"></label>
+    </div>
+    <label class="field" style="margin-top:10px">Note (where it came from, docket number)<input id="aNote"></label>
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn sec" id="aCancel">Cancel</button><button class="btn" id="aSave">Add to stock</button></div>`);
+  m.querySelector('#aCancel').onclick = closeModal;
+  m.querySelector('#aSave').onclick = async () => {
+    if (needStaff()) return;
+    const item_id = m.querySelector('#aItem').value;
+    const qty = parseFloat(m.querySelector('#aQty').value);
+    if (!item_id || !(qty > 0)) return toast('Choose an item and quantity');
+    m.querySelector('#aSave').disabled = true;
+    const { error } = await db.from(T.moves).insert({
+      item_id, qty, type: 'receive', staff_name: staffName(), note: m.querySelector('#aNote').value.trim() || 'No order'
+    });
+    if (fail(error)) { m.querySelector('#aSave').disabled = false; return; }
+    closeModal(); toast('Added to stock');
+  };
+}
+
+// ---------- HISTORY ----------
+async function renderHistory() {
+  const el = $('#tab-history');
+  let query = db.from(T.moves).select('*, item:store_items(name, unit, unit_cost, category)')
+    .order('created_at', { ascending: false }).limit(3000);
+  if (state.histDays) query = query.gte('created_at', new Date(Date.now() - Number(state.histDays) * 864e5).toISOString());
+  const { data, error } = await query;
+  if (fail(error)) return;
+  el.innerHTML = `
+    <div class="card row">
+      <select id="hDays">
+        <option value="7">Last 7 days</option><option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="">All time</option></select>
+      <select id="hType"><option value="">All types</option>
+        ${Object.entries(TYPE_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <select id="hView"><option value="list">Every movement</option><option value="summary">Summary by item</option></select>
+      <input id="hSearch" placeholder="Search item, staff or note" style="flex:1;min-width:160px">
+      <button class="btn sec" id="hExport">Export CSV</button>
+    </div>
+    ${data.length >= 3000 ? '<p class="muted small">Showing the latest 3,000 movements. Pick a shorter period to see everything in it.</p>' : ''}
+    <div class="card tablewrap" id="hOut"></div>`;
+  $('#hDays').value = state.histDays;
+  $('#hType').value = state.histType;
+  $('#hView').value = state.histView;
+
+  const filtered = () => {
+    const q = $('#hSearch').value.toLowerCase();
+    return data.filter(r => (!state.histType || r.type === state.histType) &&
+      (!q || [r.item?.name, r.item?.category, r.staff_name, r.note].join(' ').toLowerCase().includes(q)));
+  };
+  const summary = rows => {
+    const by = {};
+    for (const r of rows) {
+      const k = r.item_id;
+      const s = by[k] = by[k] || { name: r.item?.name || '(deleted item)', unit: r.item?.unit || '', cost: Number(r.item?.unit_cost || 0), receive: 0, use: 0, waste: 0, adjust: 0 };
+      s[r.type] += Number(r.qty);
+    }
+    return Object.values(by).sort((a, b) => (b.use + b.waste) * b.cost - (a.use + a.waste) * a.cost || a.name.localeCompare(b.name));
+  };
+  const draw = () => {
+    const rows = filtered();
+    if (state.histView === 'list') {
+      $('#hOut').innerHTML = `<table><thead><tr><th>When</th><th>Item</th><th>Type</th><th class="num">Qty</th>
+        <th class="hide-sm">Staff</th><th class="hide-sm">Note</th></tr></thead>
+        <tbody>${moveRows(rows, true) || '<tr><td colspan="6" class="muted">No movements in this period</td></tr>'}</tbody></table>`;
+      return;
+    }
+    const sum = summary(rows);
+    const useVal = sum.reduce((a, s) => a - s.use * s.cost, 0);
+    const wasteVal = sum.reduce((a, s) => a - s.waste * s.cost, 0);
+    $('#hOut').innerHTML = `<table><thead><tr><th>Item</th><th class="num">Received</th><th class="num">Used</th>
+      <th class="num">Binned</th><th class="num hide-sm">Count adj.</th><th class="num">Used + binned $</th></tr></thead>
+      <tbody>${sum.map(s => `<tr><td>${esc(s.name)} <span class="muted small">${esc(s.unit)}</span></td>
+        <td class="num">${s.receive ? fmt(s.receive) : ''}</td><td class="num">${s.use ? fmt(-s.use) : ''}</td>
+        <td class="num">${s.waste ? fmt(-s.waste) : ''}</td><td class="num hide-sm">${s.adjust ? signed(s.adjust) : ''}</td>
+        <td class="num">${money(-(s.use + s.waste) * s.cost)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Nothing in this period</td></tr>'}</tbody>
+      <tfoot><tr><td colspan="5">Used ${money(useVal)} &middot; binned ${money(wasteVal)} (at current unit cost)</td>
+        <td class="num">${money(useVal + wasteVal)}</td></tr></tfoot></table>`;
+  };
+  $('#hDays').onchange = e => { state.histDays = e.target.value; renderHistory(); };
+  $('#hType').onchange = e => { state.histType = e.target.value; draw(); };
+  $('#hView').onchange = e => { state.histView = e.target.value; draw(); };
+  $('#hSearch').oninput = draw;
+  $('#hExport').onclick = () => {
+    const rows = filtered();
+    if (state.histView === 'list') {
+      downloadCSV(`movements-${todayStr()}.csv`, [['When', 'Item', 'Type', 'Qty', 'Unit', 'Staff', 'Note'],
+        ...rows.map(r => [new Date(r.created_at).toLocaleString('en-AU'), r.item?.name, TYPE_LABEL[r.type], r.qty, r.item?.unit, r.staff_name, r.note])]);
+    } else {
+      downloadCSV(`usage-summary-${todayStr()}.csv`, [['Item', 'Unit', 'Received', 'Used', 'Binned', 'Count adjust', 'Unit cost', 'Used + binned $'],
+        ...summary(rows).map(s => [s.name, s.unit, s.receive, -s.use, -s.waste, s.adjust, s.cost, round2(-(s.use + s.waste) * s.cost)])]);
+    }
+  };
+  draw();
+}
+
+// ---------- SETUP ----------
+const ENTITIES = {
+  items: { label: 'Items', single: 'item', table: T.items,
+    cols: ['name', 'category', 'unit', 'location_id', 'supplier_id', 'par_level', 'unit_cost', 'active'],
+    fields: [
+      { k: 'name', l: 'Name', req: true },
+      { k: 'category', l: 'Category' },
+      { k: 'unit', l: 'Unit (each, carton, kg, L)', def: 'each' },
+      { k: 'location_id', l: 'Home location', type: 'ref', ref: 'locations' },
+      { k: 'supplier_id', l: 'Supplier', type: 'ref', ref: 'suppliers' },
+      { k: 'supplier_code', l: 'Supplier product code' },
+      { k: 'unit_cost', l: 'Unit cost ex GST ($)', type: 'number' },
+      { k: 'par_level', l: 'Par level (minimum to keep)', type: 'number' },
+      { k: 'reorder_qty', l: 'Usual reorder quantity', type: 'number' },
+      { k: 'active', l: 'Active', type: 'bool' }] },
+  suppliers: { label: 'Suppliers', single: 'supplier', table: T.suppliers,
+    cols: ['name', 'contact_name', 'email', 'phone'],
+    fields: [
+      { k: 'name', l: 'Name', req: true },
+      { k: 'contact_name', l: 'Contact name' },
+      { k: 'email', l: 'Order email' },
+      { k: 'phone', l: 'Phone' },
+      { k: 'account_no', l: 'Our account number' },
+      { k: 'notes', l: 'Notes (cut-off times, delivery days)' }] },
+  locations: { label: 'Locations', single: 'location', table: T.locations,
+    cols: ['name', 'area', 'sort_order'],
+    fields: [
+      { k: 'name', l: 'Name', req: true },
+      { k: 'area', l: 'Department / area' },
+      { k: 'sort_order', l: 'Sort order (lower shows first)', type: 'number' }] },
+  staff: { label: 'Staff', single: 'staff member', table: T.staff,
+    cols: ['name', 'active'],
+    fields: [
+      { k: 'name', l: 'Name', req: true },
+      { k: 'active', l: 'Active', type: 'bool' }] }
+};
+const ITEM_CSV_COLS = ['name', 'category', 'unit', 'location', 'supplier', 'supplier_code', 'unit_cost', 'par_level', 'reorder_qty', 'on_hand'];
+
+function displayVal(cfg, k, v) {
+  const f = cfg.fields.find(x => x.k === k);
+  if (f.type === 'ref') return (state[f.ref].find(r => r.id === v) || {}).name || '';
+  if (f.type === 'bool') return v === false ? 'No' : 'Yes';
+  if (k === 'unit_cost') return money(v);
+  if (f.type === 'number') return fmt(v);
+  return v ?? '';
+}
+
+function fieldHtml(f, v) {
+  if (f.type === 'ref') {
+    return `<label class="field">${f.l}<select data-k="${f.k}"><option value="">None</option>${state[f.ref]
+      .map(r => `<option value="${r.id}" ${r.id === v ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>`;
+  }
+  if (f.type === 'bool') {
+    return `<label class="field">${f.l}<select data-k="${f.k}">
+      <option value="true" ${v !== false ? 'selected' : ''}>Yes</option>
+      <option value="false" ${v === false ? 'selected' : ''}>No</option></select></label>`;
+  }
+  return `<label class="field">${f.l}<input data-k="${f.k}" type="${f.type === 'number' ? 'number' : 'text'}" step="any" value="${esc(v ?? '')}"></label>`;
+}
+
+function renderSetup() {
+  const el = $('#tab-setup');
+  const key = state.setupKey;
+  const cfg = ENTITIES[key];
+  el.innerHTML = `
+    <div class="card row">
+      ${Object.entries(ENTITIES).map(([k, c]) => `<button class="btn ${k === key ? '' : 'sec'} sm" data-ent="${k}">${c.label} (${state[k].length})</button>`).join('')}
+      <span style="flex:1"></span><button class="btn" id="btnAddEnt">Add ${cfg.single}</button></div>
+    ${key === 'items' ? `<div class="card row">
+      <span class="muted small" style="flex:1">Load or update lots of items at once from a spreadsheet saved as CSV.
+        Matching names are updated, new names are added, and an on_hand column is recorded as an opening count.</span>
+      <button class="btn sec sm" id="btnTemplate">Download template</button>
+      <button class="btn sec sm" id="btnExportItems">Export items</button>
+      <label class="btn sec sm">Import CSV<input type="file" id="csvFile" accept=".csv,text/csv" class="hidden"></label></div>` : ''}
+    <div class="card">
+      <input id="setupSearch" placeholder="Search ${cfg.label.toLowerCase()}" value="${esc(state.setupQ)}" style="width:100%;margin-bottom:8px">
+      <div class="tablewrap"><table><thead><tr>${cfg.cols.map(c => `<th>${esc(cfg.fields.find(f => f.k === c).l.replace(/ \(.*\)$/, ''))}</th>`).join('')}<th></th></tr></thead>
+        <tbody id="setupBody"></tbody></table></div></div>`;
+  const draw = () => {
+    const q = state.setupQ.toLowerCase();
+    const rows = state[key].filter(r => !q || cfg.cols.map(c => displayVal(cfg, c, r[c])).join(' ').toLowerCase().includes(q));
+    $('#setupBody').innerHTML = rows.map(r => `<tr${r.active === false ? ' class="muted"' : ''}>${cfg.cols.map(c => `<td>${esc(displayVal(cfg, c, r[c]))}</td>`).join('')}
+        <td class="num"><button class="btn sec sm" data-edit="${r.id}">Edit</button></td></tr>`).join('')
+      || `<tr><td colspan="${cfg.cols.length + 1}" class="muted">Nothing yet</td></tr>`;
+    $('#setupBody').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editEntity(b.dataset.edit));
+  };
+  el.querySelectorAll('[data-ent]').forEach(b => b.onclick = () => { state.setupKey = b.dataset.ent; state.setupQ = ''; renderSetup(); });
+  $('#setupSearch').oninput = e => { state.setupQ = e.target.value; draw(); };
+  $('#btnAddEnt').onclick = () => editEntity(null);
+  if (key === 'items') {
+    $('#btnTemplate').onclick = () => downloadCSV('items-template.csv', [ITEM_CSV_COLS,
+      ['Paper towel rolls', 'Cleaning', 'carton', 'Store room', 'Bunzl', 'PT-200', '42.50', '4', '6', '5']]);
+    $('#btnExportItems').onclick = exportItems;
+    $('#csvFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importItems(f); };
+  }
+  draw();
+}
+
+function editEntity(id) {
+  const key = state.setupKey;
+  const cfg = ENTITIES[key];
+  const r = id ? state[key].find(x => x.id === id) : {};
+  const m = modal(`
+    <h2>${id ? 'Edit' : 'Add'} ${cfg.single}</h2>
+    <div class="grid2">${cfg.fields.map(f => fieldHtml(f, r[f.k])).join('')}</div>
+    <div class="row" style="margin-top:16px">
+      ${id ? '<button class="btn danger" id="eDelete">Delete</button>' : ''}
+      <span style="flex:1"></span>
+      <button class="btn sec" id="eCancel">Cancel</button><button class="btn" id="eSave">Save</button></div>`);
+  m.querySelector('#eCancel').onclick = closeModal;
+  m.querySelector('#eSave').onclick = async () => {
+    const row = {};
+    for (const inp of m.querySelectorAll('[data-k]')) {
+      const f = cfg.fields.find(x => x.k === inp.dataset.k);
+      let v = inp.value.trim();
+      if (f.type === 'number') v = v === '' ? 0 : Number(v);
+      else if (f.type === 'bool') v = v === 'true';
+      else if (v === '') v = f.def || null;
+      if (f.req && !v) return toast(f.l + ' is required');
+      row[f.k] = v;
+    }
+    const res = id
+      ? await db.from(cfg.table).update(row).eq('id', id)
+      : await db.from(cfg.table).insert(row);
+    if (fail(res.error)) return;
+    await loadRef();
+    closeModal(); toast('Saved'); renderSetup();
+  };
+  if (id) m.querySelector('#eDelete').onclick = async () => {
+    if (!confirm(`Delete ${r.name}? This only works if nothing uses it yet. Otherwise set it to inactive.`)) return;
+    const { error } = await db.from(cfg.table).delete().eq('id', id);
+    if (fail(error)) return;
+    await loadRef();
+    closeModal(); toast('Deleted'); renderSetup();
+  };
+}
+
+async function exportItems() {
+  if (!await loadStock()) return;
+  const loc = id => (state.locations.find(l => l.id === id) || {}).name || '';
+  downloadCSV(`items-${todayStr()}.csv`, [ITEM_CSV_COLS.concat('active'), ...state.items.map(i => {
+    const s = state.stock.find(x => x.item_id === i.id);
+    return [i.name, i.category, i.unit, loc(i.location_id), supplierById(i.supplier_id).name || '', i.supplier_code,
+      i.unit_cost, i.par_level, i.reorder_qty, s ? s.on_hand : '', i.active ? 'yes' : 'no'];
+  })]);
+}
+
+async function importItems(file) {
+  if (needStaff()) return;
+  const rows = parseCSV((await file.text()).replace(/^﻿/, ''));
+  if (rows.length < 2) return toast('That file has no rows');
+  const head = rows[0].map(h => h.trim().toLowerCase().replace(/[\s-]+/g, '_'));
+  if (!head.includes('name')) return toast('The first row needs a "name" column. Download the template to see the layout.', 5000);
+
+  const lower = list => new Map(list.map(x => [x.name.toLowerCase(), x]));
+  const locMap = lower(state.locations), supMap = lower(state.suppliers), itemMap = lower(state.items);
+  const recMap = new Map();
+  const problems = [], warnings = [];
+  rows.slice(1).forEach((r, i) => {
+    const rec = Object.fromEntries(head.map((h, j) => [h, (r[j] ?? '').trim()]));
+    if (!rec.name) return;
+    const k = rec.name.toLowerCase();
+    if (recMap.has(k)) warnings.push(`Row ${i + 2}: "${rec.name}" appears more than once, the last row wins`);
+    for (const n of ['unit_cost', 'par_level', 'reorder_qty', 'on_hand'])
+      if (rec[n] && (isNaN(num(rec[n])) || num(rec[n]) < 0)) problems.push(`Row ${i + 2}: ${n} "${rec[n]}" is not a number`);
+    recMap.set(k, rec);
+  });
+  const recs = [...recMap.values()];
+  if (!recs.length) return toast('No rows with a name found');
+  const newLocs = new Map(), newSups = new Map();
+  recs.forEach(r => {
+    if (r.location && !locMap.has(r.location.toLowerCase())) newLocs.set(r.location.toLowerCase(), r.location);
+    if (r.supplier && !supMap.has(r.supplier.toLowerCase())) newSups.set(r.supplier.toLowerCase(), r.supplier);
+  });
+  const adds = recs.filter(r => !itemMap.has(r.name.toLowerCase()));
+  const updates = recs.filter(r => itemMap.has(r.name.toLowerCase()));
+  const counts = recs.filter(r => r.on_hand !== undefined && r.on_hand !== '');
+
+  if (problems.length) {
+    modal(`<h2>Fix these first</h2><ul>${problems.slice(0, 30).map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      ${problems.length > 30 ? `<p class="muted">...and ${problems.length - 30} more</p>` : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn" onclick="closeModal()">OK</button></div>`);
+    return;
+  }
+  const ok = await confirmModal('Import items?', `
+    <ul>
+      <li><strong>${adds.length}</strong> new item(s)</li>
+      <li><strong>${updates.length}</strong> existing item(s) updated (blank cells leave a field unchanged)</li>
+      ${newLocs.size ? `<li>New locations: ${[...newLocs.values()].map(esc).join(', ')}</li>` : ''}
+      ${newSups.size ? `<li>New suppliers: ${[...newSups.values()].map(esc).join(', ')}</li>` : ''}
+      ${counts.length ? `<li><strong>${counts.length}</strong> on_hand figure(s) saved as counts, adjusting stock to match</li>` : ''}
+    </ul>
+    ${warnings.length ? `<p class="muted small">${warnings.slice(0, 10).map(esc).join('<br>')}</p>` : ''}
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th></th><th>Location</th><th>Supplier</th><th class="num">Par</th><th class="num">On hand</th></tr></thead>
+    <tbody>${recs.slice(0, 15).map(r => `<tr><td>${esc(r.name)}</td><td><span class="pill ${itemMap.has(r.name.toLowerCase()) ? 'ordered' : 'received'}">${itemMap.has(r.name.toLowerCase()) ? 'update' : 'new'}</span></td>
+      <td>${esc(r.location || '')}</td><td>${esc(r.supplier || '')}</td><td class="num">${esc(r.par_level || '')}</td><td class="num">${esc(r.on_hand || '')}</td></tr>`).join('')}</tbody></table></div>
+    ${recs.length > 15 ? `<p class="muted small">Showing 15 of ${recs.length} rows.</p>` : ''}`, 'Import');
+  if (!ok) return;
+  toast('Importing...', 10000);
+
+  if (newLocs.size) { const { error } = await db.from(T.locations).insert([...newLocs.values()].map(name => ({ name }))); if (fail(error)) return; }
+  if (newSups.size) { const { error } = await db.from(T.suppliers).insert([...newSups.values()].map(name => ({ name }))); if (fail(error)) return; }
+  if (!await loadRef()) return fail(state.loadError);
+  const locs = lower(state.locations), sups = lower(state.suppliers);
+
+  // Only columns present and filled in are written, so a CSV of just name + par_level only changes par levels
+  const toRow = r => {
+    const row = {};
+    for (const k of ['name', 'category', 'unit', 'supplier_code']) if (r[k]) row[k] = r[k];
+    for (const k of ['unit_cost', 'par_level', 'reorder_qty']) if (r[k]) row[k] = num(r[k]);
+    if (r.location) row.location_id = locs.get(r.location.toLowerCase()).id;
+    if (r.supplier) row.supplier_id = sups.get(r.supplier.toLowerCase()).id;
+    if (r.active) row.active = !/^(no|n|false|0)$/i.test(r.active);
+    return row;
+  };
+  if (adds.length) {
+    const { error } = await db.from(T.items).insert(adds.map(toRow));
+    if (fail(error)) return;
+  }
+  for (const r of updates) {
+    const { error } = await db.from(T.items).update(toRow(r)).eq('id', itemMap.get(r.name.toLowerCase()).id);
+    if (fail(error)) return;
+  }
+  await loadRef();
+  const items = lower(state.items);
+  if (counts.length) {
+    const { error } = await db.rpc('store_count_items', {
+      p_counts: counts.map(r => ({ item_id: items.get(r.name.toLowerCase()).id, counted: num(r.on_hand) })),
+      p_staff: staffName(), p_note: 'Opening stock from CSV import'
+    });
+    if (fail(error)) return;
+  }
+  toast(`Imported: ${adds.length} added, ${updates.length} updated`, 4000);
+  renderSetup();
+}
+
+// ---------- start ----------
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+$('#staffPick').onchange = () => { saveLocal('wslrStorageStaff', staffName()); updateBanner(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modalRoot').innerHTML) closeModal(); });
+
+(async () => {
+  if (!await loadRef()) {
+    $('#main').innerHTML = `<div class="card"><strong>Can't load the database.</strong>
+      <p class="muted">${esc(errText(state.loadError))}</p></div>`;
+    return;
+  }
+  const last = readLocal('wslrStorageTab');
+  switchTab(last && last !== 'setup' && $(`#tab-${last}`) ? last : 'stock');
+})();
+</script>
+</body>
+</html>
