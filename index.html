@@ -201,7 +201,7 @@ section.active{display:block;}
 .draft-item.short{background:var(--red-bg);}
 
 /* Use first board */
-.uf-board{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; align-items:start;}
+.uf-board{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; align-items:start;}
 @media (max-width:1000px){.uf-board{grid-template-columns:repeat(2, minmax(0, 1fr));}}
 @media (max-width:700px){.uf-board{grid-template-columns:1fr;}}
 .uf-col .uf-meta{white-space:normal; overflow:visible; text-overflow:clip;}
@@ -835,8 +835,6 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
         <button data-v="freezer">Walk in freezer</button>
         <button data-v="dry">Walk in pantry</button>
         <button data-v="kitchen_fridge">Kitchen fridges</button>
-        <button data-v="bar_fridge">Glass bar fridges</button>
-        <button data-v="restaurant">Restaurant fridge/freezer</button>
       </div>
     </div>
     <div class="grid2">
@@ -892,7 +890,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
       <div class="field"><label for="nsCategory">Category</label><input id="nsCategory" placeholder="e.g. Desserts"></div>
       <div class="field"><label for="nsStorage">Storage and days</label>
         <div style="display:flex; gap:8px;">
-          <select id="nsStorage" style="flex:1;"><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Kitchen fridges</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select>
+          <select id="nsStorage" style="flex:1;"><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Kitchen fridges</option></select>
           <input id="nsDays" type="number" inputmode="numeric" min="1" placeholder="Days" style="flex:1;">
         </div>
       </div>
@@ -3006,7 +3004,9 @@ function fnChip(fnObj, fnId){
 // Every storage area in the kitchen, in the order they show on the board. The
 // first three keep their original keys (fridge, freezer, dry) so older stock
 // still lands in the right place, they just show under the new names.
-const STORAGES = ["fridge", "freezer", "dry", "kitchen_fridge", "bar_fridge", "restaurant"];
+// Glass bar fridges and Restaurant fridge/freezer are no longer used in the
+// kitchen; their labels stay below so old history still reads properly.
+const STORAGES = ["fridge", "freezer", "dry", "kitchen_fridge"];
 const STORAGE_LABELS = {
   fridge: "Cool room",
   freezer: "Walk in freezer",
@@ -4345,7 +4345,7 @@ async function confirmOrderModal(input){
     '<div class="field"><label>Category</label><select id="cxCat">' + catOpts(null) + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>Quantity</label><div style="display:flex; gap:8px;"><input id="cxQty" type="number" inputmode="decimal" step="any" min="0" style="flex:1;"><input id="cxUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"></div></div>' +
-    '<div class="field"><label>Storage</label><select id="cxStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Kitchen fridges</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select></div></div>' +
+    '<div class="field"><label>Storage</label><select id="cxStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Kitchen fridges</option></select></div></div>' +
     '<div class="field" id="cxForWrap" style="display:none;"><label>For which group?</label><select id="cxFor"></select></div>' +
     '<button class="btn btn-secondary btn-sm" id="cxAdd" style="width:100%;">Add it</button>' +
     "</div>" +
@@ -5140,7 +5140,7 @@ function orderForm(o){
     '<div class="field"><label>Category</label><select id="omICat">' + catOpts + "</select></div></div>" +
     '<div class="grid2">' +
     '<div class="field"><label>Quantity and size</label><div style="display:flex; gap:8px;"><input id="omIQty" type="number" inputmode="decimal" step="any" min="0" placeholder="Qty" style="flex:1;"><input id="omIUnit" list="unitList" placeholder="Unit" style="flex:1;" autocomplete="off"><input id="omISize" placeholder="Size, e.g. 500 g" style="flex:1.3;" autocomplete="off"></div></div>' +
-    '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Kitchen fridges</option><option value="bar_fridge">Glass bar fridges</option><option value="restaurant">Restaurant fridge/freezer</option></select></div></div>' +
+    '<div class="field"><label>Storage</label><select id="omIStorage"><option value="">Choose&hellip;</option><option value="fridge">Cool room</option><option value="freezer">Walk in freezer</option><option value="dry">Walk in pantry</option><option value="kitchen_fridge">Kitchen fridges</option></select></div></div>' +
     '<button class="btn btn-ghost" id="omAddItem" style="width:100%;">+ Add item</button>' +
     '<button class="btn btn-primary" id="omSave" style="margin-top:14px;">' + (o ? "Save order" : "Add order") + "</button>" +
     statusBtn +
