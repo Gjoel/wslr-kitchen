@@ -3170,6 +3170,67 @@ function markModal(i, status){
     }catch(e){}
   });
 }
+// ---------- add more of an item already in stock ----------
+// One tap to record more of the same thing (another tray of chocolate cake)
+// without typing the name, category, unit or date again. If it is going in
+// the same place with the same date it simply adds to the count; otherwise
+// it becomes its own line so each date stays tracked.
+function addMoreHtml(i){
+  const chips = STORAGES.map(k => '<button type="button" data-st="' + k + '" class="' + (i.storage === k ? "on " + k : "") + '">' + storageLabel(k) + "</button>").join("");
+  return '<button class="btn btn-primary" id="amOpen" style="width:100%; margin-bottom:8px;">+ Add more like this</button>' +
+    '<div id="amPanel" style="display:none; background:var(--brand-soft); border-radius:12px; padding:12px 12px 4px; margin-bottom:12px;">' +
+    '<div class="field"><label for="amQty">How many more' + (i.unit ? " (" + esc(i.unit) + ")" : "") + "</label>" +
+      '<div style="display:flex; gap:8px; align-items:center;">' +
+      '<button type="button" class="btn btn-ghost" id="amMinus" style="width:54px; flex:none; font-size:22px;">&minus;</button>' +
+      '<input id="amQty" type="number" inputmode="decimal" step="any" min="0" value="1" style="text-align:center; font-size:20px; font-weight:700;">' +
+      '<button type="button" class="btn btn-ghost" id="amPlus" style="width:54px; flex:none; font-size:22px;">+</button></div></div>' +
+    '<div class="field"><label>Where it is going</label><div class="stchips" id="amStorage">' + chips + "</div></div>" +
+    '<div class="field"><label for="amExpiry">Use by or best before</label>' + expTypeSelect("amExpType", i.expiry_type) +
+      '<input type="date" id="amExpiry" value="' + esc(i.expiry_date || "") + '">' +
+      '<div class="small muted" style="margin-top:4px;">Already filled in from this item. Change it if the new ones have a different date.</div></div>' +
+    '<button class="btn btn-primary" id="amSave" style="width:100%; margin-bottom:8px;">Add to stock</button></div>';
+}
+function wireAddMore(m, i){
+  const panel = m.querySelector("#amPanel");
+  m.querySelector("#amOpen").addEventListener("click", () => {
+    const show = panel.style.display === "none";
+    panel.style.display = show ? "" : "none";
+    if(show) m.querySelector("#amQty").select();
+  });
+  const qty = m.querySelector("#amQty");
+  m.querySelector("#amMinus").addEventListener("click", () => { qty.value = Math.max(1, (+qty.value || 1) - 1); });
+  m.querySelector("#amPlus").addEventListener("click", () => { qty.value = (+qty.value || 0) + 1; });
+  let storage = i.storage || null;
+  m.querySelectorAll("#amStorage [data-st]").forEach(b => b.addEventListener("click", () => {
+    storage = storage === b.dataset.st ? null : b.dataset.st;
+    m.querySelectorAll("#amStorage [data-st]").forEach(x => { x.className = storage === x.dataset.st ? "on " + x.dataset.st : ""; });
+  }));
+  m.querySelector("#amSave").addEventListener("click", async () => {
+    const n = +qty.value;
+    if(!(n > 0)){ toast("Enter how many to add", {type:"err"}); return; }
+    const exp = m.querySelector("#amExpiry").value || null;
+    const expType = m.querySelector("#amExpType").value;
+    const btn = m.querySelector("#amSave"); btn.disabled = true;
+    // same place, same date, same kind of date, not tied to a function: just top up the count
+    const sameLine = i.quantity != null && !i.function_id && (storage || null) === (i.storage || null) &&
+      (exp || null) === (i.expiry_date || null) && expKind(expType) === expKind(i.expiry_type);
+    try{
+      if(sameLine){
+        await run(sb.from("stock_items").update({quantity: (+i.quantity || 0) + n}).eq("id", i.id));
+      }else{
+        await run(sb.from("stock_items").insert({
+          item_name: i.item_name, category: i.category || null, storage: storage, quantity: n, unit: i.unit || null,
+          expiry_date: exp, ...expTypeNew(expType), barcode: i.barcode || null,
+          status: "in_stock", origin: "manual", received_date: localISO()
+        }));
+      }
+      closeModal();
+      toast("Added " + fmtQty(n) + (i.unit ? " " + i.unit : "") + " more " + i.item_name + (storage ? " to " + storageLabel(storage).toLowerCase() : ""));
+      refreshCurrentTab();
+    }catch(e){ btn.disabled = false; }
+  });
+}
+function fmtQty(n){ return String(Math.round(n * 100) / 100); }
 async function itemModal(i){
   let allocFns = [];
   try{
@@ -3187,6 +3248,7 @@ async function itemModal(i){
       ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">Currently tagged to <b>' +
         esc(i.catering_functions.name) + "</b>.</p>"
       : "") +
+    (inStock ? addMoreHtml(i) : "") +
     '<div class="grid2">' +
     '<div class="field"><label for="imQty">Quantity</label><div style="display:flex; gap:8px;">' +
     '<input id="imQty" type="number" inputmode="decimal" step="any" min="0" value="' + (i.quantity ?? "") + '" style="flex:1;">' +
@@ -3211,6 +3273,7 @@ async function itemModal(i){
     "</div>" +
     '<button class="btn btn-ghost" id="btnAllocate" style="width:100%;">Allocate</button>' : "")
   );
+  if(inStock) wireAddMore(m, i);
   m.querySelector("#btnImSave").addEventListener("click", async () => {
     const qv = m.querySelector("#imQty").value;
     try{
@@ -3859,6 +3922,7 @@ function kitchenItemModal(i){
     '<button class="btn" id="kiUsed" style="flex:1; background:var(--green); color:#fff;">Used</button>' +
     '<button class="btn btn-danger" id="kiBin" style="flex:1;">Bin</button>' +
     "</div>" +
+    addMoreHtml(i) +
     '<button class="btn btn-secondary" id="kiAlloc" style="width:100%;">Allocate to a function</button>' +
     "<h3>Fix the label</h3>" +
     '<div class="grid2">' +
@@ -3869,6 +3933,7 @@ function kitchenItemModal(i){
     '<button class="btn btn-ghost" id="kiSave" style="width:100%;">Save changes</button>' +
     '<p class="small muted" style="margin:10px 0 0;">Wrong name, quantity or category? That gets fixed in admin mode.</p>'
   );
+  wireAddMore(m, i);
   m.querySelector("#kiUsed").addEventListener("click", () => { closeModal(); markModal(i, "used"); });
   m.querySelector("#kiBin").addEventListener("click", () => { closeModal(); markModal(i, "binned"); });
   m.querySelector("#kiAlloc").addEventListener("click", () => {
