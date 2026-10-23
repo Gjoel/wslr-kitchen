@@ -381,6 +381,21 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 .uf-row.exp-past{border:2px solid var(--orange); background:var(--orange-bg) !important;}
 .uf-row.exp-past .uf-name{color:var(--orange);}
 .pill.past{background:var(--orange-bg); color:var(--orange);}
+/* Grouped items (flavours of ice cream, brands of lasagne) share one tile */
+.uf-grp{margin-bottom:10px;}
+.uf-grp > summary{list-style:none; cursor:pointer; margin-bottom:0; background:#fff;
+  box-shadow:5px 5px 0 -1px #fff, 5px 5px 0 0 var(--line), var(--shadow);}
+.uf-grp > summary::-webkit-details-marker{display:none;}
+.uf-gmain{flex:1; padding:10px 0; min-width:0;}
+.uf-grp .chev{flex:none; align-self:center; padding-right:12px; font-size:20px; font-weight:700; color:var(--muted); transition:transform .15s;}
+.uf-grp[open] > summary .chev{transform:rotate(90deg);}
+.uf-grp-body{margin:10px 0 0 10px; padding-left:8px; border-left:3px solid var(--line);}
+.pill.grp{background:#1d2a26; color:#fff;}
+.gw-list{display:flex; flex-direction:column; gap:6px; max-height:46vh; overflow:auto; margin:8px 0 6px;}
+.gw-opt{display:flex; justify-content:space-between; align-items:center; gap:10px; text-align:left; width:100%;
+  background:#fff; border:1px solid var(--line); border-radius:10px; padding:11px 12px; font:inherit; font-weight:600; cursor:pointer; color:var(--ink);}
+.gw-opt.g{background:var(--brand-soft); border-color:var(--brand);}
+.gw-opt span{font-weight:500; font-size:13px; color:var(--muted); text-align:right;}
 /* Where it was bought from */
 .sup-ic{display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%;
   color:#fff; font-size:10px; font-weight:800; letter-spacing:.02em; vertical-align:-6px; margin-right:6px; flex:none;}
@@ -977,6 +992,7 @@ const state = {
   functions: [],      // upcoming functions for the receive picker
   ufFnFilter: null,
   ufSort: "storage",
+  openGroups: new Set(),
   ufShowFar: false,
   draftOrders: [],
   ufItems: [],
@@ -2520,6 +2536,23 @@ function blobToB64(blob){
     r.readAsDataURL(blob);
   });
 }
+// one product photo in, the Add item fields out (name, brand, size, date...)
+async function readProduct(blob, cats){
+  const type = ["image/jpeg", "image/png", "image/webp", "image/gif"].indexOf(blob.type) !== -1 ? blob.type : "image/jpeg";
+  const files = [{media_type: type, data_b64: await blobToB64(blob)}];
+  const { data, error } = await sb.functions.invoke("read-product", {body: {files, categories: cats, today: localISO()}});
+  if(error){
+    let msg = "Could not read the photo";
+    try{
+      const body = await error.context.json();
+      if(body && body.error) msg = body.error;
+    }catch(_){}
+    throw new Error(msg);
+  }
+  if(!data) throw new Error("Could not read the photo");
+  if(data.error) throw new Error(data.error);
+  return data;
+}
 async function readDocket(){
   if(!state.draftPhotos.length) return;
   const btn = $("btnReadDocket");
@@ -2739,6 +2772,9 @@ async function quickAddItem(){
   const m = openModal(
     "<h2>Add an item</h2>" +
     '<p class="small muted" style="margin-top:-2px;">Only the name is needed. Fill in anything else you know.</p>' +
+    '<input type="file" id="qaPhotoIn" accept="image/*" hidden>' +
+    '<button type="button" class="btn btn-secondary" id="qaPhoto" style="width:100%; margin-bottom:6px;">&#128247; Fill in from a photo</button>' +
+    '<p class="small muted" id="qaPhotoNote" style="margin:0 0 12px;">Take a photo of the label with the name and the date in shot, and the form fills itself in. Check it before saving.</p>' +
     '<div class="field"><label for="qaName">Item</label><input id="qaName" list="nameList" placeholder="e.g. Milk" autocomplete="off"></div>' +
     '<div class="field"><label>Storage <span style="text-transform:none; font-weight:500;">(optional)</span></label><div class="stchips" id="qaStorage">' +
       STORAGES.map(k => '<button type="button" data-st="' + k + '">' + storageLabel(k) + "</button>").join("") +
@@ -2753,16 +2789,59 @@ async function quickAddItem(){
     '<div class="field"><label for="qaCat">Category <span style="text-transform:none; font-weight:500;">(optional)</span></label><select id="qaCat"><option value="">None</option>' +
       cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("") + "</select></div>" +
     '<div class="field"><label for="qaSup">Bought from <span style="text-transform:none; font-weight:500;">(optional)</span></label><input id="qaSup" list="supplierList" placeholder="e.g. Coles" autocomplete="off"></div></div>' +
+    '<div class="field"><label for="qaGroup">Group with <span style="text-transform:none; font-weight:500;">(optional, e.g. Ice cream)</span></label>' +
+      '<input id="qaGroup" list="qaGroupList" placeholder="Pick a group or type a new one" autocomplete="off"><datalist id="qaGroupList"></datalist></div>' +
     '<button class="btn btn-primary" id="qaSave" style="width:100%;">Add to stock</button>'
   );
   let storage = null;
+  const setStorage = v => {
+    storage = v;
+    m.querySelectorAll("#qaStorage [data-st]").forEach(x => { x.className = storage === x.dataset.st ? "on " + x.dataset.st : ""; });
+  };
   m.querySelectorAll("#qaStorage [data-st]").forEach(b =>
-    b.addEventListener("click", () => {
-      storage = storage === b.dataset.st ? null : b.dataset.st;
-      m.querySelectorAll("#qaStorage [data-st]").forEach(x => { x.className = storage === x.dataset.st ? "on " + x.dataset.st : ""; });
-    })
+    b.addEventListener("click", () => setStorage(storage === b.dataset.st ? null : b.dataset.st))
   );
   m.querySelector("#qaName").focus();
+  // the groups already in use, to pick from
+  let groupRows = [];
+  (async () => {
+    try{
+      groupRows = await run(sb.from("stock_items").select("item_name, group_label").eq("status", "in_stock").not("group_label", "is", null).limit(800));
+      const labels = {};
+      (groupRows || []).forEach(r => { const k = groupKey(r.group_label); if(k && !labels[k]) labels[k] = String(r.group_label).trim(); });
+      m.querySelector("#qaGroupList").innerHTML = Object.values(labels).sort().map(l => '<option value="' + esc(l) + '">').join("");
+    }catch(e){}
+  })();
+  // read the label from a photo and fill the form in
+  m.querySelector("#qaPhoto").addEventListener("click", () => m.querySelector("#qaPhotoIn").click());
+  m.querySelector("#qaPhotoIn").addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if(!f) return;
+    const btn = m.querySelector("#qaPhoto"), note = m.querySelector("#qaPhotoNote");
+    btn.disabled = true; btn.textContent = "Reading the label…";
+    try{
+      const d = await readProduct(await compressImage(f), cats);
+      if(d.name) m.querySelector("#qaName").value = d.name + (d.brand ? " (" + d.brand + ")" : "");
+      if(d.storage && STORAGES.indexOf(d.storage) !== -1) setStorage(d.storage);
+      if(d.quantity != null) m.querySelector("#qaQty").value = d.quantity;
+      const unit = [d.size, d.unit].filter(Boolean).join(" ");
+      if(unit) m.querySelector("#qaUnit").value = unit;
+      if(d.date){
+        m.querySelector("#qaExp").value = d.date;
+        m.querySelector("#qaExpType").value = expKind(d.date_type);
+      }
+      if(d.category){
+        const c = cats.find(x => String(x).toLowerCase() === String(d.category).toLowerCase());
+        if(c) m.querySelector("#qaCat").value = c;
+      }
+      note.innerHTML = "<b>Filled in from the photo.</b> Check it" + (d.date ? "" : " (no date could be read, add it if there is one)") + ", then tap Add to stock.";
+    }catch(err){
+      toast(err.message || "Could not read the photo", {type:"err"});
+    }finally{
+      btn.disabled = false; btn.innerHTML = "&#128247; Fill in from a photo";
+    }
+  });
   m.querySelector("#qaSave").addEventListener("click", async () => {
     const name = m.querySelector("#qaName").value.trim();
     if(!name){ toast("Give the item a name first", {type:"err"}); return; }
@@ -2773,6 +2852,16 @@ async function quickAddItem(){
     if(!exp && cat && storage){
       const row = (state.shelf || []).find(r => r.category === cat && r.storage === storage);
       if(row) exp = localISO(new Date(Date.now() + row.days * 86400000));
+    }
+    // the group typed in (matched to an existing one whatever the capitals),
+    // or the group this same item is already in
+    let group = m.querySelector("#qaGroup").value.trim() || null;
+    if(group){
+      const hit = groupRows.find(r => groupKey(r.group_label) === groupKey(group));
+      if(hit) group = String(hit.group_label).trim();
+    }else{
+      const same = groupRows.find(r => String(r.item_name || "").trim().toLowerCase() === name.toLowerCase());
+      if(same) group = String(same.group_label).trim();
     }
     const btn = m.querySelector("#qaSave");
     btn.disabled = true;
@@ -2797,12 +2886,13 @@ async function quickAddItem(){
         unit: m.querySelector("#qaUnit").value.trim() || null,
         expiry_date: exp,
         ...expTypeNew(m.querySelector("#qaExpType").value),
+        group_label: group,
         status: "in_stock",
         origin: "manual",
         received_date: localISO()
       }));
       closeModal();
-      toast(name + " added");
+      toast(name + " added" + (group ? " to " + group : ""));
       refreshCurrentTab();
     }catch(e){
       btn.disabled = false;
@@ -2813,22 +2903,174 @@ function boardHtml(list, searching, showAlloc){
   // flat list, soonest use by or best before first, whatever shelf it is on
   if(state.ufSort === "date"){
     const sorted = list.slice().sort(byExpiry);
-    return '<div class="uf-flat">' + sorted.map(i => ufRowHtml(i, searching, showAlloc, true)).join("") + "</div>";
+    return '<div class="uf-flat">' + groupedRows(sorted, i => ufRowHtml(i, searching, showAlloc, true), "flat", searching) + "</div>";
   }
   const cols = {none: []};
   STORAGES.forEach(k => { cols[k] = []; });
   list.forEach(i => (cols[i.storage] || cols.none).push(i));
   STORAGES.forEach(k => cols[k].sort(byExpiry));
+  cols.none.sort(byExpiry);
   const colHtml = st =>
     '<div class="uf-col" data-storage="' + st + '"><div class="uf-col-h"><span class="hl">' + storageIcon(st) + storageLabel(st) + "</span>" +
     '<span class="cnt">' + cols[st].length + "</span></div>" +
-    cols[st].map(i => ufRowHtml(i, searching, showAlloc)).join("") + "</div>";
+    groupedRows(cols[st], i => ufRowHtml(i, searching, showAlloc), st, searching) + "</div>";
   return '<div class="uf-board">' + STORAGES.map(colHtml).join("") + "</div>" +
     (cols.none.length
       ? '<div class="uf-group">' + storageIcon(null) + ' No storage set<span class="cnt">' + cols.none.length + "</span></div>" +
         '<div class="small muted" style="margin:-2px 0 8px;">Drag these into a column, or tap to edit.</div>' +
-        cols.none.map(i => ufRowHtml(i, searching, showAlloc)).join("")
+        groupedRows(cols.none, i => ufRowHtml(i, searching, showAlloc), "none", searching)
       : "");
+}
+// ---------- groups ----------
+// Items with the same group name (say "Ice cream" for vanilla, chocolate and
+// strawberry) sit together in one tile in each storage column. The tile shows
+// the soonest date of anything in it and opens to show each item.
+function groupKey(label){ return String(label || "").trim().toLowerCase(); }
+function groupedRows(list, rowFn, scope, searching){
+  const out = [], seen = {};
+  list.forEach(i => {
+    const k = groupKey(i.group_label);
+    if(!k){ out.push({row: i}); return; }
+    if(seen[k]){ seen[k].members.push(i); return; }
+    seen[k] = {label: String(i.group_label).trim(), members: [i]};
+    out.push({grp: seen[k], key: k});
+  });
+  return out.map(o =>
+    o.row ? rowFn(o.row)
+      : o.grp.members.length < 2 ? rowFn(o.grp.members[0])
+      : groupTileHtml(o.grp, scope + "|" + o.key, rowFn, searching)
+  ).join("");
+}
+function groupTileHtml(g, key, rowFn, searching){
+  const m = g.members, first = m[0];
+  const live = m.filter(x => x.status === "in_stock");
+  const states = live.map(expState);
+  const worst = states.indexOf("bad") !== -1 ? "bad" : states.indexOf("past") !== -1 ? "past" : "";
+  let d0 = "No date", d1 = "–", d2 = "";
+  if(first.expiry_date){
+    const ex = new Date(first.expiry_date + "T12:00");
+    d0 = "Soonest";
+    d1 = String(ex.getDate());
+    d2 = ex.toLocaleDateString("en-AU", {month:"short"});
+  }
+  const names = [...new Set(m.map(x => x.item_name))];
+  const preview = names.slice(0, 3).join(", ") + (names.length > 3 ? " and " + (names.length - 3) + " more" : "");
+  let pill = "";
+  if(worst === "bad") pill = ' <span class="pill bad">Something expired</span>';
+  else if(worst === "past") pill = ' <span class="pill past">Something past best before</span>';
+  const open = searching || state.openGroups.has(key);
+  return '<details class="uf-grp" data-gkey="' + esc(key) + '"' + (open ? " open" : "") + ">" +
+    '<summary class="uf-row' + (worst ? " exp-" + worst : "") + '">' +
+    '<div class="uf-rail rail-' + expState(first) + '"><div class="d0">' + d0 + '</div><div class="d1">' + d1 + '</div><div class="d2">' + esc(d2) + "</div></div>" +
+    '<div class="uf-gmain"><div class="uf-name">' + esc(g.label) + ' <span class="pill grp">' + m.length + " items</span>" + pill + "</div>" +
+    '<div class="uf-meta"><span>' + esc(preview) + "</span></div></div>" +
+    '<span class="chev">&rsaquo;</span></summary>' +
+    '<div class="uf-grp-body">' + m.map(rowFn).join("") + "</div></details>";
+}
+// a sensible group name from two item names: the words they share, brand
+// in brackets left off ("Vanilla ice cream" + "Choc ice cream" = "Ice cream")
+function guessGroupName(a, b){
+  const clean = s => String(s || "").replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+  const wb = new Set(clean(b).toLowerCase().split(" "));
+  let s = clean(a).split(" ").filter(w => w && wb.has(w.toLowerCase())).join(" ");
+  if(!s) s = clean(b) || clean(a);
+  s = s.toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+async function groupWithModal(i){
+  let rows = [];
+  try{
+    rows = await run(sb.from("stock_items").select("id, item_name, group_label, storage").eq("status", "in_stock").order("item_name", {ascending:true}).limit(800));
+  }catch(e){ return; }
+  const nameKey = s => String(s || "").trim().toLowerCase();
+  // every in stock line of the same thing moves together, so two dates of
+  // vanilla ice cream both land in the group
+  const sameName = n => rows.filter(r => nameKey(r.item_name) === nameKey(n)).map(r => r.id);
+  const mine = [...new Set([i.id, ...sameName(i.item_name)])];
+  const cur = groupKey(i.group_label);
+  const groups = {};
+  rows.forEach(r => {
+    const k = groupKey(r.group_label);
+    if(!k) return;
+    if(!groups[k]) groups[k] = {label: String(r.group_label).trim(), n: 0};
+    groups[k].n++;
+  });
+  const m = openModal(
+    "<h2>Group " + esc(i.item_name) + " with…</h2>" +
+    '<p class="small muted" style="margin-top:-2px;">Grouped things share one tile on the stock board, like different flavours of ice cream or another brand of lasagne. Tap the tile to see each one.</p>' +
+    (cur ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">Now in the group <b>' + esc(i.group_label) + "</b>.</p>" +
+      '<button class="btn btn-ghost" id="gwRemove" style="width:100%; margin-bottom:10px; color:var(--red);">Take out of this group</button>' : "") +
+    '<div id="gwPick"><div class="field" style="margin-bottom:0;"><label for="gwSearch">Choose a group or another item</label>' +
+    '<input id="gwSearch" placeholder="Search, e.g. ice cream" autocomplete="off"></div>' +
+    '<div class="gw-list" id="gwList"></div>' +
+    "<h3>Or start a new group</h3>" +
+    '<div style="display:flex; gap:8px;"><input id="gwNew" placeholder="Group name, e.g. Ice cream" autocomplete="off" style="flex:1;">' +
+    '<button class="btn btn-primary" id="gwNewGo" style="flex:none;">Make group</button></div></div>' +
+    '<div id="gwName" style="display:none;"></div>'
+  );
+  const save = async (ids, label, msg) => {
+    try{
+      await run(sb.from("stock_items").update({group_label: label}).in("id", ids));
+      closeModal(); toast(msg); refreshCurrentTab();
+    }catch(e){}
+  };
+  const render = () => {
+    const q = m.querySelector("#gwSearch").value.trim().toLowerCase();
+    const gs = Object.keys(groups).filter(k => k !== cur && (!q || k.indexOf(q) !== -1)).sort();
+    const seenName = new Set([nameKey(i.item_name)]);
+    const its = rows.filter(r => {
+      const n = nameKey(r.item_name);
+      if(seenName.has(n) || (q && n.indexOf(q) === -1)) return false;
+      if(cur && groupKey(r.group_label) === cur) return false;
+      seenName.add(n);
+      return true;
+    }).slice(0, 80);
+    m.querySelector("#gwList").innerHTML =
+      gs.map(k => '<button class="gw-opt g" data-g="' + esc(k) + '">' + esc(groups[k].label) + "<span>group, " + groups[k].n + " in stock</span></button>").join("") +
+      its.map(r => '<button class="gw-opt" data-i="' + r.id + '">' + esc(r.item_name) + "<span>" +
+        esc(storageLabel(r.storage)) + (r.group_label ? ", in " + esc(String(r.group_label).trim()) : "") + "</span></button>").join("") +
+      (!gs.length && !its.length ? '<div class="small muted" style="padding:8px 2px;">Nothing matches. Start a new group below.</div>' : "");
+    m.querySelectorAll("#gwList [data-g]").forEach(b => b.addEventListener("click", () => {
+      const g = groups[b.dataset.g];
+      save(mine, g.label, i.item_name + " is now in " + g.label);
+    }));
+    m.querySelectorAll("#gwList [data-i]").forEach(b => b.addEventListener("click", () => {
+      const other = rows.find(r => r.id === +b.dataset.i);
+      if(!other) return;
+      // the other item is already in a group: just join it
+      if(groupKey(other.group_label)){
+        const label = String(other.group_label).trim();
+        save(mine, label, i.item_name + " is now in " + label);
+        return;
+      }
+      // two loose items: name the new group, with a sensible guess filled in
+      const box = m.querySelector("#gwName");
+      m.querySelector("#gwPick").style.display = "none";
+      box.style.display = "";
+      box.innerHTML =
+        '<p class="small">Grouping <b>' + esc(i.item_name) + "</b> with <b>" + esc(other.item_name) + "</b>.</p>" +
+        '<div class="field"><label for="gwLabel">Group name</label><input id="gwLabel" autocomplete="off" value="' + esc(guessGroupName(i.item_name, other.item_name)) + '"></div>' +
+        '<button class="btn btn-primary" id="gwGo" style="width:100%;">Group them</button>' +
+        '<button class="btn btn-ghost" id="gwBack" style="width:100%; margin-top:8px;">Back</button>';
+      box.querySelector("#gwLabel").select();
+      box.querySelector("#gwBack").addEventListener("click", () => { box.style.display = "none"; m.querySelector("#gwPick").style.display = ""; });
+      box.querySelector("#gwGo").addEventListener("click", () => {
+        const label = box.querySelector("#gwLabel").value.trim();
+        if(!label){ toast("Give the group a name", {type:"err"}); return; }
+        save([...new Set([...mine, ...sameName(other.item_name)])], label, "Grouped as " + label);
+      });
+    }));
+  };
+  render();
+  m.querySelector("#gwSearch").addEventListener("input", render);
+  m.querySelector("#gwNewGo").addEventListener("click", () => {
+    const label = m.querySelector("#gwNew").value.trim();
+    if(!label){ toast("Give the group a name", {type:"err"}); return; }
+    const k = groupKey(label);
+    save(mine, groups[k] ? groups[k].label : label, i.item_name + " is now in " + (groups[k] ? groups[k].label : label));
+  });
+  const rm = m.querySelector("#gwRemove");
+  if(rm) rm.addEventListener("click", () => save(mine, null, i.item_name + " taken out of " + String(i.group_label).trim()));
 }
 // soonest date first, anything without a date at the bottom
 function byExpiry(a, b){
@@ -2937,6 +3179,12 @@ function ufRowHtml(i, searching, showAlloc, showStorage){
     "</div>";
 }
 function wireBoard(box, items){
+  // remember which group tiles are open so a refresh keeps them that way
+  box.querySelectorAll(".uf-grp").forEach(d =>
+    d.addEventListener("toggle", () => {
+      if(d.open) state.openGroups.add(d.dataset.gkey); else state.openGroups.delete(d.dataset.gkey);
+    })
+  );
   box.querySelectorAll(".uf-main").forEach(el =>
     el.addEventListener("click", () => {
       const it = items.find(x => x.id === +el.dataset.id);
@@ -3142,6 +3390,7 @@ function markModal(i, status){
             expiry_date: i.expiry_date,
             ...expTypeNew(i.expiry_type),
             function_id: i.function_id,
+            group_label: i.group_label || null,
             status,
             status_note: note,
             status_changed_at: new Date().toISOString()
@@ -3222,6 +3471,7 @@ function wireAddMore(m, i){
         await run(sb.from("stock_items").insert({
           item_name: i.item_name, category: i.category || null, storage: storage, quantity: n, unit: i.unit || null,
           expiry_date: exp, ...expTypeNew(expType), barcode: i.barcode || null,
+          group_label: i.group_label || null,
           status: "in_stock", origin: "manual", received_date: localISO()
         }));
       }
@@ -3232,6 +3482,13 @@ function wireAddMore(m, i){
   });
 }
 function fmtQty(n){ return String(Math.round(n * 100) / 100); }
+function groupBtnHtml(i){
+  return '<button class="btn btn-ghost" id="grpOpen" style="width:100%; margin:8px 0;">' +
+    (groupKey(i.group_label) ? "Group: " + esc(String(i.group_label).trim()) + " (change)" : "Group with…") + "</button>";
+}
+function wireGroupBtn(m, i){
+  m.querySelector("#grpOpen").addEventListener("click", () => { closeModal(); groupWithModal(i); });
+}
 async function itemModal(i){
   let allocFns = [];
   try{
@@ -3249,7 +3506,7 @@ async function itemModal(i){
       ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">Currently tagged to <b>' +
         esc(i.catering_functions.name) + "</b>.</p>"
       : "") +
-    (inStock ? addMoreHtml(i) : "") +
+    (inStock ? addMoreHtml(i) + groupBtnHtml(i) : "") +
     '<div class="grid2">' +
     '<div class="field"><label for="imQty">Quantity</label><div style="display:flex; gap:8px;">' +
     '<input id="imQty" type="number" inputmode="decimal" step="any" min="0" value="' + (i.quantity ?? "") + '" style="flex:1;">' +
@@ -3274,7 +3531,7 @@ async function itemModal(i){
     "</div>" +
     '<button class="btn btn-ghost" id="btnAllocate" style="width:100%;">Allocate</button>' : "")
   );
-  if(inStock) wireAddMore(m, i);
+  if(inStock){ wireAddMore(m, i); wireGroupBtn(m, i); }
   m.querySelector("#btnImSave").addEventListener("click", async () => {
     const qv = m.querySelector("#imQty").value;
     try{
@@ -3925,6 +4182,7 @@ function kitchenItemModal(i){
     "</div>" +
     addMoreHtml(i) +
     '<button class="btn btn-secondary" id="kiAlloc" style="width:100%;">Allocate to a function</button>' +
+    groupBtnHtml(i) +
     "<h3>Fix the label</h3>" +
     '<div class="grid2">' +
     '<div class="field"><label for="kiExpiry">Use by or best before (from the product)</label>' + expTypeSelect("kiExpType", i.expiry_type) + '<input type="date" id="kiExpiry" value="' + esc(i.expiry_date || "") + '"></div>' +
@@ -3935,6 +4193,7 @@ function kitchenItemModal(i){
     '<p class="small muted" style="margin:10px 0 0;">Wrong name, quantity or category? That gets fixed in admin mode.</p>'
   );
   wireAddMore(m, i);
+  wireGroupBtn(m, i);
   m.querySelector("#kiUsed").addEventListener("click", () => { closeModal(); markModal(i, "used"); });
   m.querySelector("#kiBin").addEventListener("click", () => { closeModal(); markModal(i, "binned"); });
   m.querySelector("#kiAlloc").addEventListener("click", () => {
