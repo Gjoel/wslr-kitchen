@@ -2610,17 +2610,22 @@ function takePhoto(fileInput){
       });
   });
 }
-// one product photo in, the Add item fields out (name, brand, size, date...)
+// one product photo in, the Add item fields out (name, brand, size, date...).
+// Uses the docket reader in its product mode, since that one is already set
+// up with the key and known to work on the tablet.
 async function readProduct(blob, cats){
   const type = ["image/jpeg", "image/png", "image/webp", "image/gif"].indexOf(blob.type) !== -1 ? blob.type : "image/jpeg";
   const files = [{media_type: type, data_b64: await blobToB64(blob)}];
-  const { data, error } = await sb.functions.invoke("read-product", {body: {files, categories: cats, today: localISO()}});
+  const { data, error } = await sb.functions.invoke("read-docket", {body: {mode: "product", files, categories: cats, today: localISO()}});
   if(error){
     let msg = "Could not read the photo";
     try{
       const body = await error.context.json();
       if(body && body.error) msg = body.error;
-    }catch(_){}
+    }catch(_){
+      // no answer at all usually means no signal, or the photo was too big
+      msg += navigator.onLine === false ? ": the tablet is offline" : " (" + (error.message || "no reply") + ")";
+    }
     throw new Error(msg);
   }
   if(!data) throw new Error("Could not read the photo");
@@ -2897,6 +2902,7 @@ async function quickAddItem(){
       if(d.name) m.querySelector("#qaName").value = d.name + (d.brand ? " (" + d.brand + ")" : "");
       if(d.storage && STORAGES.indexOf(d.storage) !== -1) setStorage(d.storage);
       if(d.quantity != null) m.querySelector("#qaQty").value = d.quantity;
+      else if(!m.querySelector("#qaQty").value) m.querySelector("#qaQty").value = 1;
       const unit = [d.size, d.unit].filter(Boolean).join(" ");
       if(unit) m.querySelector("#qaUnit").value = unit;
       if(d.date){
