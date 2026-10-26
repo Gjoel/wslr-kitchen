@@ -3127,11 +3127,14 @@ function boardHtml(list, searching, showAlloc){
 function groupKey(label){ return String(label || "").trim().toLowerCase(); }
 function groupedRows(list, rowFn, scope, searching){
   const out = [], seen = {};
+  // a "Group with" name wins; otherwise lines of the same item (the same
+  // thing bought on different days, or with different dates) share a tile
   list.forEach(i => {
-    const k = groupKey(i.group_label);
-    if(!k){ out.push({row: i}); return; }
+    const g = groupKey(i.group_label);
+    const k = g ? "g:" + g : "n:" + normName(i.item_name);
     if(seen[k]){ seen[k].members.push(i); return; }
-    seen[k] = {label: String(i.group_label).trim(), members: [i]};
+    seen[k] = g ? {label: String(i.group_label).trim(), members: [i]}
+                : {label: String(i.item_name || "").trim(), members: [i], same: true};
     out.push({grp: seen[k], key: k});
   });
   return out.map(o =>
@@ -3153,7 +3156,17 @@ function groupTileHtml(g, key, rowFn, searching){
     d2 = ex.toLocaleDateString("en-AU", {month:"short"});
   }
   const names = [...new Set(m.map(x => x.item_name))];
-  const preview = names.slice(0, 3).join(", ") + (names.length > 3 ? " and " + (names.length - 3) + " more" : "");
+  let preview = names.slice(0, 3).join(", ") + (names.length > 3 ? " and " + (names.length - 3) + " more" : "");
+  let count = m.length + " items";
+  if(g.same){
+    // one item on several lines: how many in all, and what each date covers
+    const units = [...new Set(m.map(x => normName(x.unit)))];
+    if(m.every(x => +x.quantity > 0) && units.length === 1){
+      count = fmtQty(m.reduce((t, x) => t + +x.quantity, 0)) + (m[0].unit ? " " + m[0].unit : "") + " in all";
+    }else count = m.length + " lots";
+    preview = m.map(x => (+x.quantity > 0 ? fmtQty(+x.quantity) + " " : "") +
+      (x.expiry_date ? expWord(x.expiry_type) + " " + fmtDate(x.expiry_date) : "no date")).join(" · ");
+  }
   // the group's total weight or volume, when every line in it has a size of the same kind
   const amts = live.map(lineAmount);
   const grpTotal = amts.length && amts.every(a => a && a.kind === amts[0].kind)
@@ -3165,7 +3178,7 @@ function groupTileHtml(g, key, rowFn, searching){
   return '<details class="uf-grp" data-gkey="' + esc(key) + '"' + (open ? " open" : "") + ">" +
     '<summary class="uf-row' + (worst ? " exp-" + worst : "") + '">' +
     '<div class="uf-rail rail-' + expState(first) + '"><div class="d0">' + d0 + '</div><div class="d1">' + d1 + '</div><div class="d2">' + esc(d2) + "</div></div>" +
-    '<div class="uf-gmain"><div class="uf-name">' + esc(g.label) + ' <span class="pill grp">' + m.length + " items</span>" + pill + "</div>" +
+    '<div class="uf-gmain"><div class="uf-name">' + esc(g.label) + ' <span class="pill grp">' + esc(count) + "</span>" + pill + "</div>" +
     '<div class="uf-meta"><span>' + esc(preview) + "</span></div>" +
     (grpTotal ? '<div class="uf-total">' + esc(grpTotal) + "</div>" : "") + "</div>" +
     '<span class="chev">&rsaquo;</span></summary>' +
