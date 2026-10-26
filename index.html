@@ -5255,15 +5255,25 @@ async function renderNextMeal(){
     // still to come: a later day, or today with the sitting not over yet
     const upcoming = nmBuild(orders).filter(s => s.date > today || (s.date === today && nmSittingInfo(s.sitting).end > hm));
     if(!upcoming.length){
-      let fn = null;
+      // no menu yet: say who is on site and who is next, so it is clear
+      // which group's meals are missing from the planner's shopping list
+      let fns = [];
       try{
-        const fns = await run(sb.from("catering_functions").select("name, event_date, end_date").or("sheet_state.is.null,sheet_state.neq.dropped")
-          .gte("event_date", today).order("event_date", {ascending: true}).limit(1));
-        fn = fns[0] || null;
+        fns = await run(sb.from("catering_functions").select("name, event_date, end_date").or("sheet_state.is.null,sheet_state.neq.dropped")
+          .gte("event_date", localISO(new Date(Date.now() - 30 * 86400000))).order("event_date", {ascending: true}).limit(50));
       }catch(e){}
-      box.innerHTML = '<div class="empty">No meals coming up from the planner yet.' +
-        (fn ? "<br><br>Next group: <b>" + esc(fn.name) + "</b>, arriving " + esc(nmDayLabel(fn.event_date)) +
-          ". Its meals show here once they are in the planner's shopping list." : "") + "</div>";
+      const short = iso => new Date(iso + "T12:00").toLocaleDateString("en-AU", {weekday: "short", day: "numeric", month: "short"});
+      const onSite = fns.filter(f => f.event_date <= today && (f.end_date || f.event_date) >= today);
+      const next = fns.find(f => f.event_date > today);
+      const line = (f, word) => "<b>" + esc(f.name) + "</b>: " + word + " " + esc(short(f.event_date)) +
+        ((f.end_date && f.end_date !== f.event_date) ? " to " + esc(short(f.end_date)) : "");
+      box.innerHTML = '<div class="empty" style="text-align:left;">' +
+        "<b>No meals to show.</b> The planner's shopping list has nothing for the groups below yet. " +
+        "Each meal shows here once that group's menu is in the planner's shopping list." +
+        (onSite.length ? "<br><br>On site now:<br>" + onSite.map(f => line(f, "staying")).join("<br>") : "") +
+        (next ? "<br><br>Arriving next:<br>" + line(next, "arriving") : "") +
+        (!shopUrlBase() ? "<br><br>This device is not linked to the planner's shopping list yet. In Admin, Settings, Shopping lists, paste the feed URL." : "") +
+        "</div>";
       return;
     }
     // the next sitting, and every group eating at it (usually just one)
