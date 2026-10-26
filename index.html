@@ -551,6 +551,9 @@ body.kitchen .rowcard{padding:15px 16px;}
 .ord-seg button.on-ok{background:var(--green); border-color:var(--green); color:#fff;}
 .ord-seg button.on-part{background:var(--amber); border-color:var(--amber); color:#fff;}
 .ord-seg button.on-none{background:var(--red); border-color:var(--red); color:#fff;}
+.ord-row.unmarked{background:var(--amber-bg); border-radius:10px; padding-left:10px; padding-right:6px;}
+.ord-left{margin:10px 0 0; font-weight:700; color:var(--amber); text-align:center;}
+.ord-left.done{color:var(--green);}
 .ord-qty{margin-top:8px; display:flex; gap:8px; align-items:center;}
 .ord-qty input{width:120px; flex:none; text-align:center;}
 @media (max-width:560px){
@@ -993,7 +996,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   </div>
   <div class="card">
     <h2>Kitchen and admin modes</h2>
-    <p class="small muted" style="margin-top:-6px;">Every device opens in <b>kitchen mode</b>: tick off arrivals, mark items used or binned, allocate to functions straight from the Allocate button on each stock row, run a stocktake walk-through that stamps every line with who checked it and when, and fix use by dates and storage. Everything else lives in <b>admin mode</b>, behind the Admin button in the header.<br><br>
+    <p class="small muted" style="margin-top:-6px;">Every device opens in <b>kitchen mode</b>: tick off arrivals, mark items in use or binned, allocate to functions straight from the Allocate button on each stock row, run a stocktake walk-through that stamps every line with who checked it and when, and fix use by dates and storage. Everything else lives in <b>admin mode</b>, behind the Admin button in the header.<br><br>
     The admin PIN is set in the <code style="background:#efece4; padding:1px 5px; border-radius:5px;">ADMIN_PIN</code> constant at the top of the script in this file &mdash; open the file in a text editor to change it. A device that has unlocked admin stays in admin until you tap Exit admin.</p>
   </div>
   <div class="card">
@@ -1008,7 +1011,7 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
   <span id="bulkCount" style="flex:1; font-weight:700;">0 selected</span>
   <button class="btn btn-sm" id="bulkAll" style="background:#fff; color:var(--ink);">All</button>
   <button class="btn btn-sm" id="bulkAlloc" style="background:#fff; color:var(--ink);">Allocate</button>
-  <button class="btn btn-sm" id="bulkUsed" style="background:var(--green); color:#fff;">Used</button>
+  <button class="btn btn-sm" id="bulkUsed" style="background:var(--green); color:#fff;">In use</button>
   <button class="btn btn-sm" id="bulkBin" style="background:var(--red); color:#fff;">Bin</button>
 </div>
 
@@ -2150,7 +2153,7 @@ function stocktakePane(){
           inline.style.display = "";
           inline.innerHTML =
             '<span class="small muted" style="flex-basis:100%;">Not on the shelf. What happened to it?</span>' +
-            '<button class="btn btn-secondary btn-sm" data-g="used">It was used</button>' +
+            '<button class="btn btn-secondary btn-sm" data-g="used">In use</button>' +
             '<button class="btn btn-danger btn-sm" data-g="binned">It was binned</button>' +
             '<button class="btn btn-ghost btn-sm" data-no="1">Cancel</button>';
           inline.querySelector("[data-no]").addEventListener("click", () => { inline.style.display = "none"; inline.innerHTML = ""; });
@@ -2159,7 +2162,7 @@ function stocktakePane(){
               status: g.dataset.g,
               status_note: "Not on the shelf at stocktake",
               status_changed_at: new Date().toISOString()
-            }, stStamp()), i.item_name + (g.dataset.g === "used" ? " marked used" : " binned"))
+            }, stStamp()), i.item_name + (g.dataset.g === "used" ? " marked in use" : " binned"))
           ));
         }
       }));
@@ -3269,7 +3272,7 @@ function ufRowHtml(i, searching, showAlloc, showStorage){
   const tint = col ? hexTint(col, 0.13) : "#f0efe9";
   const evWarn = i.catering_functions && i.catering_functions.event_date && i.expiry_date && i.expiry_date < i.catering_functions.event_date;
   const statusPill = !inStock
-    ? (i.status === "used" ? ' <span class="pill plain">Used</span>'
+    ? (i.status === "used" ? ' <span class="pill plain">In use</span>'
       : i.status === "binned" ? ' <span class="pill bad">Binned</span>'
       : ' <span class="pill bad">Not received</span>')
     : "";
@@ -3296,7 +3299,7 @@ function ufRowHtml(i, searching, showAlloc, showStorage){
     (!state.selectMode && inStock ?
       '<div class="uf-acts">' +
       (showAlloc ? '<button class="btn btn-secondary btn-xs" data-alloc="' + i.id + '">Allocate</button>' : "") +
-      '<button class="btn btn-ghost btn-xs" data-mark="used" data-id="' + i.id + '">Used</button>' +
+      '<button class="btn btn-ghost btn-xs" data-mark="used" data-id="' + i.id + '">In use</button>' +
       '<button class="btn btn-danger btn-xs" data-mark="binned" data-id="' + i.id + '">Bin</button>' +
       "</div>" : "") +
     "</div>";
@@ -3477,17 +3480,17 @@ function markModal(i, status){
   const isBin = status === "binned";
   const hasQty = i.quantity != null && i.quantity > 0;
   const m = openModal(
-    "<h2>" + (isBin ? "Bin: " : "Used: ") + esc(i.item_name) + "</h2>" +
+    "<h2>" + (isBin ? "Bin: " : "In use: ") + esc(i.item_name) + "</h2>" +
     (hasQty
       ? '<div class="field"><label>How much?</label><div class="seg" id="mkSeg">' +
         '<button data-v="all">All (' + i.quantity + " " + esc(i.unit || "") + ')</button>' +
         '<button data-v="some">Some</button></div></div>' +
-        '<div class="field" id="mkQtyWrap" style="display:none;"><label for="mkQty">Quantity ' + (isBin ? "binned" : "used") + '</label>' +
+        '<div class="field" id="mkQtyWrap" style="display:none;"><label for="mkQty">Quantity ' + (isBin ? "binned" : "in use") + '</label>' +
         '<input id="mkQty" type="number" inputmode="decimal" step="any" min="0" max="' + i.quantity + '" value="' + i.quantity + '"></div>'
       : "") +
     '<div class="field"><label for="mkNote">Note (optional)</label><textarea id="mkNote" rows="2" placeholder="' +
     (isBin ? "e.g. dropped on the floor, spoiled, freezer failure" : "e.g. Saturday breakfast service") + '"></textarea></div>' +
-    '<button class="btn ' + (isBin ? "btn-danger" : "btn-primary") + '" id="btnMkGo" style="width:100%;">' + (isBin ? "Bin it" : "Mark used") + "</button>"
+    '<button class="btn ' + (isBin ? "btn-danger" : "btn-primary") + '" id="btnMkGo" style="width:100%;">' + (isBin ? "Bin it" : "Mark in use") + "</button>"
   );
   let mode = "all";
   const segEl = m.querySelector("#mkSeg");
@@ -3520,7 +3523,7 @@ function markModal(i, status){
           }).select().single());
           await run(sb.from("stock_items").update({quantity: Math.round((i.quantity - aq) * 100) / 100}).eq("id", i.id));
           closeModal();
-          toast(aq + " " + (i.unit || "") + (isBin ? " binned" : " marked used"), {undo: async () => {
+          toast(aq + " " + (i.unit || "") + (isBin ? " binned" : " marked in use"), {undo: async () => {
             try{
               await run(sb.from("stock_items").delete().eq("id", ins.id));
               await run(sb.from("stock_items").update({quantity: i.quantity}).eq("id", i.id));
@@ -3533,7 +3536,7 @@ function markModal(i, status){
       }
       await run(sb.from("stock_items").update({status, status_note: note, status_changed_at: new Date().toISOString()}).eq("id", i.id));
       closeModal();
-      toast(isBin ? "Binned" : "Marked as used", {undo: async () => {
+      toast(isBin ? "Binned" : "Marked in use", {undo: async () => {
         try{
           await run(sb.from("stock_items").update({status:"in_stock", status_note:null, status_changed_at:null}).eq("id", i.id));
           refreshCurrentTab();
@@ -4270,7 +4273,7 @@ function foodCheckHtml(fn, allItems){
   }).join("");
   return (heads ? "" : '<p class="small" style="background:var(--amber-bg); color:var(--amber); padding:8px 12px; border-radius:9px; font-weight:600;">Set the heads on this function to get per-head numbers.</p>') +
     (rows || '<p class="small muted">Nothing currently in stock for this function.</p>') +
-    '<p class="small muted" style="margin-top:8px;">' + inStock.length + " line" + (inStock.length === 1 ? "" : "s") + " in stock &middot; " + used + " used &middot; " + binned + " binned" + (nr ? " &middot; " + nr + " not received" : "") + "</p>";
+    '<p class="small muted" style="margin-top:8px;">' + inStock.length + " line" + (inStock.length === 1 ? "" : "s") + " in stock &middot; " + used + " in use &middot; " + binned + " binned" + (nr ? " &middot; " + nr + " not received" : "") + "</p>";
 }
 // ============================================================
 // KITCHEN MODE: item modal and read-only function view
@@ -4283,7 +4286,7 @@ function kitchenItemModal(i){
       '<p class="small muted" style="margin-top:2px;">' +
       esc([i.category, i.quantity ? i.quantity + " " + (i.unit || "") : ""].filter(Boolean).join(" · ")) + "</p>" +
       '<p class="small">' +
-      (i.status === "used" ? '<span class="pill plain">Already marked used</span>'
+      (i.status === "used" ? '<span class="pill plain">Already marked in use</span>'
         : i.status === "binned" ? '<span class="pill bad">Already binned</span>'
         : '<span class="pill bad">Marked not received</span>') +
       (i.status_note ? ' <span class="muted">&ldquo;' + esc(i.status_note) + "&rdquo;</span>" : "") + "</p>" +
@@ -4300,7 +4303,7 @@ function kitchenItemModal(i){
     '<div style="margin:0 0 14px;">' + fnChip(i.catering_functions, i.function_id) +
     (i.expiry_date ? ' <span class="pill ' + ({bad:"bad", past:"past", warn:"warn", ok:"ok"}[expState(i)] || "ok") + '">' + expWord(i.expiry_type) + " " + esc(fmtDate(i.expiry_date)) + "</span>" : "") + "</div>" +
     '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
-    '<button class="btn" id="kiUsed" style="flex:1; background:var(--green); color:#fff;">Used</button>' +
+    '<button class="btn" id="kiUsed" style="flex:1; background:var(--green); color:#fff;">In use</button>' +
     '<button class="btn btn-danger" id="kiBin" style="flex:1;">Bin</button>' +
     "</div>" +
     addMoreHtml(i) +
@@ -4837,7 +4840,7 @@ async function confirmOrderModal(input){
       if(!marks[p.key]){
         const prof = profileFor(p.name);
         marks[p.key] = {
-          mode: "ok",
+          mode: null,
           qty: p.qtyless ? null : p.expected,
           category: p.category || (prof ? prof.category : null),
           storage: p.storage || (prof ? prof.storage : null),
@@ -4865,7 +4868,7 @@ async function confirmOrderModal(input){
     box.innerHTML = pools.map(p => {
       const mk = marks[p.key];
       const showQty = mk.mode === "part" && !p.qtyless;
-      return '<div class="ord-row" data-k="' + esc(p.key) + '"><div class="nm">' + esc(p.name) +
+      return '<div class="ord-row' + (mk.mode ? "" : " unmarked") + '" data-k="' + esc(p.key) + '"><div class="nm">' + esc(p.name) +
         '<div class="sub">' + esc(expTxt(p)) + "</div>" +
         '<div class="stchips">' +
           STORAGES.map(s => '<button data-st="' + s + '" class="' + (mk.storage === s ? "on " + s : "") + '">' + storageLabel(s) + "</button>").join("") +
@@ -4875,11 +4878,16 @@ async function confirmOrderModal(input){
           '<span class="small muted">' + esc(p.unitRaw) + " actually arrived" + (p.parts.length > 1 ? " in total" : "") + "</span></div>" +
         '<div class="splitprev">' + (showQty ? esc(splitTxt(p, mk.qty)) : "") + "</div></div>" +
         '<div class="ord-seg">' +
-        '<button data-m="ok" class="' + (mk.mode === "ok" ? "on-ok" : "") + '">All here</button>' +
+        '<button data-m="ok" class="' + (mk.mode === "ok" ? "on-ok" : "") + '">&#10003; Here</button>' +
         (p.qtyless ? "" : '<button data-m="part" class="' + (mk.mode === "part" ? "on-part" : "") + '">Adjust</button>') +
-        '<button data-m="none" class="' + (mk.mode === "none" ? "on-none" : "") + '">Missing</button>' +
+        '<button data-m="none" class="' + (mk.mode === "none" ? "on-none" : "") + '">&#10007; Missing</button>' +
         "</div></div>";
-    }).join("");
+    }).join("") + (function(){
+      const left = pools.filter(p => !marks[p.key].mode).length;
+      return '<p class="ord-left' + (left ? "" : " done") + '">' + (left
+        ? left + " of " + pools.length + " still to tick or cross"
+        : "All " + pools.length + " items checked") + "</p>";
+    })();
     box.querySelectorAll(".ord-row").forEach(row => {
       const k = row.dataset.k;
       const p = pools.find(x => x.key === k);
@@ -5035,6 +5043,13 @@ async function confirmOrderModal(input){
   // ----- save -----
   m.querySelector("#coSave").addEventListener("click", async () => {
     if(state.busy) return;
+    const left = pools.filter(p => !marks[p.key].mode);
+    if(left.length){
+      toast("Tick or cross every item first: " + left.length + " still to check, starting with " + left[0].name, {type:"err"});
+      const row = m.querySelector('.ord-row.unmarked');
+      if(row) row.scrollIntoView({behavior: "smooth", block: "center"});
+      return;
+    }
     for(const p of pools){
       const mk = marks[p.key];
       if(mk.mode === "part" && !(mk.qty > 0)){ toast("Enter what actually arrived for " + p.name + ", or mark it Missing", {type:"err"}); return; }
@@ -6455,7 +6470,7 @@ async function historyModal(){
     "<h2>Item history</h2>" +
     '<div class="seg" id="histSeg" style="margin:10px 0 4px;">' +
     '<button data-v="all" class="on">All</button>' +
-    '<button data-v="used">Used</button>' +
+    '<button data-v="used">In use</button>' +
     '<button data-v="binned">Binned</button>' +
     '<button data-v="not_received">Not received</button></div>' +
     '<div id="histList"></div>'
@@ -6463,7 +6478,7 @@ async function historyModal(){
   const draw = () => {
     const list = rows.filter(r => filter === "all" || r.status === filter);
     if(!list.length){
-      m.querySelector("#histList").innerHTML = '<div class="empty">Nothing here yet. Items land here when they are marked used, binned or not received.</div>';
+      m.querySelector("#histList").innerHTML = '<div class="empty">Nothing here yet. Items land here when they are marked in use, binned or not received.</div>';
       return;
     }
     let html = "", lastDay = "";
@@ -6481,7 +6496,7 @@ async function historyModal(){
       ].filter(Boolean).join(" · ");
       const pill = r.status === "binned" ? '<span class="pill bad">Binned</span>'
         : r.status === "not_received" ? '<span class="pill bad">Not received</span>'
-        : '<span class="pill ok">Used</span>';
+        : '<span class="pill ok">In use</span>';
       html += '<div class="rowcard" style="cursor:default;"><div class="l"><div class="t">' + esc(r.item_name) +
         " " + pill + "</div>" +
         '<div class="s">' + esc(meta) + "</div></div>" +
