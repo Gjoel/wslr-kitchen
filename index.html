@@ -2758,8 +2758,9 @@ async function renderUseFirst(){
       const safe = q.replace(/[,%()]/g, " ").trim();
       qb = sb.from("stock_items")
         .select("*, deliveries(supplier, delivered_at), catering_functions(name, event_date, colour)")
+        .eq("status", "in_stock")
         .or("item_name.ilike.%" + safe + "%,category.ilike.%" + safe + "%")
-        .order("created_at", {ascending:false}).limit(80);
+        .order("expiry_date", {ascending:true, nullsFirst:false}).limit(200);
     }else{
       qb = sb.from("stock_items")
         .select("*, deliveries(supplier, delivered_at), catering_functions(name, event_date, colour)")
@@ -2815,7 +2816,7 @@ async function renderUseFirst(){
 
     if(!list.length){
       box.innerHTML = '<div class="empty">' +
-        (searching ? 'Nothing found for "' + esc(q) + '".'
+        (searching ? 'No "' + esc(q) + '" in stock right now. Past items are under Admin, Item history.'
           : "Nothing in stock" + (state.ufFnFilter != null ? " for this filter" : "") + ".<br>Add items when you receive a delivery and they show up here by storage area.") +
         "</div>";
       updateBulkBar();
