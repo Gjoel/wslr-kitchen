@@ -381,6 +381,30 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 .uf-row.exp-past{border:2px solid var(--orange); background:var(--orange-bg) !important;}
 .uf-row.exp-past .uf-name{color:var(--orange);}
 .pill.past{background:var(--orange-bg); color:var(--orange);}
+/* Dashboard: the next meal */
+.nm-card{background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px;}
+.nm-head{color:#fff; padding:16px 18px;}
+.nm-head .nm-grp{font-size:14px; font-weight:700; opacity:.92; text-transform:uppercase; letter-spacing:.05em;}
+.nm-head .nm-when{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:26px; line-height:1.15; margin-top:4px;}
+.nm-head .nm-sub{font-size:14px; opacity:.92; margin-top:4px;}
+.nm-body{padding:6px 18px 14px;}
+.nm-dish{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:21px; margin:14px 0 6px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.nm-dish .pill{font-family:inherit; font-size:12px;}
+.nm-ing{list-style:none; margin:0; padding:0;}
+.nm-ing li{display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:16px;}
+.nm-ing li:last-child{border-bottom:0;}
+.nm-ing .q{flex:none; font-weight:700; text-align:right;}
+.nm-ing .n small{display:block; color:var(--muted); font-size:12.5px; margin-top:2px;}
+.nm-next{margin-top:6px;}
+.nm-next h3{margin:18px 0 8px;}
+.nm-row{display:flex; gap:12px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:8px;}
+.nm-row .d{flex:none; width:96px; font-weight:700; font-size:14px;}
+.nm-row .d small{display:block; color:var(--muted); font-weight:600;}
+.nm-row .w{flex:1; min-width:0; font-size:15px;}
+.nm-row .w small{display:block; color:var(--muted); font-size:13px;}
+body.kitchen .nm-head .nm-when{font-size:30px;}
+body.kitchen .nm-ing li{font-size:18px;}
+@media (max-width:480px){ body.kitchen nav .tabbar button{font-size:12.5px; padding:12px 1px; min-width:0;} }
 /* Grouped items (flavours of ice cream, brands of lasagne) share one tile */
 .uf-grp{margin-bottom:10px;}
 .uf-grp > summary{list-style:none; cursor:pointer; margin-bottom:0; background:#fff;
@@ -640,7 +664,8 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 
 <nav>
   <div class="tabbar">
-    <button data-tab="usefirst" class="active">Stock</button>
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="usefirst">Stock</button>
     <button data-tab="incoming">Incoming</button>
     <button data-tab="arrivals" class="kit-only">Arrivals<span id="arrBadge" class="badge-dot" style="display:none;"></span></button>
     <button data-tab="orders" class="adm-only">Orders</button>
@@ -653,8 +678,13 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
 
 <main>
 
+<!-- ============ DASHBOARD: the next meal ============ -->
+<section id="sec-dashboard" class="active">
+  <div id="nmBox"><div class="loading">Loading the next meal…</div></div>
+</section>
+
 <!-- ============ USE FIRST ============ -->
-<section id="sec-usefirst" class="active">
+<section id="sec-usefirst">
   <div class="dash-acts" style="display:flex; gap:8px; margin-bottom:12px;">
     <button class="btn btn-primary" id="btnGoReceive" style="flex:2;">+ Receive a delivery</button>
     <button class="btn btn-secondary" id="btnQuickAdd" style="flex:1;">+ Add item</button>
@@ -1116,7 +1146,7 @@ const STORAGE_ICONS = {fridge: "coolroom", freezer: "freezer", dry: "dry", kitch
 function storageIcon(s){
   return icon(STORAGE_ICONS[s] || "none", "st-ic-" + (STORAGE_ICONS[s] ? s : "none"));
 }
-const TAB_ICONS = {usefirst: "stock", incoming: "incoming", arrivals: "truck", orders: "orders", unalloc: "inbox", functions: "calendar", deliveries: "receipt", settings: "gear"};
+const TAB_ICONS = {dashboard: "utensils", usefirst: "stock", incoming: "incoming", arrivals: "truck", orders: "orders", unalloc: "inbox", functions: "calendar", deliveries: "receipt", settings: "gear"};
 function paintDashboardIcons(){
   document.querySelectorAll(".tabbar button").forEach(b => {
     if(b.querySelector(".ic")) return;
@@ -1149,13 +1179,11 @@ function setMode(m, remember){
   document.body.classList.toggle("admin", m === "admin");
   $("btnMode").textContent = m === "admin" ? "Exit admin" : "Admin";
   $("hdSub").textContent = m === "admin" ? "Admin · full controls" : "Arrivals · Use first · Waste";
-  const uf = document.querySelector('.tabbar [data-tab="usefirst"]');
-  if(uf) uf.innerHTML = icon("stock") + "<span>" + (m === "admin" ? "Dashboard" : "Stock") + "</span>";
   const gr = $("btnGoReceive");
   if(gr) gr.innerHTML = icon("truck") + (m === "admin" ? "Receive a delivery" : "A delivery just arrived");
   if(remember !== false) store("wslr_mode", m);
   updateBulkBar();
-  showTab("usefirst");
+  showTab("dashboard");
   updateArrBadge();
 }
 function askAdminPin(){
@@ -1238,6 +1266,7 @@ function wireSeg(el, initial, onChange){
 function showTab(name){
   document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
   document.querySelectorAll("main section").forEach(s => s.classList.toggle("active", s.id === "sec-" + name));
+  if(name === "dashboard") renderNextMeal();
   if(name === "usefirst") renderUseFirst();
   if(name === "incoming") renderIncoming();
   if(name === "arrivals") renderArrivals();
@@ -1257,8 +1286,9 @@ function showDeliveryPane(name){
 }
 function refreshCurrentTab(){
   const b = document.querySelector(".tabbar button.active");
-  const t = b ? b.dataset.tab : "usefirst";
-  if(t === "usefirst") renderUseFirst();
+  const t = b ? b.dataset.tab : "dashboard";
+  if(t === "dashboard") renderNextMeal();
+  else if(t === "usefirst") renderUseFirst();
   else if(t === "incoming") renderIncoming();
   else if(t === "arrivals") renderArrivals();
   else if(t === "orders") renderOrders();
@@ -5111,6 +5141,159 @@ async function confirmOrderModal(input){
   if(!m.isConnected) return;   // closed while the profiles were loading
   buildPools(); drawRows(); drawFor();
 }
+// ---------- dashboard: the next meal ----------
+// Built from the planner's shopping list, which already comes into orders
+// here: every item carries a "for" like "Sat 17 Oct Lasagne", so the day and
+// the dish are known. The sitting (breakfast, lunch, dinner...) comes from the
+// planner's usual time for that dish; desserts go with dinner.
+const NM_SITTINGS = [
+  {k: "breakfast", label: "Breakfast",     start: "07:00", end: "10:00"},
+  {k: "morning",   label: "Morning tea",   start: "10:00", end: "11:30"},
+  {k: "lunch",     label: "Lunch",         start: "12:30", end: "14:30"},
+  {k: "afternoon", label: "Afternoon tea", start: "14:30", end: "16:30"},
+  {k: "dinner",    label: "Dinner",        start: "17:30", end: "20:30"}
+];
+// the planner's dishes and when each is usually served (from its meal list)
+const NM_DISHES = {
+  "hot breakfast (full)": "breakfast", "continental breakfast": "breakfast", "breakfast packs (early departure)": "breakfast",
+  "morning tea: muffins & fruit": "morning", "morning tea: biscuits & fruit": "morning", "fruit platter (any break)": "morning",
+  "afternoon tea: mini pastries": "afternoon", "afternoon tea: cake slices": "afternoon", "afternoon tea: cheese & crackers": "afternoon",
+  "pasta bar (choice of sauces)": "lunch", "fish & chips": "lunch", "burger & chips": "lunch", "nachos": "lunch",
+  "chicken schnitzel": "lunch", "quiche": "lunch", "frittata": "lunch", "hot dogs": "lunch", "wrap platters": "lunch",
+  "takeaway lunch packs": "lunch",
+  "spaghetti bolognese": "dinner", "roast of the day": "dinner", "stir fry": "dinner", "curry night": "dinner",
+  "cottage pie": "dinner", "lasagne": "dinner"
+};
+const NM_DESSERT = /dessert|mousse|danish|custard|cheesecake|cake\b|pudding|crumble|pavlova|tart\b|ice cream|brownie/i;
+function nmSitting(dish){
+  const n = String(dish || "").trim().toLowerCase();
+  if(NM_DISHES[n]) return {k: NM_DISHES[n], dessert: false};
+  if(/breakfast/.test(n)) return {k: "breakfast", dessert: false};
+  if(/morning tea/.test(n)) return {k: "morning", dessert: false};
+  if(/afternoon tea/.test(n)) return {k: "afternoon", dessert: false};
+  if(NM_DESSERT.test(n)) return {k: "dinner", dessert: true};
+  if(/lunch|wrap|sandwich|roll|burger|hot dog|nacho|schnitzel|quiche|frittata|fish/.test(n)) return {k: "lunch", dessert: false};
+  return {k: "dinner", dessert: false};
+}
+const NM_MON = {jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11};
+// "Sat 17 Oct Lasagne" -> {date:"2026-10-17", dish:"Lasagne"}; the year is the
+// one that puts the day closest to when the order is due
+function nmParseFor(part, nearISO){
+  const m = String(part || "").trim().match(/^(?:[A-Za-z]{3,9}\.?\s+)?(\d{1,2})\s+([A-Za-z]{3})[A-Za-z]*\.?\s+(.+)$/);
+  if(!m || NM_MON[m[2].toLowerCase()] == null) return null;
+  const near = nearISO ? new Date(nearISO + "T12:00") : new Date();
+  let best = null;
+  [-1, 0, 1].forEach(dy => {
+    const d = new Date(near.getFullYear() + dy, NM_MON[m[2].toLowerCase()], +m[1], 12);
+    if(!best || Math.abs(d - near) < Math.abs(best - near)) best = d;
+  });
+  return {date: localISO(best), dish: m[3].trim()};
+}
+function nmQty(i){
+  const q = i.quantity == null ? null : +i.quantity;
+  if(q == null || !(q > 0)) return "as required";
+  return fmtQty(q) + (i.unit && !/as required/i.test(i.unit) ? " " + i.unit : "");
+}
+function nmBuild(orders){
+  const slots = {};
+  orders.forEach(o => {
+    const group = o.catering_functions ? o.catering_functions.name : (o.sheet_block || "Group");
+    const colour = o.catering_functions && o.catering_functions.colour ? o.catering_functions.colour : "#2b7bb9";
+    (o.order_items || []).forEach(i => {
+      const parts = String(i.sheet_for || "").split(/\s+\+\s+/).map(p => nmParseFor(p, o.expected_date)).filter(Boolean);
+      parts.forEach(p => {
+        const s = nmSitting(p.dish);
+        const key = p.date + "|" + s.k + "|" + group.toLowerCase();
+        if(!slots[key]) slots[key] = {date: p.date, sitting: s.k, group, colour, dishes: {}};
+        const dk = p.dish.toLowerCase();
+        if(!slots[key].dishes[dk]) slots[key].dishes[dk] = {name: p.dish, dessert: s.dessert, items: []};
+        const others = parts.filter(x => x !== p).map(x => fmtDate(x.date) + " " + x.dish);
+        slots[key].dishes[dk].items.push({name: String(i.item_name || "").replace(/^~\s*/, ""), est: /^~/.test(i.item_name || ""), qty: nmQty(i), shared: others});
+      });
+    });
+  });
+  const order = k => NM_SITTINGS.findIndex(s => s.k === k);
+  return Object.values(slots).sort((a, b) =>
+    a.date !== b.date ? (a.date < b.date ? -1 : 1) : order(a.sitting) - order(b.sitting) || a.group.localeCompare(b.group));
+}
+function nmSittingInfo(k){ return NM_SITTINGS.find(s => s.k === k) || NM_SITTINGS[4]; }
+function nmTime(hhmm){
+  const [h, m] = hhmm.split(":").map(Number);
+  return (h % 12 || 12) + (m ? ":" + String(m).padStart(2, "0") : "") + (h < 12 ? " am" : " pm");
+}
+function nmDayLabel(iso){
+  const today = localISO(), tom = localISO(new Date(Date.now() + 86400000));
+  const d = new Date(iso + "T12:00");
+  const long = d.toLocaleDateString("en-AU", {weekday: "long", day: "numeric", month: "long"});
+  return iso === today ? "Today, " + long : iso === tom ? "Tomorrow, " + long : long;
+}
+function nmCardHtml(slot){
+  const si = nmSittingInfo(slot.sitting);
+  const dishes = Object.values(slot.dishes).sort((a, b) => a.dessert - b.dessert);
+  return '<div class="nm-card"><div class="nm-head" style="background:' + esc(slot.colour) + ';">' +
+    '<div class="nm-grp">' + esc(slot.group) + "</div>" +
+    '<div class="nm-when">' + esc(si.label) + " · " + esc(nmDayLabel(slot.date)) + "</div>" +
+    '<div class="nm-sub">Usually served from ' + nmTime(si.start) + " · " + esc(dishes.map(d => d.name).join(" + ")) + "</div></div>" +
+    '<div class="nm-body">' + dishes.map(d =>
+      '<div class="nm-dish">' + esc(d.name) + (d.dessert ? ' <span class="pill plain">Dessert</span>' : "") + "</div>" +
+      '<ul class="nm-ing">' + d.items.map(i =>
+        '<li><span class="n">' + esc(i.name) + (i.est ? ' <span class="pill warn">estimate</span>' : "") +
+        (i.shared.length ? "<small>Amount also covers " + esc(i.shared.join(", ")) + "</small>" : "") + "</span>" +
+        '<span class="q">' + esc(i.qty) + "</span></li>").join("") + "</ul>"
+    ).join("") + "</div></div>";
+}
+async function renderNextMeal(){
+  const box = $("nmBox");
+  const draw = async () => {
+    const from = localISO(new Date(Date.now() - 21 * 86400000));
+    const orders = await run(
+      sb.from("orders").select("id, sheet_block, sheet_state, expected_date, catering_functions(name, colour), order_items(item_name, quantity, unit, sheet_for)")
+        .eq("source", "sheet").or("sheet_state.is.null,sheet_state.neq.dropped").gte("expected_date", from).limit(300)
+    );
+    const now = new Date(), today = localISO(now);
+    const hm = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+    // still to come: a later day, or today with the sitting not over yet
+    const upcoming = nmBuild(orders).filter(s => s.date > today || (s.date === today && nmSittingInfo(s.sitting).end > hm));
+    if(!upcoming.length){
+      let fn = null;
+      try{
+        const fns = await run(sb.from("catering_functions").select("name, event_date, end_date").or("sheet_state.is.null,sheet_state.neq.dropped")
+          .gte("event_date", today).order("event_date", {ascending: true}).limit(1));
+        fn = fns[0] || null;
+      }catch(e){}
+      box.innerHTML = '<div class="empty">No meals coming up from the planner yet.' +
+        (fn ? "<br><br>Next group: <b>" + esc(fn.name) + "</b>, arriving " + esc(nmDayLabel(fn.event_date)) +
+          ". Its meals show here once they are in the planner's shopping list." : "") + "</div>";
+      return;
+    }
+    // the next sitting, and every group eating at it (usually just one)
+    const first = upcoming[0];
+    const now0 = upcoming.filter(s => s.date === first.date && s.sitting === first.sitting);
+    const later = upcoming.filter(s => now0.indexOf(s) === -1).slice(0, 5);
+    box.innerHTML = now0.map(nmCardHtml).join("") +
+      (later.length
+        ? '<div class="nm-next"><h3>After that</h3>' + later.map(s => {
+            const d = new Date(s.date + "T12:00");
+            return '<div class="nm-row" style="border-left:6px solid ' + esc(s.colour) + ';">' +
+              '<div class="d">' + esc(d.toLocaleDateString("en-AU", {weekday: "short", day: "numeric", month: "short"})) +
+              "<small>" + esc(nmSittingInfo(s.sitting).label) + "</small></div>" +
+              '<div class="w">' + esc(Object.values(s.dishes).map(x => x.name).join(" + ")) + "<small>" + esc(s.group) + "</small></div></div>";
+          }).join("") + "</div>"
+        : "");
+  };
+  try{ await draw(); }
+  catch(e){ box.innerHTML = '<div class="empty">Could not load the next meal. Check the connection.</div>'; return; }
+  // pull in anything new from the planner's shopping list, then redraw
+  if(shopUrlBase() && Date.now() - lastShopSync > 60000){
+    lastShopSync = Date.now();
+    try{ await syncShoppingOrders(); await draw(); }catch(e){}
+  }
+}
+// keep the dashboard current on a tablet that sits on it all day
+setInterval(() => {
+  const b = document.querySelector(".tabbar button.active");
+  if(b && b.dataset.tab === "dashboard" && !document.hidden && !$("modalRoot").classList.contains("open")) renderNextMeal();
+}, 5 * 60000);
 // ---------- shopping list -> orders ----------
 // The planner's "Shopping lists" tab lays one block out per function with
 // supplier headings inside it. Each supplier inside each block becomes one
