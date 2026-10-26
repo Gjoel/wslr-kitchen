@@ -404,6 +404,10 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 .nm-row .w small{display:block; color:var(--muted); font-size:13px;}
 body.kitchen .nm-head .nm-when{font-size:30px;}
 body.kitchen .nm-ing li{font-size:18px;}
+.nm-alert{background:var(--red-bg); border:2px solid var(--red); color:var(--red); border-radius:14px; padding:12px 16px; margin-bottom:14px; font-size:16px;}
+.nm-alert ul{margin:6px 0 6px 18px; padding:0;}
+.nm-alert li{margin:3px 0; font-weight:600;}
+.nm-alert .small{color:var(--ink); opacity:.8;}
 @media (max-width:480px){ body.kitchen nav .tabbar button{font-size:12.5px; padding:12px 1px; min-width:0;} }
 /* Grouped items (flavours of ice cream, brands of lasagne) share one tile */
 .uf-grp{margin-bottom:10px;}
@@ -976,6 +980,15 @@ a.linkline{display:block; text-align:center; color:var(--brand-dark); font-weigh
     <div class="syncrow">
       <button class="btn btn-secondary" id="btnSaveShop" style="width:auto;">Save and test</button>
       <p class="syncmsg" id="shopTestMsg"></p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Meal Planner feed (Dashboard)</h2>
+    <p class="muted small" style="margin-top:-6px;">Paste the web app URL from the <code style="background:#efece4; padding:1px 5px; border-radius:5px;">kitchen-dashboard-feed.gs</code> deployment. The Dashboard then shows the next meal straight from the planner, drafts included. Saved on this device only.</p>
+    <div class="field"><label for="stPlanUrl">Feed URL</label><input id="stPlanUrl" placeholder="https://script.google.com/macros/s/&hellip;/exec" autocomplete="off"></div>
+    <div class="syncrow">
+      <button class="btn btn-secondary" id="btnSavePlan" style="width:auto;">Save and test</button>
+      <p class="syncmsg" id="planTestMsg"></p>
     </div>
   </div>
   <div class="card">
@@ -5242,8 +5255,147 @@ function nmCardHtml(slot){
         '<span class="q">' + esc(i.qty) + "</span></li>").join("") + "</ul>"
     ).join("") + "</div></div>";
 }
+// ---------- the Meal Planner feed (kitchen-dashboard-feed.gs) ----------
+// Straight from the planner's saved plans: real times, guests, notes and
+// dietary counts, the shopping lines for each dish, and the planner's own
+// "Plan check" list of what no longer matches the group's form. Drafts are
+// in there as soon as they are planned.
+const PLANNER_FEED_URL = "";
+function planUrlBase(){ return (readStore("wslr_plan_url") || PLANNER_FEED_URL || "").trim(); }
+const NM_DIET = {GF: "gluten free", DF: "dairy free", V: "vegetarian", VG: "vegan", NUT: "nut allergy", EGG: "egg allergy"};
+const NM_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const NM_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// the planner's own day label, e.g. "Thu 29 Oct"
+function nmDayLbl(iso){
+  const d = new Date(iso + "T12:00");
+  return NM_DAYS[d.getDay()] + " " + d.getDate() + " " + NM_MONTHS[d.getMonth()];
+}
+function nmSitFromMin(m){
+  return m < 570 ? "breakfast" : m < 690 ? "morning" : m < 900 ? "lunch" : m < 1020 ? "afternoon" : "dinner";
+}
+function nmClock(m){
+  const h = Math.floor(m / 60), mm = m % 60;
+  return (h % 12 || 12) + (mm ? ":" + String(mm).padStart(2, "0") : "") + (h < 12 ? " am" : " pm");
+}
+async function fetchPlannerFeed(){
+  const base = planUrlBase();
+  const res = await feedFetch(base + (base.indexOf("?") > -1 ? "&" : "?") + "cb=" + Date.now());
+  if(!res.ok) throw new Error("The Meal Planner feed replied " + res.status + ".");
+  const data = JSON.parse(await res.text());
+  if(!data || data.ok !== true) throw new Error((data && data.error) || "The Meal Planner feed returned an error.");
+  return data;
+}
+function nmPlannerSlots(feed, colours){
+  const slots = {};
+  (feed.plans || []).forEach(p => {
+    const lines = {};
+    (p.lines || []).forEach(l => String(l.forWhat || "").split(/\s+\+\s+/).forEach(part => {
+      const k = part.trim().toLowerCase();
+      (lines[k] = lines[k] || []).push(Object.assign({shared: String(l.forWhat).split(/\s+\+\s+/).filter(x => x.trim().toLowerCase() !== k)}, l));
+    }));
+    (p.services || []).forEach(s => {
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(s.day || "")) return;
+      const sit = nmSitFromMin(s.min);
+      const key = s.day + "|" + sit + "|" + p.name.toLowerCase();
+      if(!slots[key]) slots[key] = {date: s.day, sitting: sit, group: p.name, plan: p, colour: colours[p.name.trim().toLowerCase()] || "#2b7bb9",
+                                    min: s.min, guests: 0, services: []};
+      const slot = slots[key];
+      slot.min = Math.min(slot.min, s.min);
+      slot.guests = Math.max(slot.guests, s.guests || 0);
+      slot.services.push(Object.assign({}, s, {lines: lines[(nmDayLbl(s.day) + " " + s.mealName).toLowerCase()] || []}));
+    });
+  });
+  return Object.values(slots).map(s => { s.services.sort((a, b) => a.min - b.min); return s; })
+    .sort((a, b) => a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.min - b.min || a.group.localeCompare(b.group));
+}
+// the planner's checks that are about this meal (or about the group as a whole)
+function nmChecksFor(slot){
+  const lbl = nmDayLbl(slot.date).toLowerCase();
+  const word = nmSittingInfo(slot.sitting).label.toLowerCase();
+  return (slot.plan.checks || []).filter(c => {
+    const t = String(c).toLowerCase();
+    if(!/^(mon|tue|wed|thu|fri|sat|sun)\s+\d/.test(t)) return true;
+    return t.indexOf(lbl) === 0 && (t.indexOf(word) > -1 || (slot.sitting === "dinner" && t.indexOf("dessert") > -1));
+  });
+}
+function nmPlannerCardHtml(slot){
+  const si = nmSittingInfo(slot.sitting);
+  const p = slot.plan;
+  const draft = p.form === "draft" || /progress|draft/i.test(p.status || "");
+  const diets = {};
+  slot.services.forEach(s => Object.keys(s.diets || {}).forEach(k => { diets[k] = Math.max(diets[k] || 0, +s.diets[k] || 0); }));
+  const dietChips = Object.keys(diets).filter(k => diets[k] > 0).map(k =>
+    '<span class="pill ' + (k === "NUT" || k === "EGG" ? "bad" : "plain") + '" style="margin:2px 4px 2px 0;">' + diets[k] + " " + esc(NM_DIET[k] || k) + "</span>").join("");
+  return '<div class="nm-card"><div class="nm-head" style="background:' + esc(slot.colour) + ';">' +
+    '<div class="nm-grp">' + esc(slot.group) + (draft ? ' <span class="pill warn" style="text-transform:none; letter-spacing:0;">Draft, not confirmed yet</span>' : "") + "</div>" +
+    '<div class="nm-when">' + esc(si.label) + " · " + esc(nmDayLabel(slot.date)) + "</div>" +
+    '<div class="nm-sub">' + esc(nmClock(slot.min)) + " · " + slot.guests + " guests · " + esc(slot.services.map(s => s.mealName).join(" + ")) + "</div></div>" +
+    '<div class="nm-body">' +
+    (dietChips ? '<div style="margin-top:12px;">' + dietChips + "</div>" : "") +
+    slot.services.map(s =>
+      '<div class="nm-dish">' + esc(s.mealName) + (slot.services.length > 1 ? ' <span class="pill plain">' + esc(nmClock(s.min)) + "</span>" : "") + "</div>" +
+      (s.note ? '<div class="small muted" style="white-space:pre-line; margin:-2px 0 8px;">' + esc(s.note) + "</div>" : "") +
+      Object.keys(s.dietNotes || {}).map(k => '<div class="small" style="margin:0 0 4px;"><b>' + esc(NM_DIET[k] || k) + ":</b> " + esc(s.dietNotes[k]) + "</div>").join("") +
+      (s.lines.length
+        ? '<ul class="nm-ing">' + s.lines.map(l =>
+            '<li><span class="n">' + esc(String(l.n).replace(/^~\s*/, "")) + (l.est || /^~/.test(l.n) ? ' <span class="pill warn">estimate</span>' : "") +
+            (l.shared.length ? "<small>Amount also covers " + esc(l.shared.join(", ")) + "</small>" : "") + "</span>" +
+            '<span class="q">' + esc(l.qty || "as required") + "</span></li>").join("") + "</ul>"
+        : '<p class="small muted">No ingredients listed for this dish in the planner.</p>')
+    ).join("") + "</div></div>";
+}
+function nmAfterHtml(list, dishesOf){
+  if(!list.length) return "";
+  return '<div class="nm-next"><h3>After that</h3>' + list.map(s => {
+    const d = new Date(s.date + "T12:00");
+    return '<div class="nm-row" style="border-left:6px solid ' + esc(s.colour) + ';">' +
+      '<div class="d">' + esc(d.toLocaleDateString("en-AU", {weekday: "short", day: "numeric", month: "short"})) +
+      "<small>" + esc(nmSittingInfo(s.sitting).label + (s.min != null ? " · " + nmClock(s.min) : "")) + "</small></div>" +
+      '<div class="w">' + esc(dishesOf(s)) + "<small>" + esc(s.group) + "</small></div></div>";
+  }).join("") + "</div>";
+}
+// returns false when the feed has nothing still to come, so the caller can fall back
+async function nmDrawPlanner(box, feed){
+  let colours = {};
+  try{
+    const fns = await run(sb.from("catering_functions").select("name, colour").gte("event_date", localISO(new Date(Date.now() - 30 * 86400000))).limit(200));
+    fns.forEach(f => { if(f.colour) colours[String(f.name).trim().toLowerCase()] = f.colour; });
+  }catch(e){}
+  const now = new Date(), today = localISO(now), nowMin = now.getHours() * 60 + now.getMinutes();
+  // a sitting stays up until about 75 minutes after it starts
+  const upcoming = nmPlannerSlots(feed, colours).filter(s => s.date > today || (s.date === today && s.min + 75 > nowMin));
+  if(!upcoming.length) return false;
+  const first = upcoming[0];
+  const now0 = upcoming.filter(s => s.date === first.date && s.sitting === first.sitting);
+  const later = upcoming.filter(s => now0.indexOf(s) === -1).slice(0, 5);
+  const checks = [];
+  now0.forEach(s => nmChecksFor(s).forEach(c => checks.push((now0.length > 1 ? s.group + ": " : "") + c)));
+  box.innerHTML =
+    (checks.length
+      ? '<div class="nm-alert"><b>Changed since this meal was planned</b><ul>' + checks.map(c => "<li>" + esc(c) + "</li>").join("") + "</ul>" +
+        '<div class="small">The group\'s form no longer matches the Meal Planner. Update the plan in the planner and this box goes away.</div></div>'
+      : "") +
+    now0.map(nmPlannerCardHtml).join("") +
+    nmAfterHtml(later, s => s.services.map(x => x.mealName).join(" + ")) +
+    '<p class="small muted" style="text-align:center; margin-top:14px;">From the Meal Planner' + (feed.at ? ", checked " + esc(new Date(feed.at).toLocaleTimeString("en-AU", {hour: "numeric", minute: "2-digit"})) : "") + "</p>";
+  return true;
+}
 async function renderNextMeal(){
   const box = $("nmBox");
+  if(planUrlBase()){
+    // show the last copy straight away, then the fresh one when it lands
+    let cached = null;
+    try{ cached = JSON.parse(readStore("wslr_plan_cache") || "null"); }catch(e){}
+    let shown = false;
+    if(cached){ try{ shown = await nmDrawPlanner(box, cached); }catch(e){} }
+    try{
+      const feed = await fetchPlannerFeed();
+      store("wslr_plan_cache", JSON.stringify(feed));
+      if(await nmDrawPlanner(box, feed)) return;
+    }catch(e){
+      if(shown) return;
+    }
+  }
   const draw = async () => {
     const from = localISO(new Date(Date.now() - 21 * 86400000));
     const orders = await run(
@@ -6417,10 +6569,26 @@ function bindStatic(){
   $("btnAddOrder").addEventListener("click", () => orderForm(null));
   const bsh = $("btnShopSync");
   if(bsh) bsh.addEventListener("click", () => renderOrders(true));
+  const bsp = $("btnSavePlan");
+  if(bsp) bsp.addEventListener("click", async () => {
+    const url = ($("stPlanUrl").value || "").trim();
+    const msg = $("planTestMsg");
+    if(url && !/^https:\/\/script\.google\.com\/.+\/exec/.test(url)){ msg.className = "syncmsg bad"; msg.textContent = "That does not look like an Apps Script web app URL (it should end in /exec)."; return; }
+    store("wslr_plan_url", url);
+    if(!url){ msg.className = "syncmsg"; msg.textContent = "Cleared. The Dashboard goes back to the shopping list orders."; return; }
+    msg.className = "syncmsg"; msg.textContent = "Checking the Meal Planner…";
+    try{
+      const feed = await fetchPlannerFeed();
+      store("wslr_plan_cache", JSON.stringify(feed));
+      const n = (feed.plans || []).reduce((t, p) => t + (p.services || []).length, 0);
+      msg.className = "syncmsg good"; msg.textContent = "Connected: " + (feed.plans || []).length + " plans, " + n + " meals.";
+    }catch(e){ msg.className = "syncmsg bad"; msg.textContent = e.message || "Could not reach the Meal Planner feed."; }
+  });
   const bss2 = $("btnSaveShop");
   if(bss2) bss2.addEventListener("click", saveShopSettings);
   const su = $("stShopUrl"); if(su) su.value = readStore("wslr_shop_url") || SHOP_FEED_URL || "";
   const sk = $("stShopKey"); if(sk) sk.value = readStore("wslr_shop_key") || SHOP_FEED_KEY || "";
+  const pu = $("stPlanUrl"); if(pu) pu.value = readStore("wslr_plan_url") || PLANNER_FEED_URL || "";
   document.querySelectorAll(".dl-side button").forEach(b =>
     b.addEventListener("click", () => showDeliveryPane(b.dataset.dv))
   );
