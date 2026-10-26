@@ -2916,6 +2916,7 @@ async function quickAddItem(){
     '<div class="field"><label for="qaSup">Bought from <span style="text-transform:none; font-weight:500;">(optional)</span></label><input id="qaSup" list="supplierList" placeholder="e.g. Coles" autocomplete="off"></div></div>' +
     '<div class="field"><label for="qaGroup">Group with <span style="text-transform:none; font-weight:500;">(optional, e.g. Ice cream)</span></label>' +
       '<input id="qaGroup" list="qaGroupList" placeholder="Pick a group or type a new one" autocomplete="off"><datalist id="qaGroupList"></datalist></div>' +
+    '<div id="qaDup" style="display:none;"></div>' +
     '<button class="btn btn-primary" id="qaSave" style="width:100%;">Add to stock</button>'
   );
   let storage = null;
@@ -2986,10 +2987,27 @@ async function quickAddItem(){
       const hit = groupRows.find(r => groupKey(r.group_label) === groupKey(group));
       if(hit) group = String(hit.group_label).trim();
     }else{
-      const same = groupRows.find(r => String(r.item_name || "").trim().toLowerCase() === name.toLowerCase());
+      const same = groupRows.find(r => r.group_label && String(r.item_name || "").trim().toLowerCase() === name.toLowerCase());
       if(same) group = String(same.group_label).trim();
     }
     const btn = m.querySelector("#qaSave");
+    const qty = qv === "" ? null : +qv;
+    const unit = m.querySelector("#qaUnit").value.trim() || null;
+    const expType = m.querySelector("#qaExpType").value;
+    // already in stock under the same name? offer to add to it rather than
+    // starting a second line (skipped once they say keep it separate)
+    if(!m.dataset.dupSkip){
+      btn.disabled = true;
+      let rows = [];
+      try{
+        rows = await run(sb.from("stock_items").select("id, item_name, storage, quantity, unit, expiry_date, expiry_type, status_note, function_id")
+          .eq("status", "in_stock").is("function_id", null).limit(2000));
+      }catch(e){}
+      btn.disabled = false;
+      const key = normName(name);
+      const hits = rows.filter(r => normName(r.item_name) === key && (!storage || r.storage === storage));
+      if(hits.length){ showDupChoice(m, name, hits, {qty, unit, exp, expType}); return; }
+    }
     btn.disabled = true;
     try{
       // a supplier gets its own small delivery record so the bought from icon
@@ -3008,10 +3026,10 @@ async function quickAddItem(){
         item_name: name,
         category: cat,
         storage: storage,
-        quantity: qv === "" ? null : +qv,
-        unit: m.querySelector("#qaUnit").value.trim() || null,
+        quantity: qty,
+        unit: unit,
         expiry_date: exp,
-        ...expTypeNew(m.querySelector("#qaExpType").value),
+        ...expTypeNew(expType),
         group_label: group,
         status: "in_stock",
         origin: "manual",
@@ -3024,6 +3042,60 @@ async function quickAddItem(){
       btn.disabled = false;
     }
   });
+}
+// ---------- adding to something already in stock ----------
+// When the same item is already on the shelf, Add item offers to top that
+// line up instead of starting a second one. The line keeps the soonest date
+// of the two and is marked as holding mixed dates, so the rail reads
+// "Soonest best before" (or use by) until someone sets a date by hand.
+const MIXED_DATES = "Mixed dates";
+function normName(s){ return String(s || "").trim().replace(/\s+/g, " ").toLowerCase(); }
+function isMixedDates(i){ return i && (!i.status || i.status === "in_stock") && i.status_note === MIXED_DATES; }
+function showDupChoice(m, name, hits, add){
+  const box = m.querySelector("#qaDup"), save = m.querySelector("#qaSave");
+  const desc = r => [storageLabel(r.storage), r.quantity != null ? fmtQty(+r.quantity) + " " + (r.unit || "") : "",
+    r.expiry_date ? expWord(r.expiry_type) + " " + fmtDate(r.expiry_date) : "no date"].filter(Boolean).join(" · ");
+  save.style.display = "none";
+  box.style.display = "";
+  box.innerHTML = '<div style="background:var(--amber-bg); border:2px solid var(--amber); border-radius:12px; padding:12px 14px;">' +
+    '<div style="font-weight:700; font-size:16px; margin-bottom:4px;">' + esc(name) + " is already in stock</div>" +
+    '<div class="small" style="margin-bottom:10px;">Add this to it? The line keeps the <b>soonest</b> ' + esc(add.exp ? expWord(add.expType) : "date") + " of the two.</div>" +
+    hits.map(r => '<button class="btn btn-primary" data-dup="' + r.id + '" style="width:100%; margin-bottom:8px; text-align:left; display:block;">Add to the one in ' + esc(desc(r)) + "</button>").join("") +
+    '<button class="btn btn-secondary" id="qaDupNew" style="width:100%; margin-bottom:8px;">No, keep it as a separate item</button>' +
+    '<button class="btn btn-ghost" id="qaDupBack" style="width:100%;">Back</button></div>';
+  box.querySelector("#qaDupBack").addEventListener("click", () => { box.style.display = "none"; box.innerHTML = ""; save.style.display = ""; });
+  box.querySelector("#qaDupNew").addEventListener("click", () => {
+    m.dataset.dupSkip = "1";
+    box.style.display = "none"; box.innerHTML = ""; save.style.display = "";
+    save.click();
+  });
+  box.querySelectorAll("[data-dup]").forEach(b => b.addEventListener("click", async () => {
+    const r = hits.find(x => x.id === +b.dataset.dup);
+    if(!r) return;
+    box.querySelectorAll("button").forEach(x => { x.disabled = true; });
+    const patch = {};
+    if(add.qty != null) patch.quantity = Math.round(((+r.quantity || 0) + add.qty) * 1000) / 1000;
+    if(!r.unit && add.unit) patch.unit = add.unit;
+    let note = "";
+    if(add.exp){
+      const oldExp = r.expiry_date;
+      if(!oldExp || add.exp < oldExp){
+        patch.expiry_date = add.exp;
+        Object.assign(patch, expTypePatch(add.expType, r.expiry_type));
+      }
+      if(oldExp && oldExp !== add.exp){
+        patch.status_note = MIXED_DATES;
+        const soon = add.exp < oldExp ? add.exp : oldExp;
+        note = ". Showing the soonest date, " + fmtDate(soon);
+      }
+    }
+    try{
+      if(Object.keys(patch).length) await run(sb.from("stock_items").update(patch).eq("id", r.id));
+      closeModal();
+      toast("Added to " + r.item_name + " in " + storageLabel(r.storage).toLowerCase() + note);
+      refreshCurrentTab();
+    }catch(e){ box.querySelectorAll("button").forEach(x => { x.disabled = false; }); }
+  }));
 }
 function boardHtml(list, searching, showAlloc){
   // flat list, soonest use by or best before first, whatever shelf it is on
@@ -3262,7 +3334,7 @@ function ufRowHtml(i, searching, showAlloc, showStorage){
   let d0 = "No date", d1 = "–", d2 = "";
   if(i.expiry_date){
     const ex = new Date(i.expiry_date + "T12:00");
-    d0 = expLabel(i.expiry_type);
+    d0 = isMixedDates(i) ? "Soonest " + expWord(i.expiry_type) : expLabel(i.expiry_type);
     d1 = String(ex.getDate());
     d2 = ex.toLocaleDateString("en-AU", {month:"short"});
   }
@@ -3608,6 +3680,67 @@ function wireAddMore(m, i){
   });
 }
 function fmtQty(n){ return String(Math.round(n * 100) / 100); }
+// ---------- move some (or all) to another area ----------
+// 6 chocolate slabs in the freezer, 4 of them wanted in the cool room: the
+// 4 become their own line in the cool room with the same details, and the
+// freezer line drops to 2. Moving the lot just changes the area.
+function moveHtml(i){
+  const hasQty = i.quantity != null && +i.quantity > 0;
+  const chips = STORAGES.filter(k => k !== i.storage).map(k => '<button type="button" data-st="' + k + '">' + storageLabel(k) + "</button>").join("");
+  return '<button class="btn btn-secondary" id="mvOpen" style="width:100%; margin-bottom:8px;">&#8644; Move some to another area</button>' +
+    '<div id="mvPanel" style="display:none; background:#efece6; border-radius:12px; padding:12px 12px 4px; margin-bottom:12px;">' +
+    (hasQty
+      ? '<div class="field"><label for="mvQty">How many to move (of ' + fmtQty(+i.quantity) + (i.unit ? " " + esc(i.unit) : "") + ")</label>" +
+        '<div style="display:flex; gap:8px; align-items:center;">' +
+        '<button type="button" class="btn btn-ghost" id="mvMinus" style="width:54px; flex:none; font-size:22px;">&minus;</button>' +
+        '<input id="mvQty" type="number" inputmode="decimal" step="any" min="0" max="' + (+i.quantity) + '" value="' + (+i.quantity > 1 ? 1 : +i.quantity) + '" style="text-align:center; font-size:20px; font-weight:700;">' +
+        '<button type="button" class="btn btn-ghost" id="mvPlus" style="width:54px; flex:none; font-size:22px;">+</button></div></div>'
+      : '<p class="small muted">No quantity is set on this item, so the whole line moves.</p>') +
+    '<div class="field"><label>Move to</label><div class="stchips" id="mvTo">' + chips + "</div></div>" +
+    '<button class="btn btn-primary" id="mvGo" style="width:100%; margin-bottom:8px;">Move</button></div>';
+}
+function wireMove(m, i){
+  const panel = m.querySelector("#mvPanel");
+  m.querySelector("#mvOpen").addEventListener("click", () => {
+    panel.style.display = panel.style.display === "none" ? "" : "none";
+  });
+  const qty = m.querySelector("#mvQty");
+  const total = +i.quantity || 0;
+  if(qty){
+    m.querySelector("#mvMinus").addEventListener("click", () => { qty.value = Math.max(1, (+qty.value || 1) - 1); });
+    m.querySelector("#mvPlus").addEventListener("click", () => { qty.value = Math.min(total, (+qty.value || 0) + 1); });
+  }
+  let to = null;
+  m.querySelectorAll("#mvTo [data-st]").forEach(b => b.addEventListener("click", () => {
+    to = b.dataset.st;
+    m.querySelectorAll("#mvTo [data-st]").forEach(x => { x.className = to === x.dataset.st ? "on " + x.dataset.st : ""; });
+  }));
+  m.querySelector("#mvGo").addEventListener("click", async () => {
+    if(!to){ toast("Choose where it is going", {type:"err"}); return; }
+    const n = qty ? +qty.value : total;
+    if(qty && !(n > 0)){ toast("Enter how many to move", {type:"err"}); return; }
+    if(qty && n > total){ toast("Only " + fmtQty(total) + (i.unit ? " " + i.unit : "") + " here", {type:"err"}); return; }
+    const btn = m.querySelector("#mvGo"); btn.disabled = true;
+    try{
+      if(!qty || n >= total){
+        await run(sb.from("stock_items").update({storage: to}).eq("id", i.id));
+      }else{
+        // the moved part is a copy of this line with its own count
+        await run(sb.from("stock_items").insert({
+          delivery_id: i.delivery_id || null, item_name: i.item_name, category: i.category || null, storage: to,
+          quantity: n, unit: i.unit || null, expiry_date: i.expiry_date || null, ...expTypeNew(i.expiry_type),
+          function_id: i.function_id || null, barcode: i.barcode || null, group_label: i.group_label || null,
+          status_note: isMixedDates(i) ? MIXED_DATES : null,
+          status: "in_stock", origin: i.origin || "manual", received_date: i.received_date || localISO()
+        }));
+        await run(sb.from("stock_items").update({quantity: Math.round((total - n) * 1000) / 1000}).eq("id", i.id));
+      }
+      closeModal();
+      toast("Moved " + (qty ? fmtQty(Math.min(n, total)) + (i.unit ? " " + i.unit : "") + " " : "") + i.item_name + " to " + storageLabel(to).toLowerCase());
+      refreshCurrentTab();
+    }catch(e){ btn.disabled = false; }
+  });
+}
 function groupBtnHtml(i){
   return '<button class="btn btn-ghost" id="grpOpen" style="width:100%; margin:8px 0;">' +
     (groupKey(i.group_label) ? "Group: " + esc(String(i.group_label).trim()) + " (change)" : "Group with…") + "</button>";
@@ -3632,7 +3765,7 @@ async function itemModal(i){
       ? '<p class="small" style="background:var(--brand-soft); padding:9px 12px; border-radius:9px;">Currently tagged to <b>' +
         esc(i.catering_functions.name) + "</b>.</p>"
       : "") +
-    (inStock ? addMoreHtml(i) + groupBtnHtml(i) : "") +
+    (inStock ? addMoreHtml(i) + moveHtml(i) + groupBtnHtml(i) : "") +
     '<div class="grid2">' +
     '<div class="field"><label for="imQty">Quantity</label><div style="display:flex; gap:8px;">' +
     '<input id="imQty" type="number" inputmode="decimal" step="any" min="0" value="' + (i.quantity ?? "") + '" style="flex:1;">' +
@@ -3657,7 +3790,7 @@ async function itemModal(i){
     "</div>" +
     '<button class="btn btn-ghost" id="btnAllocate" style="width:100%;">Allocate</button>' : "")
   );
-  if(inStock){ wireAddMore(m, i); wireGroupBtn(m, i); }
+  if(inStock){ wireAddMore(m, i); wireMove(m, i); wireGroupBtn(m, i); }
   m.querySelector("#btnImSave").addEventListener("click", async () => {
     const qv = m.querySelector("#imQty").value;
     try{
@@ -3666,6 +3799,7 @@ async function itemModal(i){
         quantity: qv === "" ? null : +qv,
         unit: m.querySelector("#imUnit").value.trim() || null,
         expiry_date: m.querySelector("#imExpiry").value || null,
+        ...((m.querySelector("#imExpiry").value || null) !== (i.expiry_date || null) && isMixedDates(i) ? {status_note: null} : {}),
         ...expTypePatch(m.querySelector("#imExpType").value, i.expiry_type)
       }).eq("id", i.id));
       closeModal(); toast("Saved"); refreshCurrentTab();
@@ -4308,6 +4442,7 @@ function kitchenItemModal(i){
     "</div>" +
     addMoreHtml(i) +
     '<button class="btn btn-secondary" id="kiAlloc" style="width:100%;">Allocate to a function</button>' +
+    moveHtml(i) +
     groupBtnHtml(i) +
     "<h3>Fix the label</h3>" +
     '<div class="grid2">' +
@@ -4319,6 +4454,7 @@ function kitchenItemModal(i){
     '<p class="small muted" style="margin:10px 0 0;">Wrong name, quantity or category? That gets fixed in admin mode.</p>'
   );
   wireAddMore(m, i);
+  wireMove(m, i);
   wireGroupBtn(m, i);
   m.querySelector("#kiUsed").addEventListener("click", () => { closeModal(); markModal(i, "used"); });
   m.querySelector("#kiBin").addEventListener("click", () => { closeModal(); markModal(i, "binned"); });
@@ -4338,6 +4474,7 @@ function kitchenItemModal(i){
     try{
       await run(sb.from("stock_items").update({
         expiry_date: m.querySelector("#kiExpiry").value || null,
+        ...((m.querySelector("#kiExpiry").value || null) !== (i.expiry_date || null) && isMixedDates(i) ? {status_note: null} : {}),
         ...expTypePatch(m.querySelector("#kiExpType").value, i.expiry_type),
         storage: m.querySelector("#kiStorage").value || null
       }).eq("id", i.id));
