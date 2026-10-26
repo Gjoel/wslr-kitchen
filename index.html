@@ -3125,16 +3125,84 @@ function boardHtml(list, searching, showAlloc){
 // strawberry) sit together in one tile in each storage column. The tile shows
 // the soonest date of anything in it and opens to show each item.
 function groupKey(label){ return String(label || "").trim().toLowerCase(); }
+// Key words, so different kinds of the same thing share a tile on their own:
+// "Beef lasagne" and "Vegetable lasagne (McCain)" both go under Lasagne,
+// "Breast schnitzel trucut" and "Panko white schnitzel" under Schnitzel.
+// Each item's last real word (brands in brackets, sizes and pack words left
+// out) is a candidate heading; an item joins the heading that it shares with
+// the most other items in the same column, wherever the word sits in its
+// name. A few two word foods (ice cream, hash browns...) count as one word.
+const KW_TWO = ["ice cream", "sour cream", "hash browns", "hash brown", "spring rolls", "spring roll", "bread rolls",
+  "garlic bread", "fish fingers", "chicken nuggets", "cream cheese", "soy sauce", "fish sauce", "olive oil", "baked beans", "ice blocks", "corn chips"];
+const KW_SKIP = new Set(["pack", "packs", "box", "boxes", "tray", "trays", "bag", "bags", "tub", "tubs", "tin", "tins", "can", "cans",
+  "jar", "jars", "bottle", "bottles", "carton", "cartons", "ctn", "ctns", "case", "each", "ea", "x", "kg", "g", "l", "ml", "pc", "pcs",
+  "piece", "pieces", "slices", "sliced", "frozen", "fresh", "large", "small", "medium", "mini", "bulk", "whole", "half", "portion",
+  "portions", "of", "and", "with", "the", "uht", "free", "range", "style"]);
+function kwWords(name){
+  let t = " " + String(name || "").toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, " ").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim() + " ";
+  KW_TWO.forEach(two => { t = t.split(" " + two + " ").join(" " + two.replace(" ", "_") + " "); });
+  return t.trim().split(" ").filter(w => w.length > 1 && !KW_SKIP.has(w));
+}
+// "lasagne"/"lasagnes" and "fry"/"fries" match each other
+function kwKey(w){
+  if(/ies$/.test(w)) return w.slice(0, -3) + "y";
+  if(/(oes|ches|shes|xes)$/.test(w)) return w.slice(0, -2);
+  if(/[^s]s$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+function kwLabel(w){ w = w.replace(/_/g, " "); return w.charAt(0).toUpperCase() + w.slice(1); }
+// item -> {key, word} for every item in the column that shares a heading
+function keywordGroups(list){
+  const items = list.filter(i => !groupKey(i.group_label)).map(i => ({i, name: normName(i.item_name), words: kwWords(i.item_name)}));
+  const heads = {};
+  items.forEach(x => { const w = x.words[x.words.length - 1]; if(w) heads[kwKey(w)] = heads[kwKey(w)] || w; });
+  const holders = {};
+  items.forEach(x => new Set(x.words.map(kwKey)).forEach(k => { if(heads[k]) (holders[k] = holders[k] || new Set()).add(x.name); }));
+  const pick = new Map();
+  items.forEach(x => {
+    const keys = x.words.map(kwKey);
+    const own = keys[keys.length - 1];
+    let best = null;
+    keys.forEach((k, pos) => {
+      const n = holders[k] ? holders[k].size : 0;
+      if(n < 2) return;
+      const score = n * 100 + (k === own ? 50 : 0) + pos;
+      if(!best || score > best.score) best = {k, score};
+    });
+    if(best) pick.set(x.i, best.k);
+  });
+  // a heading only stands if two or more different items ended up under it
+  const names = {}, phrases = {};
+  pick.forEach((k, i) => { (names[k] = names[k] || new Set()).add(normName(i.item_name)); });
+  // the heading is the longest run of words every item under it shares,
+  // ending on the key word: "Vanilla chocolate ice cream" and "Mint
+  // chocolate ice cream" give "Chocolate ice cream", not just "Ice cream"
+  pick.forEach((k, i) => {
+    const w = kwWords(i.item_name), at = w.map(kwKey).lastIndexOf(k);
+    const run = w.slice(0, at + 1);
+    if(!phrases[k]){ phrases[k] = run; return; }
+    const p = phrases[k];
+    let n = 0;
+    while(n < p.length && n < run.length && kwKey(p[p.length - 1 - n]) === kwKey(run[run.length - 1 - n])) n++;
+    phrases[k] = p.slice(p.length - Math.max(n, 1));
+  });
+  const out = new Map();
+  pick.forEach((k, i) => { if(names[k].size > 1) out.set(i, {key: k, word: phrases[k].join(" ")}); });
+  return out;
+}
 function groupedRows(list, rowFn, scope, searching){
   const out = [], seen = {};
+  const kwOf = keywordGroups(list);
   // a "Group with" name wins; otherwise lines of the same item (the same
   // thing bought on different days, or with different dates) share a tile
   list.forEach(i => {
     const g = groupKey(i.group_label);
-    const k = g ? "g:" + g : "n:" + normName(i.item_name);
+    const kwg = g ? null : kwOf.get(i);
+    const k = g ? "g:" + g : kwg ? "k:" + kwg.key : "n:" + normName(i.item_name);
     if(seen[k]){ seen[k].members.push(i); return; }
     seen[k] = g ? {label: String(i.group_label).trim(), members: [i]}
-                : {label: String(i.item_name || "").trim(), members: [i], same: true};
+            : kwg ? {label: kwLabel(kwg.word), members: [i]}
+            : {label: String(i.item_name || "").trim(), members: [i], same: true};
     out.push({grp: seen[k], key: k});
   });
   return out.map(o =>
