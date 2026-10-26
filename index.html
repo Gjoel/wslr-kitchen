@@ -382,6 +382,7 @@ body.kitchen #modalRoot .fnpick .fp-d{font-size:14.5px;}
 .uf-row.exp-past .uf-name{color:var(--orange);}
 .pill.past{background:var(--orange-bg); color:var(--orange);}
 .uf-total{font-weight:700; font-size:14px; color:var(--ink); margin-top:3px;}
+.uf-total.none{font-weight:500; color:var(--muted);}
 /* Dashboard: the next meal */
 .nm-card{background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px;}
 .nm-head{color:#fff; padding:16px 18px;}
@@ -3229,17 +3230,11 @@ function groupTileHtml(g, key, rowFn, searching){
   let count = m.length + " items";
   if(g.same){
     // one item on several lines: how many in all, and what each date covers
-    const units = [...new Set(m.map(x => normName(x.unit)))];
-    if(m.every(x => +x.quantity > 0) && units.length === 1){
-      count = fmtQty(m.reduce((t, x) => t + +x.quantity, 0)) + (m[0].unit ? " " + m[0].unit : "") + " in all";
-    }else count = m.length + " lots";
+    count = m.length + " lots";
     preview = m.map(x => (+x.quantity > 0 ? fmtQty(+x.quantity) + " " : "") +
       (x.expiry_date ? expWord(x.expiry_type) + " " + fmtDate(x.expiry_date) : "no date")).join(" · ");
   }
-  // the group's total weight or volume, when every line in it has a size of the same kind
-  const amts = live.map(lineAmount);
-  const grpTotal = amts.length && amts.every(a => a && a.kind === amts[0].kind)
-    ? fmtAmount(amts.reduce((t, a) => t + a.v, 0), amts[0].kind) + " total" : "";
+  const grpTotal = linesTotal(live);
   let pill = "";
   if(worst === "bad") pill = ' <span class="pill bad">Something expired</span>';
   else if(worst === "past") pill = ' <span class="pill past">Something past best before</span>';
@@ -3249,7 +3244,7 @@ function groupTileHtml(g, key, rowFn, searching){
     '<div class="uf-rail rail-' + expState(first) + '"><div class="d0">' + d0 + '</div><div class="d1">' + d1 + '</div><div class="d2">' + esc(d2) + "</div></div>" +
     '<div class="uf-gmain"><div class="uf-name">' + esc(g.label) + ' <span class="pill grp">' + esc(count) + "</span>" + pill + "</div>" +
     '<div class="uf-meta"><span>' + esc(preview) + "</span></div>" +
-    (grpTotal ? '<div class="uf-total">' + esc(grpTotal) + "</div>" : "") + "</div>" +
+    '<div class="uf-total' + (grpTotal ? "" : " none") + '">' + esc(grpTotal || "No quantity set") + "</div></div>" +
     '<span class="chev">&rsaquo;</span></summary>' +
     '<div class="uf-grp-body">' + m.map(rowFn).join("") + "</div></details>";
 }
@@ -3439,10 +3434,29 @@ function lineAmount(i){
   const sz = sizeOf(i.unit);
   return sz && q > 0 ? {v: sz.v * q, kind: sz.kind} : null;
 }
-function totalText(i){
-  const a = lineAmount(i);
-  return a && +i.quantity !== 1 ? fmtAmount(a.v, a.kind) + " total" : "";
+// The total for one or more stock lines: weights and volumes add up across
+// lines (9 kg + 5 kg = 14 kg), counts add up per unit (4 tray + 2 tray =
+// 6 tray), and anything that does not mix is listed side by side.
+function linesTotal(lines){
+  const amt = {}, cnt = {}, order = [];
+  let missing = 0;
+  lines.forEach(i => {
+    const a = lineAmount(i), q = +i.quantity;
+    if(a){
+      if(!(a.kind in amt)){ amt[a.kind] = 0; order.push("a:" + a.kind); }
+      amt[a.kind] += a.v;
+    }else if(q > 0){
+      const u = String(i.unit || "").trim(), k = normName(u);
+      if(!cnt[k]){ cnt[k] = {q: 0, unit: u}; order.push("c:" + k); }
+      cnt[k].q += q;
+    }else missing++;
+  });
+  const parts = order.map(o => o[0] === "a" ? fmtAmount(amt[o.slice(2)], o.slice(2))
+    : fmtQty(cnt[o.slice(2)].q) + (cnt[o.slice(2)].unit ? " " + cnt[o.slice(2)].unit : ""));
+  if(!parts.length) return "";
+  return parts.join(" + ") + " total" + (missing ? " (+" + missing + " with no quantity)" : "");
 }
+function totalText(i){ return linesTotal([i]); }
 function ufRowHtml(i, searching, showAlloc, showStorage){
   const es = expState(i);
   const cls = "rail-" + es;
@@ -3484,7 +3498,7 @@ function ufRowHtml(i, searching, showAlloc, showStorage){
     '<div class="uf-main" data-id="' + i.id + '"><div class="uf-name">' + supplierIcon(supplier) + esc(i.item_name) + statusPill + expPill +
     (evWarn ? ' <span class="pill warn">Expires before event</span>' : "") + "</div>" +
     '<div class="uf-meta">' + (showStorage ? '<span class="pill st ' + esc(i.storage || "plain") + '">' + storageLabel(i.storage) + "</span>" : "") + fnChip(i.catering_functions, i.function_id) + (meta ? " <span>" + esc(meta) + "</span>" : "") + "</div>" +
-    (totalText(i) ? '<div class="uf-total">' + esc(totalText(i)) + "</div>" : "") + "</div>" +
+    '<div class="uf-total' + (totalText(i) ? "" : " none") + '">' + esc(totalText(i) || "No quantity set") + "</div></div>" +
     (!state.selectMode && inStock ?
       '<div class="uf-acts">' +
       (showAlloc ? '<button class="btn btn-secondary btn-xs" data-alloc="' + i.id + '">Allocate</button>' : "") +
